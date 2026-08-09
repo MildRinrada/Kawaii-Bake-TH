@@ -22,7 +22,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { api } from "@/lib/api/client";
 import type { Category, RecipeDetail } from "@/lib/api/models";
@@ -119,6 +119,39 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
   );
   const [cover, setCover] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverProblem, setCoverProblem] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  // When creation succeeds but the cover upload fails, the recipe already
+  // exists. Remembering its slug turns the retry into an update instead of
+  // a second POST — otherwise every retry leaves another orphan draft.
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+
+  /**
+   * Reject what the server will reject, at pick time.
+   *
+   * The server's Pillow build has no HEIF plugin, so an iPhone photo comes
+   * back as a generic "not an image" error after a round trip. Catching it
+   * here says the useful thing immediately.
+   */
+  function chooseCover(file: File | undefined | null) {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (/\.(heic|heif)$/.test(name)) {
+      setCoverProblem(
+        "ไฟล์ .HEIC/.HEIF จาก iPhone ยังอัปโหลดไม่ได้ — ให้แปลงเป็น JPG หรือ PNG ก่อน (ในแอปรูปภาพ: แชร์ → บันทึกเป็น JPEG)",
+      );
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setCoverProblem(`ไฟล์นี้ไม่ใช่รูปภาพ (${file.type || "ไม่ทราบชนิดไฟล์"})`);
+      return;
+    }
+    setCoverProblem(null);
+    setCover(file);
+    setCoverPreview(URL.createObjectURL(file));
+  }
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>(
     initial?.ingredients.length
@@ -194,7 +227,10 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
     { ok: cleanSteps.length > 0, label: "มีขั้นตอนอย่างน้อย 1 ขั้น" },
     { ok: picked.length > 0, label: "เลือกหมวดหมู่อย่างน้อย 1 หมวด" },
     {
-      ok: cover !== null || Boolean(initial?.cover_image_url),
+      // A file the server refused does not count as a cover.
+      ok:
+        (cover !== null && !form.fieldErrors.cover_image?.length) ||
+        Boolean(initial?.cover_image_url),
       label: "มีรูปหน้าปก",
     },
   ];
@@ -215,7 +251,11 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
       steps: cleanSteps,
     };
 
-    const ok = await form.submit(async () => {
+    // `useFormSubmit` already renders the form-level and per-field errors,
+    // so there is no extra toast here — a generic "save failed" beside a
+    // precise inline message is noise, and reading `form.fieldErrors`
+    // right after `submit()` would see the previous render's state anyway.
+    await form.submit(async () => {
       let targetSlug: string;
       if (editing) {
         // Only send a slug when it actually changed: the backend rejects
@@ -226,28 +266,35 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
           body,
         });
         targetSlug = updated.slug;
+      } else if (createdSlug) {
+        // A previous attempt already created the record; finish it.
+        const updated = await api.patch<RecipeDetail>(`/recipes/${createdSlug}/`, {
+          body,
+        });
+        targetSlug = updated.slug;
       } else {
         const created = await api.post<RecipeDetail>("/recipes/", { body });
         targetSlug = created.slug;
+        setCreatedSlug(created.slug);
       }
 
       if (cover) {
         const payload = new FormData();
         payload.append("cover_image", cover);
+        // Anything thrown here leaves `createdSlug` set, so the retry
+        // updates this recipe rather than creating another one.
         await api.patch(`/recipes/${targetSlug}/`, { formData: payload });
       }
 
       toast(
-        editing ? "บันทึกการแก้ไขแล้ว" : "สร้างสูตรใหม่เป็นฉบับร่างแล้ว",
+        editing || createdSlug
+          ? "บันทึกการแก้ไขแล้ว"
+          : "สร้างสูตรใหม่เป็นฉบับร่างแล้ว",
         "success",
       );
       router.push(`/admin/recipes/${encodeURIComponent(targetSlug)}/edit`);
       router.refresh();
     });
-
-    if (!ok && form.formError === null && !Object.keys(form.fieldErrors).length) {
-      toast("บันทึกไม่สำเร็จ", "danger");
-    }
   }
 
   async function removeRecipe() {
@@ -574,26 +621,89 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                   alt=""
                   className="aspect-video w-full rounded border border-edge object-cover"
                 />
-              ) : (
-                <p className="rounded border border-dashed border-edge px-3 py-6 text-center text-xs text-fg-subtle">
-                  ยังไม่มีรูปหน้าปก
-                </p>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                aria-label="เลือกรูปหน้าปก"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (!file) return;
-                  setCover(file);
-                  setCoverPreview(URL.createObjectURL(file));
+              ) : null}
+
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragging(true);
                 }}
-                className="w-full text-xs text-fg-muted"
-              />
+                onDragLeave={() => setDragging(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragging(false);
+                  chooseCover(event.dataTransfer.files?.[0]);
+                }}
+                className={`rounded border border-dashed px-3 py-4 text-center ${
+                  dragging ? "border-accent bg-accent-subtle" : "border-edge"
+                }`}
+              >
+                <p className="text-xs text-fg-muted">
+                  ลากรูปมาวางที่นี่ หรือ
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="mt-1.5"
+                  onClick={() => fileInput.current?.click()}
+                >
+                  เลือกรูปจากเครื่อง
+                </Button>
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  aria-label="เลือกรูปหน้าปก"
+                  className="sr-only"
+                  onChange={(event) => chooseCover(event.target.files?.[0])}
+                />
+                <p className="mt-1.5 text-[11px] text-fg-subtle">
+                  รองรับ JPG · PNG · WebP · GIF (ไม่รองรับ .HEIC จาก iPhone)
+                </p>
+              </div>
+
+              {cover ? (
+                <p className="flex items-center justify-between gap-2 rounded bg-surface-sunken px-2 py-1.5 text-xs">
+                  <span className="min-w-0 truncate text-fg">
+                    {cover.name}{" "}
+                    <span className="text-fg-subtle">
+                      (
+                      {cover.size < 1024
+                        ? `${cover.size} B`
+                        : `${Math.round(cover.size / 1024)} KB`}
+                      )
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="เอารูปที่เลือกออก"
+                    onClick={() => {
+                      setCover(null);
+                      setCoverPreview(null);
+                      if (fileInput.current) fileInput.current.value = "";
+                    }}
+                    className="shrink-0 rounded px-1 text-danger hover:bg-danger-subtle"
+                  >
+                    ✕
+                  </button>
+                </p>
+              ) : null}
+
+              {coverProblem ? (
+                <p role="alert" className="text-xs text-danger">
+                  {coverProblem}
+                </p>
+              ) : null}
               {form.fieldErrors.cover_image?.length ? (
                 <p role="alert" className="text-xs text-danger">
                   {form.fieldErrors.cover_image.join(" ")}
+                </p>
+              ) : null}
+              {createdSlug && !editing ? (
+                <p className="rounded bg-warning-subtle px-2 py-1.5 text-xs text-warning">
+                  สร้างสูตรไว้แล้ว — การกดบันทึกอีกครั้งจะอัปเดตสูตรเดิม
+                  ไม่สร้างซ้ำ
                 </p>
               ) : null}
             </div>

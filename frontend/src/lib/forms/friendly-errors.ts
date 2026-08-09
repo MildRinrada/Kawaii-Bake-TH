@@ -34,6 +34,12 @@ const EXACT_MESSAGES: Record<string, string> = {
     "อีเมลนี้มีบัญชีอยู่แล้ว — ลองเข้าสู่ระบบ หรือใช้เมนูลืมรหัสผ่าน",
   "Username may only contain lowercase letters, numbers, hyphens and underscores, and must start and end with a letter or number.":
     "ชื่อผู้ใช้ใช้ได้เฉพาะ a-z, 0-9, ขีดกลาง (-) และขีดล่าง (_) และต้องขึ้นต้นและลงท้ายด้วยตัวอักษรหรือตัวเลข",
+  // Django's ImageField message. The most common real cause is an iPhone
+  // HEIC photo, which the server's Pillow build cannot decode — so the
+  // Thai version names that cause instead of restating "invalid".
+  "Upload a valid image. The file you uploaded was either not an image or a corrupted image.":
+    "ไฟล์นี้ไม่ใช่รูปภาพที่ระบบเปิดได้ — ถ้าเป็นรูปจาก iPhone (.HEIC) ให้แปลงเป็น JPG หรือ PNG ก่อน",
+  "The submitted file is empty.": "ไฟล์ที่อัปโหลดว่างเปล่า",
 };
 
 /** Parameterised messages (lengths, similarity targets) matched by prefix. */
