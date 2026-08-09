@@ -123,53 +123,97 @@ try {
   await expect(page, "text=วัตถุดิบ", "detail shows real recipe fields");
   await page.screenshot({ path: `${SHOT_DIR}/53-admin-recipe-detail.png` });
 
-  // A real lifecycle round trip against the live API, whichever state the
-  // row starts in — then put it back.
+  // Read-only here: the lifecycle *writes* are exercised further down on a
+  // fixture this script owns, so browsing never mutates seeded content.
   const unpublish = page.locator(
     'dialog[open] button:has-text("ถอนกลับเป็นฉบับร่าง")',
   );
   const startedPublished = (await unpublish.count()) > 0;
   if (startedPublished) {
-    await unpublish.click();
-    await expect(page, "text=อัปเดตสถานะเรียบร้อย", "unpublish succeeded via the real API");
-    await page.locator('dialog[open] button:has-text("เผยแพร่")').first().click();
-    await expect(page, "text=อัปเดตสถานะเรียบร้อย", "re-publish restored the original state");
+    ok("a published recipe offers unpublish/archive, not publish");
   } else {
-    await page.locator('dialog[open] button:has-text("เผยแพร่")').first().click();
-    // Either it publishes, or the backend refuses with its full checklist —
-    // both prove the write path and the error contract are wired up.
-    const toast = page.locator('[role="status"]').last();
-    await toast.waitFor({ state: "visible", timeout: 15_000 });
-    console.log(`     backend answered: ${(await toast.textContent()).trim()}`);
-    const published = await page
-      .locator('dialog[open] button:has-text("ถอนกลับเป็นฉบับร่าง")')
-      .count();
-    if (published) {
-      await page
-        .locator('dialog[open] button:has-text("ถอนกลับเป็นฉบับร่าง")')
-        .click();
-      await expect(page, "text=อัปเดตสถานะเรียบร้อย", "draft published then restored to draft");
-    } else {
-      ok("publish was refused by the backend and the reason was surfaced");
-    }
+    ok("a draft recipe offers publish, not unpublish");
   }
   await page.keyboard.press("Escape");
 
-  /* ---------- A successful lifecycle round trip on a published row ---------- */
-  const scopeSelect = page.locator("select").first();
-  await scopeSelect.selectOption("public");
-  await page.waitForTimeout(900);
+  /* ---------- A successful publish/unpublish round trip ----------
+     On a fixture this test creates and deletes, never on seeded content:
+     the seeded recipes were written straight to `published` without cover
+     images, so the publish endpoint rightly refuses to put them back and
+     any round trip on them is a one-way trip. Assertions watch the button
+     state and then re-read the API — a lingering success toast once made
+     this pass while the second request had not even been sent. */
+  const fixtureSlug = await page.evaluate(async () => {
+    const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? "";
+    const png =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const create = await fetch("http://localhost:8000/api/v1/recipes/", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+      body: JSON.stringify({
+        title: "E2E lifecycle fixture",
+        prep_minutes: 1,
+        cook_minutes: 1,
+        servings: 1,
+        category_slugs: ["bread"],
+        ingredients: [{ name: "flour", is_optional: false }],
+        steps: [{ body: "mix" }],
+      }),
+    });
+    const recipe = await create.json();
+    const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+    const form = new FormData();
+    form.append("cover_image", new Blob([bytes], { type: "image/png" }), "c.png");
+    await fetch(
+      `http://localhost:8000/api/v1/recipes/${encodeURIComponent(recipe.slug)}/`,
+      { method: "PATCH", credentials: "include", headers: { "X-CSRFToken": csrf }, body: form },
+    );
+    return recipe.slug;
+  });
+  ok(`created a throwaway fixture recipe (${fixtureSlug})`);
+
+  await page.goto(`${BASE}/admin/recipes`);
+  await page.fill('input[aria-label="ค้นหาสูตร"]', "E2E lifecycle fixture");
+  await page.waitForTimeout(1000);
   await page.locator("tbody tr").first().click();
   await page.waitForSelector("dialog[open]");
+
+  await page.locator('dialog[open] button:has-text("เผยแพร่")').first().click();
   await page
     .locator('dialog[open] button:has-text("ถอนกลับเป็นฉบับร่าง")')
-    .click();
-  await expect(page, "text=อัปเดตสถานะเรียบร้อย", "unpublish of a published recipe succeeded");
-  await page.locator('dialog[open] button:has-text("เผยแพร่")').first().click();
-  await expect(page, "text=อัปเดตสถานะเรียบร้อย", "re-publish restored the original state");
+    .waitFor({ state: "visible", timeout: 15_000 });
+  ok("publish succeeded (button state flipped)");
+
+  await page.locator('dialog[open] button:has-text("ถอนกลับเป็นฉบับร่าง")').click();
+  await page
+    .locator('dialog[open] button:has-text("เผยแพร่")')
+    .waitFor({ state: "visible", timeout: 15_000 });
+  ok("unpublish returned it to draft (button state flipped back)");
+
+  const finalStatus = await page.evaluate(async (slug) => {
+    const response = await fetch(
+      `http://localhost:8000/api/v1/recipes/${encodeURIComponent(slug)}/`,
+      { credentials: "include" },
+    );
+    return (await response.json()).status;
+  }, fixtureSlug);
+  if (finalStatus !== "draft") {
+    throw new Error(`fixture left as "${finalStatus}"`);
+  }
+  ok("the API confirms the round trip ended where it started");
+
+  await page.evaluate(async (slug) => {
+    const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? "";
+    await fetch(
+      `http://localhost:8000/api/v1/recipes/${encodeURIComponent(slug)}/`,
+      { method: "DELETE", credentials: "include", headers: { "X-CSRFToken": csrf } },
+    );
+  }, fixtureSlug);
+  ok("fixture deleted — the run leaves no data behind");
+
   await page.keyboard.press("Escape");
-  await scopeSelect.selectOption("all");
-  await page.waitForTimeout(900);
+  await page.goto(`${BASE}/admin/recipes`);
 
   /* ---------- Confirmation dialog on a destructive action ---------- */
   await page.locator("tbody tr").first().click();

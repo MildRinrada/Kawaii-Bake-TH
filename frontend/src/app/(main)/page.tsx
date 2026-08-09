@@ -29,9 +29,10 @@ import type {
 import { REASON_LABELS } from "@/lib/recommendations";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { useAuth } from "@/lib/auth/auth-context";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge, DifficultyBadge, flavorFor } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
@@ -458,6 +459,15 @@ function RecipeDiscovery() {
       description="ทำตามได้เลย พร้อมส่วนผสมและวิธีทำครบทุกขั้นตอน"
       href="/recipes"
     >
+      {/* The recipe section owns recipe authoring; the community section
+          below owns post creation. The two CTAs never share a section. */}
+      <div className="mb-4 flex justify-end">
+        <Link href="/recipes/create">
+          <Button variant="secondary" size="sm">
+            + เพิ่มสูตรอาหาร
+          </Button>
+        </Link>
+      </div>
       {recipes.loading ? (
         <CardGridSkeleton count={6} />
       ) : recipes.error ? (
@@ -542,6 +552,66 @@ function CategoryExplorer() {
 /* Community preview                                                  */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The homepage's community entry point.
+ *
+ * A composer-shaped invitation, not a working editor: tapping it opens
+ * `/community/create`, where the real post is written. Anonymous
+ * visitors get a sign-in call instead — the backend refuses anonymous
+ * writes anyway, so showing a composer that cannot submit would be a
+ * lie.
+ */
+function CommunityComposerCard() {
+  const { status, user } = useAuth();
+
+  if (status === "anonymous") {
+    return (
+      <Card className="kb-hero border-none">
+        <CardBody className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-display font-medium text-fg">
+              อยากแบ่งปันขนมของคุณกับชุมชน?
+            </p>
+            <p className="text-sm text-fg-muted">
+              เข้าสู่ระบบเพื่อโพสต์ผลงาน รูปถ่าย และเทคนิคของคุณ
+            </p>
+          </div>
+          <Link href="/login">
+            <Button>เข้าสู่ระบบเพื่อโพสต์</Button>
+          </Link>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (status !== "authenticated") return null;
+
+  return (
+    <Card>
+      <CardBody className="space-y-3">
+        <p className="text-sm text-fg-muted">
+          มีอะไรอยากแบ่งปันเกี่ยวกับการทำขนม?
+        </p>
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={user?.avatar_url}
+            name={user?.display_name || user?.username || "คุณ"}
+          />
+          <Link
+            href="/community/create"
+            className="flex-1 rounded-full bg-surface-sunken px-4 py-2.5 text-sm text-fg-subtle transition-colors hover:bg-accent-subtle hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            เขียนโพสต์…
+          </Link>
+          <Link href="/community/create" className="shrink-0">
+            <Button size="sm">+ สร้างโพสต์</Button>
+          </Link>
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+
 function CommunityPreview() {
   const gallery = useApiQuery(
     (signal) =>
@@ -564,16 +634,20 @@ function CommunityPreview() {
     (post) => post.images.length > 0,
   );
   const questions = threads.data?.results ?? [];
-  const loading = gallery.loading || threads.loading;
-  if (!loading && posts.length === 0 && questions.length === 0) return null;
-  if (gallery.error && threads.error) return null;
 
+  // Unlike the other sections, this one renders even when empty: the
+  // homepage has to say "you can post your own baking here", and an
+  // empty community is exactly when that matters most.
   return (
     <Section
       title="จากครัวของชุมชน 🏡"
       description="ผลงานจริงและคำถามล่าสุดจากเพื่อนนักอบ"
+      href="/community"
+      hrefLabel="ไปที่ชุมชน →"
     >
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+      <CommunityComposerCard />
+
+      <div className="mt-5 grid gap-6 lg:grid-cols-[3fr_2fr]">
         {posts.length > 0 ? (
           <div>
             <h3 className="mb-3 text-sm font-medium text-fg-muted">
@@ -659,8 +733,10 @@ export default function HomePage() {
         <FeaturedCourses />
         <RecommendationFeed />
         <RecipeDiscovery />
-        <CategoryExplorer />
+        {/* Community sits after recipes and before categories: enough to
+            say "you can post here", never enough to take over the page. */}
         <CommunityPreview />
+        <CategoryExplorer />
       </PageContainer>
     </>
   );

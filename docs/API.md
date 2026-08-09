@@ -82,6 +82,10 @@ change — no view, serializer, service, repository, selector or URL is touched.
 |---|---|---|---|---|
 | GET | `/` | optional | 200 | Paginated; filter, order, search, `scope` |
 | POST | `/` | session | 201 | Creates a **draft**; nested ingredients and steps |
+<!-- Read payloads carry `id` alongside `slug` (ADR 0023): slug is the
+     addressing identity, `id` exists so a caller can fill another app's
+     `recipe_id` write field — the gallery post attachment. -->
+
 | GET | `/search/` | optional | 200 | `q` required; relevance ordering |
 | GET | `/{slug}/` | optional | 200 / 404 | |
 | PATCH | `/{slug}/` | owner/admin | 200 | Partial; `status` not accepted |

@@ -135,6 +135,7 @@ class RecipeDetailApiTests(TestCase):
         self.assertEqual(
             set(response.json()),
             {
+                "id",
                 "slug",
                 "title",
                 "summary",
@@ -157,6 +158,15 @@ class RecipeDetailApiTests(TestCase):
                 "nutrition",
             },
         )
+
+    def test_payload_carries_the_primary_key_other_apps_write_with(self) -> None:
+        # The gallery post attachment takes a `recipe_id`; without this
+        # field a client has no way to turn a browsed recipe into one
+        # (ADR 0023). The same value is already public in gallery and Q&A
+        # reference cards, so this discloses nothing new.
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.json()["id"], self.recipe.pk)
 
     def test_owner_can_patch(self) -> None:
         self.client.force_login(self.owner)

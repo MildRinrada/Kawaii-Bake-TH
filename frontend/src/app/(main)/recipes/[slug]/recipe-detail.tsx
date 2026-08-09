@@ -12,11 +12,18 @@
  * this browser (localStorage) so a baker can leave and resume.
  */
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { api, type Paginated } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import type { RecipeDetail, RecipeListItem, Review } from "@/lib/api/models";
+import type {
+  GalleryPost,
+  RecipeDetail,
+  RecipeListItem,
+  Review,
+} from "@/lib/api/models";
+import { MAX_RECIPE_COMMUNITY_POSTS } from "@/lib/community";
 import type { components } from "@/lib/api/types";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -33,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaFrame } from "@/components/content/media-frame";
 import { RecipeCard } from "@/components/content/recipe-card";
+import { CommunityPostCard } from "@/components/community/post-card";
 import { cn } from "@/lib/cn";
 
 type RatingSummary = components["schemas"]["RatingSummary"];
@@ -524,6 +532,9 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
         </CardBody>
       </Card>
 
+      {/* ---------- Community posts about this recipe ---------- */}
+      <RecipeCommunitySection recipe={recipe.data} />
+
       {/* ---------- Related ---------- */}
       {relatedItems.length > 0 ? (
         <section className="mt-10">
@@ -538,6 +549,104 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
         </section>
       ) : null}
     </PageContainer>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Community posts about this recipe                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The recipe ↔ community bridge.
+ *
+ * Reads only posts explicitly attached to this recipe
+ * (`GET /gallery/?recipe_id=`), capped by one shared constant rather
+ * than a number sprinkled through the UI. The compose link carries the
+ * recipe so the post opens with it already attached — the user is still
+ * creating a *community post*, which the copy says out loud.
+ */
+function RecipeCommunitySection({ recipe }: { recipe: RecipeDetail }) {
+  const { status } = useAuth();
+  const posts = useApiQuery(
+    (signal) =>
+      api.get<Paginated<GalleryPost>>("/gallery/", {
+        query: {
+          recipe_id: recipe.id,
+          page_size: MAX_RECIPE_COMMUNITY_POSTS,
+        },
+        signal,
+      }),
+    [recipe.id],
+  );
+
+  const items = posts.data?.results ?? [];
+  const total = posts.data?.count ?? 0;
+  const composeHref =
+    `/community/create?recipe=${recipe.id}&recipe_slug=${encodeURIComponent(recipe.slug)}` as "/community/create";
+
+  return (
+    <section className="mt-10">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-display text-xl font-medium text-fg">
+          โพสต์จากชุมชนเกี่ยวกับสูตรนี้
+        </h2>
+        {total > items.length ? (
+          <Link
+            href={`/community?recipe=${recipe.id}` as "/community"}
+            className="text-sm text-accent hover:text-accent-hover"
+          >
+            ดูโพสต์ทั้งหมด ({total}) →
+          </Link>
+        ) : null}
+      </div>
+
+      {posts.loading ? (
+        <Skeleton className="h-40 w-full rounded-surface" />
+      ) : items.length === 0 ? (
+        <Card>
+          <CardBody className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-display font-medium text-fg">
+                ยังไม่มีใครโพสต์เกี่ยวกับสูตรนี้
+              </p>
+              <p className="text-sm text-fg-muted">
+                ถ้าคุณลองอบแล้ว มาเล่าให้ชุมชนฟังเป็นคนแรกสิ
+              </p>
+            </div>
+            {status === "authenticated" ? (
+              <Link href={composeHref}>
+                <Button variant="secondary">แชร์ประสบการณ์เกี่ยวกับสูตรนี้</Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button variant="secondary">เข้าสู่ระบบเพื่อแชร์</Button>
+              </Link>
+            )}
+          </CardBody>
+        </Card>
+      ) : (
+        <>
+          <ul className="space-y-4">
+            {items.map((post) => (
+              <li key={post.id}>
+                <CommunityPostCard post={post} />
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 text-center">
+            {status === "authenticated" ? (
+              <Link href={composeHref}>
+                <Button variant="secondary">แชร์ประสบการณ์เกี่ยวกับสูตรนี้</Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button variant="secondary">เข้าสู่ระบบเพื่อแชร์</Button>
+              </Link>
+            )}
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 

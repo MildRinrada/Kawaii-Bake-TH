@@ -3049,6 +3049,7 @@ export interface components {
         };
         /** @description A full recipe. */
         RecipeDetail: {
+            readonly id: number;
             readonly slug: string;
             readonly title: string;
             readonly summary: string;
@@ -3121,6 +3122,7 @@ export interface components {
          *     are detail-only, and the list selector defers or omits them.
          */
         RecipeListItem: {
+            readonly id: number;
             readonly slug: string;
             readonly title: string;
             readonly summary: string;

@@ -22,7 +22,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, type ComponentType, type ReactNode } from "react";
 
 import { api } from "@/lib/api/client";
 import type { Category, RecipeDetail } from "@/lib/api/models";
@@ -93,7 +93,33 @@ const EMPTY_INGREDIENT: IngredientRow = {
   is_optional: false,
 };
 
-export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
+/**
+ * The section wrapper. Injected so the same form can wear the dense
+ * admin chrome or the learner UI's soft cards without either copy of
+ * the (considerable) write logic drifting from the other.
+ */
+export type FormPanel = ComponentType<{
+  title?: string;
+  description?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}>;
+
+export function RecipeForm({
+  initial,
+  Panel = AdminPanel,
+  /** Where to go after a successful save. */
+  redirectTo = (slug) => `/admin/recipes/${encodeURIComponent(slug)}/edit`,
+  /** Authors delete from the recipe page; admins delete from here. */
+  showDelete = true,
+  cancelHref = "/admin/recipes",
+}: {
+  initial?: RecipeDetail;
+  Panel?: FormPanel;
+  redirectTo?: (slug: string) => string;
+  showDelete?: boolean;
+  cancelHref?: string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const form = useFormSubmit();
@@ -292,7 +318,7 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
           : "สร้างสูตรใหม่เป็นฉบับร่างแล้ว",
         "success",
       );
-      router.push(`/admin/recipes/${encodeURIComponent(targetSlug)}/edit`);
+      router.push(redirectTo(targetSlug) as "/admin/recipes");
       router.refresh();
     });
   }
@@ -302,7 +328,7 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
     try {
       await api.delete(`/recipes/${initial.slug}/`);
       toast(`ลบสูตร “${initial.title}” แล้ว`, "success");
-      router.push("/admin/recipes");
+      router.push(cancelHref as "/admin/recipes");
     } catch (error) {
       toast(describeAdminError(error), "danger");
     }
@@ -322,7 +348,7 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           {/* ---- Basics ---- */}
-          <AdminPanel title="ข้อมูลหลัก">
+          <Panel title="ข้อมูลหลัก">
             <div className="space-y-4 px-4 py-4">
               <Field label="ชื่อสูตร" required errors={form.fieldErrors.title}>
                 {(control) => (
@@ -379,10 +405,10 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                 )}
               </Field>
             </div>
-          </AdminPanel>
+          </Panel>
 
           {/* ---- Ingredients ---- */}
-          <AdminPanel
+          <Panel
             title="วัตถุดิบ"
             description={`${cleanIngredients.length}/${MAX_INGREDIENTS} รายการ — การบันทึกจะแทนที่รายการเดิมทั้งชุด`}
             actions={
@@ -482,10 +508,10 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                 </div>
               ))}
             </div>
-          </AdminPanel>
+          </Panel>
 
           {/* ---- Steps ---- */}
-          <AdminPanel
+          <Panel
             title="ขั้นตอน"
             description={`${cleanSteps.length}/${MAX_STEPS} ขั้น — ลำดับตามที่แสดงด้านล่าง`}
             actions={
@@ -572,12 +598,12 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                 </div>
               ))}
             </div>
-          </AdminPanel>
+          </Panel>
         </div>
 
         {/* ---- Sidebar ---- */}
         <div className="space-y-4">
-          <AdminPanel title="การเผยแพร่">
+          <Panel title="การเผยแพร่">
             <div className="space-y-3 px-4 py-4 text-sm">
               {editing ? (
                 <p className="text-fg-muted">
@@ -610,9 +636,9 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                 </ul>
               </div>
             </div>
-          </AdminPanel>
+          </Panel>
 
-          <AdminPanel title="รูปหน้าปก">
+          <Panel title="รูปหน้าปก">
             <div className="space-y-2 px-4 py-4">
               {coverPreview || initial?.cover_image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element -- admin preview from the API origin or a local blob
@@ -707,9 +733,9 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                 </p>
               ) : null}
             </div>
-          </AdminPanel>
+          </Panel>
 
-          <AdminPanel title="รายละเอียดการทำ">
+          <Panel title="รายละเอียดการทำ">
             <div className="space-y-3 px-4 py-4">
               <Field label="ระดับความยาก" errors={form.fieldErrors.difficulty}>
                 {(control) => (
@@ -774,9 +800,9 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                 </Field>
               </div>
             </div>
-          </AdminPanel>
+          </Panel>
 
-          <AdminPanel title={`หมวดหมู่ (${picked.length}/${MAX_CATEGORIES})`}>
+          <Panel title={`หมวดหมู่ (${picked.length}/${MAX_CATEGORIES})`}>
             <div className="px-4 py-4">
               <div className="flex flex-wrap gap-1.5">
                 {(categories.data ?? []).map((category) => {
@@ -805,12 +831,12 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
                 </p>
               ) : null}
             </div>
-          </AdminPanel>
+          </Panel>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-edge pt-4">
-        {editing ? (
+        {editing && showDelete ? (
           <Button
             type="button"
             variant="danger"
@@ -832,7 +858,7 @@ export function RecipeForm({ initial }: { initial?: RecipeDetail }) {
         <Button
           type="button"
           variant="secondary"
-          onClick={() => router.push("/admin/recipes")}
+          onClick={() => router.push(cancelHref as "/admin/recipes")}
         >
           ยกเลิก
         </Button>

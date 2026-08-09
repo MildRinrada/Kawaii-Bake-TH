@@ -84,11 +84,29 @@ try {
   await page.waitForSelector("text=MildBakes");
   await page.goto(`${BASE}/recipes`);
   await expect(page, 'button[aria-pressed="true"][aria-label*="นำ"]', "already-favorited card shows a filled heart on load");
-  const emptyHeart = page.locator('button[aria-pressed="false"][aria-label*="บันทึก"]').first();
-  const heartLabel = await emptyHeart.getAttribute("aria-label");
-  await emptyHeart.click();
-  await expect(page, "text=บันทึกเข้ารายการโปรดแล้ว 🧁", "saving from the card confirms via toast");
+  // A full toggle round trip, so the run leaves the account's favourites
+  // exactly as it found them. Starting from whichever state the first card
+  // is in keeps this working once every recipe has been saved.
+  const heart = page.locator('button[aria-label*="รายการโปรด"]').first();
+  const heartLabel = await heart.getAttribute("aria-label");
+  const startedSaved = (await heart.getAttribute("aria-pressed")) === "true";
+
+  await heart.click();
+  await expect(
+    page,
+    startedSaved ? "text=นำออกจากรายการโปรดแล้ว" : "text=บันทึกเข้ารายการโปรดแล้ว 🧁",
+    "toggling the heart from the card confirms via toast",
+  );
+  await heart
+    .and(page.locator(`[aria-pressed="${startedSaved ? "false" : "true"}"]`))
+    .waitFor({ timeout: 10_000 });
   ok(`heart toggled without opening the recipe (${heartLabel?.slice(0, 30)}…)`);
+
+  await heart.click();
+  await heart
+    .and(page.locator(`[aria-pressed="${startedSaved}"]`))
+    .waitFor({ timeout: 10_000 });
+  ok("toggled back — the account's favourites are unchanged by this run");
   await page.screenshot({ path: `${SHOT_DIR}/25-recipes-authed.png`, fullPage: true });
 
   // ---------- Mobile: sheet + horizontal categories ----------

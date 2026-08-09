@@ -84,14 +84,39 @@ try {
   await page.click('button[type="submit"]');
   await page.waitForSelector("text=MildBakes");
   await page.goto(`${BASE}/courses`);
-  await expect(page, "text=เรียนต่อจากที่ค้างไว้ 📖", "continue-learning strip appears before the catalog");
-  await expect(page, "text=/เรียนแล้ว 1 จาก 2/", "strip shows real lesson counts");
-  await expect(page, 'button:has-text("เรียนต่อ →")', "enrolled card CTA becomes Continue");
-  await expect(page, 'div[role="progressbar"]', "progress bar shows directly on the card");
 
-  // Learning-status facet
+  // Derived from the account's real progress: the strip only exists while
+  // a course is unfinished, and this learner's courses get completed by
+  // other suites. Both branches are real behaviour.
+  const inProgress = await page.evaluate(async () => {
+    const data = await (
+      await fetch("http://localhost:8000/api/v1/me/progress/", {
+        credentials: "include",
+      })
+    ).json();
+    return data.courses.filter((course) => !course.completed_at).length;
+  });
+
+  if (inProgress > 0) {
+    await expect(page, "text=เรียนต่อจากที่ค้างไว้ 📖", "continue-learning strip appears before the catalog");
+    await expect(page, "text=/เรียนแล้ว \\d+ จาก \\d+/", "strip shows real lesson counts");
+    await expect(page, 'button:has-text("เรียนต่อ →")', "enrolled card CTA becomes Continue");
+    await expect(page, 'div[role="progressbar"]', "progress bar shows directly on the card");
+  } else {
+    if (await page.locator("text=เรียนต่อจากที่ค้างไว้ 📖").count()) {
+      throw new Error("continue-learning strip rendered with nothing in progress");
+    }
+    ok("no course is in progress, so the continue-learning strip is correctly absent");
+  }
+
+  // Learning-status facet — the count comes from the same live progress
+  // read, so the assertion stays true as the account's courses finish.
   await page.click('button:has-text("กำลังเรียน")');
-  await expect(page, "text=พบ 1 คอร์ส", "in-progress facet narrows to enrolled course");
+  await expect(
+    page,
+    `text=พบ ${inProgress} คอร์ส`,
+    `in-progress facet narrows to the ${inProgress} unfinished course(s)`,
+  );
   await page.click('button:has-text("ยังไม่เริ่ม")');
   await expect(page, "text=ศิลปะการแต่งหน้าเค้กเบื้องต้น", "not-started facet shows the unenrolled course");
   await page.click("text=ล้างทั้งหมด");

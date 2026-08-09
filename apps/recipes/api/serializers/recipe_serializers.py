@@ -60,6 +60,11 @@ class RecipeListItemSerializer(ImageUrlMixin):
     are detail-only, and the list selector defers or omits them.
     """
 
+    # Recipes are addressed by slug everywhere; the primary key is here
+    # only because other apps' write contracts take a `recipe_id` (the
+    # gallery post attachment), and their read payloads already publish
+    # this exact value in their reference cards (ADR 0023).
+    id = serializers.IntegerField(read_only=True)
     slug = serializers.CharField(read_only=True)
     title = serializers.CharField(read_only=True)
     summary = serializers.CharField(read_only=True)

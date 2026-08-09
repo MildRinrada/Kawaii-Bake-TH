@@ -495,6 +495,13 @@ function RecipesContent() {
             ? `ค้นพบสูตรถัดไปของคุณ — ทั้งหมด ${data.count} สูตร ตั้งแต่ของหวานมือใหม่ถึงเพสตรีขั้นสูง`
             : "ค้นพบสูตรถัดไปของคุณ ตั้งแต่ของหวานมือใหม่ถึงเพสตรีขั้นสูง"
         }
+        actions={
+          // The primary recipe-authoring entry point. Community posting
+          // deliberately has no CTA on this page.
+          <Link href="/recipes/create">
+            <Button>+ เพิ่มสูตรอาหาร</Button>
+          </Link>
+        }
       />
 
       <SearchBox

@@ -100,10 +100,38 @@ try {
   if (noteValue.includes("อบเพิ่ม 2 นาที")) ok("personal note persists");
   else throw new Error("note lost");
 
-  // ---------- Related recipes (cake category has 2 recipes) ----------
-  await page.goto(`${BASE}/recipes/fudge-brownie`);
-  await expect(page, "text=ถ้าชอบสูตรนี้ ลองต่อเลย", "related recipes section renders (same category)");
-  await expect(page, "text=เค้กส้มหน้านิ่มสูตรคุณยาย", "related card links a real same-category recipe");
+  // ---------- Related recipes ----------
+  // Asserted against the live catalogue rather than a hard-coded pair:
+  // the section only renders when a *published* same-category sibling
+  // exists, and both branches are real behaviour worth checking.
+  const sibling = await page.evaluate(async () => {
+    const detail = await (
+      await fetch("http://localhost:8000/api/v1/recipes/choc-chip-cookies/")
+    ).json();
+    const category = detail.categories[0]?.slug;
+    if (!category) return null;
+    const list = await (
+      await fetch(
+        `http://localhost:8000/api/v1/recipes/?category=${category}&page_size=10`,
+      )
+    ).json();
+    const other = list.results.find((item) => item.slug !== detail.slug);
+    return other ? other.title : null;
+  });
+
+  await page.goto(`${BASE}/recipes/choc-chip-cookies`);
+  if (sibling) {
+    await expect(page, "text=ถ้าชอบสูตรนี้ ลองต่อเลย", "related recipes section renders (same category)");
+    await expect(page, `text=${sibling}`, "related card links a real same-category recipe");
+  } else {
+    const heading = await page.locator("text=ถ้าชอบสูตรนี้ ลองต่อเลย").count();
+    if (heading) throw new Error("related section rendered with no sibling to show");
+    ok("no published same-category sibling exists, so the section is correctly absent");
+  }
+
+  // ---------- Community posts about this recipe ----------
+  await expect(page, "text=โพสต์จากชุมชนเกี่ยวกับสูตรนี้", "recipe page shows the community section");
+
   await page.goto(RECIPE);
   await page.waitForSelector("text=โน้ตส่วนตัว 📝");
 

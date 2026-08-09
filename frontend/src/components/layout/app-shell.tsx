@@ -19,9 +19,13 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
 import { Dropdown } from "@/components/ui/dropdown";
 
+// Recipes and Community are the two creation destinations and both sit
+// in the top level of the nav — Community is never nested inside the
+// recipe section, and recipe authoring is never nested inside Community.
 const NAV_ITEMS: Array<{ href: Route; label: string }> = [
   { href: "/recipes", label: "สูตรขนม" },
   { href: "/courses", label: "คอร์สเรียน" },
+  { href: "/community", label: "ชุมชน" },
   { href: "/recommendations", label: "แนะนำสำหรับคุณ" },
   { href: "/assistant", label: "ผู้ช่วย AI" },
 ];
@@ -29,6 +33,7 @@ const NAV_ITEMS: Array<{ href: Route; label: string }> = [
 const FOOTER_LEARN: Array<{ href: Route; label: string }> = [
   { href: "/recipes", label: "สูตรขนมทั้งหมด" },
   { href: "/courses", label: "คอร์สเรียน" },
+  { href: "/community", label: "ชุมชน" },
   { href: "/recommendations", label: "แนะนำสำหรับคุณ" },
   { href: "/assistant", label: "ผู้ช่วย AI" },
 ];
