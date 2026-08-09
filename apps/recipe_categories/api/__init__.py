@@ -1,0 +1,1 @@
+"""Recipe categories API layer."""

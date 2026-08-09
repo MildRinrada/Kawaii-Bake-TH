@@ -1,0 +1,21 @@
+# Core runtime dependencies (all environments).
+# Target interpreter: Python 3.12+ (Django 5.2 also supports 3.10 for local work).
+
+Django>=5.2,<6.0
+
+# REST API layer — Django is API-only; Next.js owns the UI.
+djangorestframework>=3.15
+django-cors-headers>=4.6
+
+# OpenAPI schema, consumed by the Next.js client for TypeScript type generation.
+drf-spectacular>=0.28
+
+# Image handling — required by models.ImageField (Profile.avatar).
+Pillow>=11.0
+
+# Background workers.
+celery>=5.4
+redis>=5.2
+
+# Environment variables from .env
+python-dotenv>=1.0

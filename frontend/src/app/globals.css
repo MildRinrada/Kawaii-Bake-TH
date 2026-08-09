@@ -1,0 +1,122 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/*
+ * Map the semantic tokens into Tailwind utilities (Tailwind v4 CSS-first).
+ * Components use ONLY these semantic names (bg-surface, text-fg-muted,
+ * border-edge, …) — never raw palette values — so the future visual
+ * design lands by editing tokens.css alone.
+ */
+@theme inline {
+  --color-canvas: var(--kb-canvas);
+  --color-surface: var(--kb-surface);
+  --color-surface-raised: var(--kb-surface-raised);
+  --color-surface-sunken: var(--kb-surface-sunken);
+  --color-edge: var(--kb-edge);
+  --color-edge-strong: var(--kb-edge-strong);
+  --color-fg: var(--kb-fg);
+  --color-fg-muted: var(--kb-fg-muted);
+  --color-fg-subtle: var(--kb-fg-subtle);
+  --color-fg-inverted: var(--kb-fg-inverted);
+  --color-accent: var(--kb-accent);
+  --color-accent-hover: var(--kb-accent-hover);
+  --color-accent-subtle: var(--kb-accent-subtle);
+  --color-danger: var(--kb-danger);
+  --color-danger-subtle: var(--kb-danger-subtle);
+  --color-success: var(--kb-success);
+  --color-success-subtle: var(--kb-success-subtle);
+  --color-warning: var(--kb-warning);
+  --color-warning-subtle: var(--kb-warning-subtle);
+  --color-focus: var(--kb-focus);
+
+  --radius-control: var(--kb-radius-control);
+  --radius-surface: var(--kb-radius-surface);
+
+  --shadow-raised: var(--kb-shadow-raised);
+  --shadow-overlay: var(--kb-shadow-overlay);
+
+  --font-sans: var(--kb-font-sans);
+  --font-display: var(--kb-font-display);
+  --font-mono: var(--kb-font-mono);
+
+  /* Flavor family — decorative/categorical accents */
+  --color-berry-soft: var(--kb-berry-soft);
+  --color-berry-ink: var(--kb-berry-ink);
+  --color-peach-soft: var(--kb-peach-soft);
+  --color-peach-ink: var(--kb-peach-ink);
+  --color-butter-soft: var(--kb-butter-soft);
+  --color-butter-ink: var(--kb-butter-ink);
+  --color-lavender-soft: var(--kb-lavender-soft);
+  --color-lavender-ink: var(--kb-lavender-ink);
+  --color-mint-soft: var(--kb-mint-soft);
+  --color-mint-ink: var(--kb-mint-ink);
+}
+
+body {
+  background: var(--kb-canvas);
+  color: var(--kb-fg);
+  font-family: var(--kb-font-sans);
+  /* Thai needs generous line-height to keep vowels/tone marks airy. */
+  line-height: 1.7;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--kb-font-display);
+  line-height: 1.45;
+}
+
+::selection {
+  background: var(--kb-berry-soft);
+  color: var(--kb-berry-ink);
+}
+
+/* The one decorative gradient surface (hero/banners). */
+.kb-hero {
+  background: var(--kb-hero-gradient);
+}
+
+/* Gentle bob for hero decorations — short, subtle, and off entirely
+   when the visitor prefers reduced motion. */
+@keyframes kb-float {
+  from { transform: translateY(0) rotate(var(--kb-tilt, 0deg)); }
+  to { transform: translateY(-10px) rotate(var(--kb-tilt, 0deg)); }
+}
+
+.kb-float {
+  animation: kb-float 4s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-float {
+    animation: none;
+  }
+}
+
+/* The certificate sizes its type against its own width, so one render
+   serves a card, a full-screen viewer and the printed page. */
+.kb-certificate {
+  container-type: inline-size;
+}
+
+/* Printing a certificate prints the document alone — this is the
+   "download" path (browser → Save as PDF); there is no server-side
+   certificate file to fetch. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .kb-print-target,
+  .kb-print-target * {
+    visibility: visible;
+  }
+  .kb-print-target {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+  .kb-no-print {
+    display: none !important;
+  }
+}

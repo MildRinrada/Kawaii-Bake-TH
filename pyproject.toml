@@ -1,0 +1,27 @@
+[project]
+name = "kawaiibake"
+version = "0.1.0"
+description = "KawaiiBake — bakery learning platform"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [".venv", "migrations", "staticfiles", "frontend"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "N"]
+ignore = ["B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config", "infrastructure", "ai"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.testing"
+python_files = ["test_*.py"]
+testpaths = ["apps", "tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["apps", "infrastructure"]
+omit = ["*/migrations/*", "*/tests/*"]

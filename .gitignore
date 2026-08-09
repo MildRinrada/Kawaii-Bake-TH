@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Django
+*.log
+db.sqlite3
+media/*
+!media/.gitkeep
+staticfiles/
+
+# Generated OpenAPI schema (rebuild with `manage.py spectacular --file schema.yml`)
+schema.yml
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Tooling
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

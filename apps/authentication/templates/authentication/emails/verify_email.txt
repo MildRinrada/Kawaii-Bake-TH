@@ -1,0 +1,15 @@
+Hi {{ username }},
+
+Welcome to {{ site_name }}! Please confirm your email address to unlock
+everything the platform has to offer.
+
+Confirm your address:
+{{ verification_url }}
+
+This link expires in {{ expiry_hours }} hours. If it stops working, sign in and
+request a new one.
+
+If you did not create a {{ site_name }} account, you can safely ignore this
+email — no account will be activated without confirmation.
+
+— The {{ site_name }} team

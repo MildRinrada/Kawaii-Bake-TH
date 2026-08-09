@@ -1,0 +1,11 @@
+-r base.txt
+
+# PostgreSQL driver.
+psycopg[binary]>=3.2
+
+# Required by the Argon2 hasher configured in config/settings/production.py.
+argon2-cffi>=23.1
+
+# WSGI server + static file serving (Django admin assets).
+gunicorn>=23.0
+whitenoise>=6.8
