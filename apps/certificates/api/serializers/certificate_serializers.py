@@ -52,8 +52,14 @@ class CertificateVerificationSerializer(serializers.Serializer):
         )
 
 
-class _BadgeSerializer(serializers.Serializer):
-    """Display metadata for an earned badge."""
+class BadgeSerializer(serializers.Serializer):
+    """Display metadata for one badge.
+
+    The same shape whether it is embedded in an earned achievement or
+    listed in the catalogue: presentation only, no user data, nothing
+    about whether *this* caller earned it — that fact lives on the
+    achievement row (ADR 0024).
+    """
 
     slug = serializers.CharField(read_only=True)
     title_th = serializers.CharField(read_only=True)
@@ -61,6 +67,10 @@ class _BadgeSerializer(serializers.Serializer):
     description_th = serializers.CharField(read_only=True)
     description_en = serializers.CharField(read_only=True)
     icon = serializers.CharField(read_only=True)
+
+
+# The embedded name kept for the achievement payload's existing shape.
+_BadgeSerializer = BadgeSerializer
 
 
 class AchievementSerializer(serializers.Serializer):

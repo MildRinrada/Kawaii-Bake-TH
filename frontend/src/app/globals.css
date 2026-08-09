@@ -92,6 +92,41 @@ h1, h2, h3, h4 {
   }
 }
 
+/* Badge celebration: a short reveal plus a handful of falling sprinkles,
+   played once when an earned badge is opened — never on page load. Both
+   stop entirely under prefers-reduced-motion, where the badge simply
+   appears at full size. */
+@keyframes kb-badge-pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes kb-sprinkle {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(110px) rotate(var(--kb-spin, 240deg)); opacity: 0; }
+}
+
+.kb-badge-pop {
+  animation: kb-badge-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.kb-sprinkle {
+  animation: kb-sprinkle 1100ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-badge-pop,
+  .kb-sprinkle {
+    animation: none;
+  }
+  /* Sprinkles carry no meaning; with motion off they are simply absent. */
+  .kb-sprinkle {
+    display: none;
+  }
+}
+
 /* The certificate sizes its type against its own width, so one render
    serves a card, a full-screen viewer and the printed page. */
 .kb-certificate {

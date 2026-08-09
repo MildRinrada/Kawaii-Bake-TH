@@ -44,6 +44,9 @@ export type RecommendedCourse = Schemas["RecommendedCourse"];
 
 /** Authentication state — carries the caller's own `is_staff` (ADR 0022). */
 export type Me = Schemas["Me"];
+/** A badge definition from the catalogue — what there is to earn (ADR 0024). */
+export type Badge = Schemas["Badge"];
+export type GamificationSummary = Schemas["GamificationSummary"];
 export type QuizListItem = Schemas["QuizListItem"];
 export type OwnerQuestion = Schemas["OwnerQuestion"];
 export type QaAnswer = Schemas["Answer"];

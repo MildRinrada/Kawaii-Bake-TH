@@ -31,6 +31,21 @@ class LevelInfo:
     total_xp: int
 
 
+def xp_for_level(*, level: int) -> int:
+    """XP required to advance out of ``level``.
+
+    The single public statement of the curve, so API payloads and clients
+    never restate it (ADR 0024).
+
+    Args:
+        level: A 1-based level number.
+
+    Returns:
+        The XP span of that level.
+    """
+    return max(1, level) * LEVEL_STEP
+
+
 def calculate_level(*, total_xp: int) -> LevelInfo:
     """Map a ledger total onto the curve.
 
@@ -48,6 +63,6 @@ def calculate_level(*, total_xp: int) -> LevelInfo:
     return LevelInfo(
         level=level,
         xp_into_level=remaining,
-        xp_for_next_level=level * LEVEL_STEP,
+        xp_for_next_level=xp_for_level(level=level),
         total_xp=max(0, total_xp),
     )

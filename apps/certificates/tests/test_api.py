@@ -5,8 +5,10 @@ from __future__ import annotations
 import uuid
 
 from django.test import TestCase
+from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.certificates.models import BadgeDefinition
 from apps.certificates.services import certificate_service
 from apps.certificates.tests.factories import build_completed_course
 from apps.courses.tests.factories import create_published_course, enroll_user
@@ -157,3 +159,67 @@ class CertificateApiTests(TestCase):
         first_badge = body["results"][0]["badge"]
         self.assertIn("title_th", first_badge)
         self.assertTrue(first_badge["icon"])
+
+
+class BadgeCatalogApiTests(TestCase):
+    """GET /api/v1/achievements/ — what there is to earn."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.url = "/api/v1/achievements/"
+
+    def test_anonymous_can_read_the_catalog(self) -> None:
+        # Badge definitions describe the platform, not any user, so the
+        # catalogue carries nothing worth gating (ADR 0024).
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.json())
+
+    def test_catalog_lists_every_seeded_badge(self) -> None:
+        response = self.client.get(self.url)
+
+        slugs = {row["slug"] for row in response.json()}
+        self.assertEqual(
+            slugs,
+            {
+                "course_completed",
+                "first_course",
+                "ten_courses",
+                "quiz_master",
+                "recipe_author",
+            },
+        )
+
+    def test_catalog_carries_display_metadata_only(self) -> None:
+        response = self.client.get(self.url)
+
+        row = response.json()[0]
+        self.assertEqual(
+            set(row),
+            {
+                "slug",
+                "title_th",
+                "title_en",
+                "description_th",
+                "description_en",
+                "icon",
+            },
+        )
+
+    def test_deactivated_badges_are_hidden_without_unearning_anything(self) -> None:
+        student = create_user()
+        course = build_completed_course(student=student, instructor=create_user())
+        certificate_service.issue_if_completed(
+            user_id=student.id, course_slug=course.slug
+        )
+        BadgeDefinition.objects.filter(slug="first_course").update(is_active=False)
+
+        catalog = self.client.get(self.url).json()
+        self.client.force_login(student)
+        earned = self.client.get("/api/v1/me/achievements/").json()
+
+        self.assertNotIn("first_course", {row["slug"] for row in catalog})
+        self.assertIn(
+            "first_course", {row["achievement_type"] for row in earned["results"]}
+        )

@@ -28,10 +28,16 @@ class StreakSerializer(serializers.Serializer):
 
 
 class _LevelSerializer(serializers.Serializer):
-    """The caller's level standing."""
+    """The caller's level standing.
+
+    ``xp_for_next_level`` ships alongside ``current_xp`` so a client can
+    draw a progress bar without reimplementing the level curve — the
+    curve is business logic and stays in `level_service` (ADR 0024).
+    """
 
     current_level = serializers.IntegerField(read_only=True)
     current_xp = serializers.IntegerField(read_only=True)
+    xp_for_next_level = serializers.IntegerField(read_only=True)
     total_xp = serializers.IntegerField(read_only=True)
 
 

@@ -206,6 +206,7 @@ are rate-limited per user before the provider is called. See ADR 0013.
 | GET | `/me/certificates/` | session | 200 | Paginated, newest first, revoked included with `status` |
 | GET | `/certificates/{verification_token}/` | **anonymous** | 200 / 404 | Employer verification by UUID token; returns `valid`/`revoked`; never an email |
 | GET | `/me/achievements/` | session | 200 | Paginated earned achievements with bilingual badge metadata |
+| GET | `/achievements/` | **anonymous** | 200 | The active badge catalogue — *what there is to earn*, unpaginated. Pair with `/me/achievements/` (*what I have earned*) to render locked badges (ADR 0024). Inactive badges are hidden here without un-earning anything |
 
 Completion is read from the progress app's stamped fact — certificates
 never count lessons. Certificates are immutable once issued (number,
@@ -218,7 +219,7 @@ only the unguessable token verifies. See ADR 0014.
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
-| GET | `/me/gamification/` | session | 200 | `{level, streak, recent_transactions}` — derived on first read |
+| GET | `/me/gamification/` | session | 200 | `{level, streak, recent_transactions}` — derived on first read. `level.xp_for_next_level` states the current level's XP span so clients draw the bar without restating the curve (ADR 0024) |
 | POST | `/me/gamification/recalculate/` | session | 200 | Rebuild XP + streak from the domains' facts; idempotent |
 | GET | `/me/streak/` | session | 200 | `{current, longest, last_activity}` |
 | GET | `/leaderboard/` | **anonymous** | 200 | Paginated; each row is exactly `{public_handle, level, total_xp}` — never an email |

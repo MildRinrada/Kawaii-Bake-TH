@@ -1,7 +1,8 @@
 """Certificate and achievement endpoints.
 
-Everything is owner-scoped except the verification endpoint, which is the
-one deliberately public read — keyed only by the unguessable UUID token.
+Owner-scoped, with two deliberate public reads: the verification endpoint
+(keyed only by an unguessable UUID token) and the badge catalogue, which
+is presentation metadata about the platform rather than about any user.
 """
 
 from __future__ import annotations
@@ -16,10 +17,11 @@ from rest_framework.response import Response
 
 from apps.certificates.api.serializers import (
     AchievementSerializer,
+    BadgeSerializer,
     CertificateSerializer,
     CertificateVerificationSerializer,
 )
-from apps.certificates.selectors import certificate_selector
+from apps.certificates.selectors import badge_selector, certificate_selector
 from apps.certificates.services import achievement_service, certificate_service
 from apps.common.api.views import PaginatedServiceAPIView, ServiceAPIView
 
@@ -91,3 +93,25 @@ class MyAchievementsView(PaginatedServiceAPIView):
         """Return a page of the caller's achievements, newest first."""
         queryset = achievement_service.list_user(user_id=request.user.id)
         return self.paginated_response(queryset, AchievementSerializer)
+
+
+class BadgeCatalogView(ServiceAPIView):
+    """Every badge the platform presents — what there is to earn.
+
+    Public and user-independent by construction: it answers "which
+    achievements exist", never "who has them". A client pairs it with the
+    owner-scoped ``/me/achievements/`` to show earned and locked side by
+    side, which the earned ledger alone cannot express (ADR 0024).
+
+    Unpaginated: the set is a small, curated, system-owned list.
+    """
+
+    permission_classes = (AllowAny,)
+
+    @extend_schema(responses={200: BadgeSerializer(many=True)}, tags=["certificates"])
+    def get(self, request: Request) -> Response:
+        """Return every active badge definition."""
+        badges = badge_selector.list_active()
+        return Response(
+            BadgeSerializer(badges, many=True).data, status=status.HTTP_200_OK
+        )

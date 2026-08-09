@@ -49,6 +49,10 @@ urlpatterns = [
     path(f"{API_V1}rewards/", include("apps.rewards.api.urls")),
     path(f"{API_V1}assistant/", include("apps.assistant.api.urls")),
     path(f"{API_V1}certificates/", include("apps.certificates.api.urls")),
+    path(
+        f"{API_V1}achievements/",
+        include("apps.certificates.api.urls.achievements"),
+    ),
     path(f"{API_V1}leaderboard/", include("apps.gamification.api.urls")),
     path(f"{API_V1}questions/", include("apps.questions.api.urls")),
     path(f"{API_V1}quizzes/", include("apps.quizzes.api.urls")),

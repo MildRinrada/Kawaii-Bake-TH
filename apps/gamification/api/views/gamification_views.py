@@ -24,6 +24,7 @@ from apps.gamification.constants import RECENT_TRANSACTIONS_LIMIT
 from apps.gamification.selectors import gamification_selector
 from apps.gamification.services import (
     leaderboard_service,
+    level_service,
     streak_service,
     xp_service,
 )
@@ -40,6 +41,10 @@ def _summary_payload(user_id: int) -> dict:
         "level": {
             "current_level": level.current_level,
             "current_xp": level.current_xp,
+            # The curve lives in one place; clients render, never derive.
+            "xp_for_next_level": level_service.xp_for_level(
+                level=level.current_level
+            ),
             "total_xp": level.total_xp,
         },
         "streak": StreakSerializer(streak).data,

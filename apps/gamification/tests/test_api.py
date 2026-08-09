@@ -10,7 +10,7 @@ from rest_framework.test import APIClient
 
 from apps.certificates.tests.factories import build_completed_course
 from apps.gamification.constants import XPReason
-from apps.gamification.services import xp_service
+from apps.gamification.services import level_service, xp_service
 from apps.gamification.tests.factories import add_activity_day
 from apps.users.tests.factories import create_user
 
@@ -43,6 +43,19 @@ class GamificationApiTests(TestCase):
         self.assertEqual(body["level"]["total_xp"], 0)
         self.assertEqual(body["streak"]["current"], 0)
         self.assertEqual(body["recent_transactions"], [])
+
+    def test_summary_states_the_level_span_so_clients_never_derive_it(self) -> None:
+        # The curve is business logic; a client drawing a progress bar
+        # reads this instead of restating `level * LEVEL_STEP` (ADR 0024).
+        self.client.force_login(self.user)
+
+        level = self.client.get("/api/v1/me/gamification/").json()["level"]
+
+        self.assertEqual(
+            level["xp_for_next_level"],
+            level_service.xp_for_level(level=level["current_level"]),
+        )
+        self.assertGreater(level["xp_for_next_level"], 0)
 
     def test_recalculate_builds_the_summary_from_facts(self) -> None:
         instructor = create_user(username="gapiinst")

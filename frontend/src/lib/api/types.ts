@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/achievements/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return every active badge definition. */
+        get: operations["achievements_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assistant/conversations/": {
         parameters: {
             query?: never;
@@ -1762,7 +1779,7 @@ export interface components {
             /** Format: date-time */
             readonly awarded_at: string;
             readonly metadata: unknown;
-            readonly badge: components["schemas"]["_Badge"] | null;
+            readonly badge: components["schemas"]["Badge"] | null;
         };
         /** @description Validates a staff balance adjustment. */
         AdjustmentRequest: {
@@ -1820,6 +1837,22 @@ export interface components {
             readonly display_name: string;
             /** @description Return the author's absolute avatar URL, if any. */
             readonly avatar_url: string | null;
+        };
+        /**
+         * @description Display metadata for one badge.
+         *
+         *     The same shape whether it is embedded in an earned achievement or
+         *     listed in the catalogue: presentation only, no user data, nothing
+         *     about whether *this* caller earned it — that fact lives on the
+         *     achievement row (ADR 0024).
+         */
+        Badge: {
+            readonly slug: string;
+            readonly title_th: string;
+            readonly title_en: string;
+            readonly description_th: string;
+            readonly description_en: string;
+            readonly icon: string;
         };
         /**
          * @description * `beginner` - Beginner
@@ -3365,25 +3398,23 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
-        /** @description Display metadata for an earned badge. */
-        _Badge: {
-            readonly slug: string;
-            readonly title_th: string;
-            readonly title_en: string;
-            readonly description_th: string;
-            readonly description_en: string;
-            readonly icon: string;
-        };
         /** @description The referenced course, as a card link. */
         _CourseRef: {
             readonly id: number;
             readonly slug: string;
             readonly title: string;
         };
-        /** @description The caller's level standing. */
+        /**
+         * @description The caller's level standing.
+         *
+         *     ``xp_for_next_level`` ships alongside ``current_xp`` so a client can
+         *     draw a progress bar without reimplementing the level curve — the
+         *     curve is business logic and stays in `level_service` (ADR 0024).
+         */
         _Level: {
             readonly current_level: number;
             readonly current_xp: number;
+            readonly xp_for_next_level: number;
             readonly total_xp: number;
         };
         /** @description Schema shape of the embedded message page (docs only). */
@@ -3414,6 +3445,25 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    achievements_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Badge"][];
+                };
+            };
+        };
+    };
     assistant_conversations_create: {
         parameters: {
             query?: never;
