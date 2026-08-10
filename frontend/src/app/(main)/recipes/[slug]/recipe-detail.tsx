@@ -244,7 +244,7 @@ function FavoriteButton({ slug }: { slug: string }) {
       onClick={() => void toggle()}
     >
       <Icon
-        name={favorited ? "ui/heart-filled" : "ui/heart"}
+        name={favorited ? "ui/heart-filled-2" : "ui/heart"}
         className="size-4"
       />
       {favorited ? "อยู่ในรายการโปรด" : "บันทึกเข้ารายการโปรด"}
@@ -898,7 +898,7 @@ function Workspace({
                 </div>
                 {session.unitSystem === "imperial" ? (
                   <p className="mt-1.5 text-xs text-fg-subtle">
-                    แปลงเฉพาะหน่วยชั่งตวงสากล — ช้อน/ฟอง คงเดิม
+                    แปลงเฉพาะหน่วยชั่งตวงสากล| ช้อน/ฟอง คงเดิม
                   </p>
                 ) : null}
               </div>
@@ -1127,7 +1127,7 @@ function Workspace({
               </ol>
               {activeStep === -1 && steps.length > 0 ? (
                 <p className="mt-5 rounded-control bg-mint-soft px-4 py-3 text-center text-sm font-medium text-mint-ink">
-                  <Icon name="ui/party" className="size-4 shrink-0" /> ทำครบทุกขั้นแล้ว — อย่าลืมมารีวิวเล่าผลงานนะ
+                  <Icon name="ui/party" className="size-4 shrink-0" /> ทำครบทุกขั้นแล้ว อย่าลืมมารีวิวเล่าผลงานนะ
                 </p>
               ) : null}
             </CardBody>

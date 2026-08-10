@@ -2708,10 +2708,16 @@ export interface components {
          *
          *     Privacy settings are *not* included here; they live behind
          *     ``/users/preferences/`` so that this payload can never leak them.
+         *
+         *     ``cover_url`` is on this shape only. The public profile has no consumer
+         *     for it yet, and an unread field is surface with no test behind it — the
+         *     ``PublicProfileDTO`` gains one the day a public profile page renders it.
          */
         OwnProfile: {
             /** @description Return the absolute URL of the avatar, or ``None`` when unset. */
             readonly avatar_url: string | null;
+            /** @description Return the absolute URL of the cover, or ``None`` when unset. */
+            readonly cover_url: string | null;
             readonly username: string;
             /** Format: email */
             readonly email: string;
@@ -3142,6 +3148,8 @@ export interface components {
             favorite_categories?: string[];
             /** Format: binary */
             avatar?: string | null;
+            /** Format: binary */
+            cover?: string | null;
         };
         /** @description Validates a partial question update; absent means unchanged. */
         PatchedQuestionUpdateRequest: {

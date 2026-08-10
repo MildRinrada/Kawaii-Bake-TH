@@ -134,7 +134,7 @@ export default function RegisterPage() {
       }),
     );
     if (ok) {
-      toast("ยินดีต้อนรับสู่ KawaiiBake 🧁", "success");
+      toast("ยินดีต้อนรับสู่ KawaiiBake", "success");
       router.replace("/");
     }
   }
@@ -220,7 +220,7 @@ export default function RegisterPage() {
           <p className="rounded-control bg-berry-soft/60 px-3.5 py-2.5 text-xs leading-relaxed text-fg-muted">
             สมัครแล้วได้อะไร —{" "}
             <span className="font-medium text-berry-ink">
-              บันทึกสูตรโปรด 🧁
+              บันทึกสูตรโปรด
             </span>{" "}
             เรียนคอร์สพร้อมเก็บความคืบหน้า และถามผู้ช่วย AI ได้ทันที ฟรี
           </p>

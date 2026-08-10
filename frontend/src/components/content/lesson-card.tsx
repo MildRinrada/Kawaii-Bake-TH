@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { components } from "@/lib/api/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/cn";
+import { Icon } from "@/components/ui/icon";
 
 type SyllabusItem = components["schemas"]["LessonSyllabusItem"] & {
   completed?: boolean | null;
@@ -42,8 +43,16 @@ export function LessonCard({
           {lesson.title}
         </span>
         <span className="mt-0.5 flex items-center gap-2 text-xs text-fg-subtle">
-          {lesson.duration_minutes ? <span>⏱ {lesson.duration_minutes} นาที</span> : null}
-          {lesson.has_video ? <span>🎬 มีวิดีโอ</span> : null}
+          {lesson.duration_minutes ? (
+            <span className="flex items-center gap-1">
+              <Icon name="ui/clock" className="size-3.5" /> {lesson.duration_minutes} นาที
+            </span>
+          ) : null}
+          {lesson.has_video ? (
+            <span className="flex items-center gap-1">
+              <Icon name="ui/camera" className="size-3.5" /> มีวิดีโอ
+            </span>
+          ) : null}
         </span>
       </span>
       {lesson.is_preview ? <Badge tone="butter">ดูตัวอย่างได้</Badge> : null}

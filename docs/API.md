@@ -317,7 +317,7 @@ ADR 0018.
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/profile/` | session | 200 | The caller's own profile |
-| PATCH | `/profile/update/` | session | 200 | Partial; accepts `multipart/form-data` for `avatar`; `favorite_categories` slugs are validated against the **live** taxonomy (Phase 14) — unknown slug ⇒ 400, nothing persists |
+| PATCH | `/profile/update/` | session | 200 | Partial; accepts `multipart/form-data` for `avatar` and `cover`; `favorite_categories` slugs are validated against the **live** taxonomy (Phase 14) — unknown slug ⇒ 400, nothing persists |
 | GET | `/preferences/` | session | 200 | Privacy, learning and interface settings; `locale` is `th`/`en` (Thai default), assistant-compatible |
 | PATCH | `/preferences/` | session | 200 | Partial |
 | GET | `/<username>/` | optional | 200 / 404 | Redacted per the owner's privacy settings |
@@ -372,7 +372,7 @@ cookie that dies with the browser.
 ### `PATCH /users/profile/update/`
 
 All fields optional. **Absent** means "leave unchanged"; an explicit `null` on a
-nullable field (`birthday`, `location`, `avatar`) clears it.
+nullable field (`birthday`, `location`, `avatar`, `cover`) clears it.
 
 ```json
 { "display_name": "Baker", "bio": "Sourdough obsessive.",
@@ -386,6 +386,18 @@ Unknown keys are **rejected with 400**, not silently ignored — a typo like
 
 Identity and permission fields (`email`, `username`, `is_staff`, …) are absent
 from the serializer entirely, so they cannot be mass-assigned.
+
+**Images (`avatar`, `cover`)** go in a `multipart/form-data` request. Both are
+validated by decoding the bytes, never by trusting `content_type`: allowed
+formats are JPEG/PNG/WebP (SVG is excluded — it can carry script), the cap is
+2 MB for an avatar and 4 MB for a cover, and the client filename is used only
+for its extension. `cover` arrives **already cropped** — the browser performs
+the fixed-ratio pan/zoom crop and uploads only the result, so there is no
+server-side image pipeline and no original to re-crop from.
+
+`cover_url` is returned on the **own-profile** shape only
+(`GET /users/profile/`); the public profile payload does not carry it, because
+nothing renders a stranger's banner yet.
 
 ## Recipes
 

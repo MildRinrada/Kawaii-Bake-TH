@@ -93,13 +93,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-full focus:bg-surface-raised focus:px-4 focus:py-2 focus:shadow-overlay"
-      >
-        ข้ามไปยังเนื้อหา
-      </a>
-
       <header className="sticky top-0 z-40 border-b border-edge bg-canvas/85 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
           <Link

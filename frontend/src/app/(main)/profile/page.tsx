@@ -57,6 +57,7 @@ import {
   CertificateSheet,
   formatThaiDate,
 } from "@/components/content/certificate-sheet";
+import { CoverEditor } from "./cover-editor";
 import { EXPERIENCE_LABELS, EditProfileDialog } from "./edit-profile-dialog";
 
 const PREVIEW_LIMIT = 6;
@@ -147,7 +148,7 @@ function buildActivity(
     if (recipe) {
       events.push({
         at: favorite.favorited_at,
-        icon: { kind: "ui", name: "heart-filled" },
+        icon: { kind: "ui", name: "heart-filled-2" },
         text: `บันทึกสูตร ${recipe.title}`,
         href: `/recipes/${recipe.slug}`,
       });
@@ -158,7 +159,7 @@ function buildActivity(
     if (course) {
       events.push({
         at: favorite.favorited_at,
-        icon: { kind: "ui", name: "heart-filled" },
+        icon: { kind: "ui", name: "heart-filled-2" },
         text: `บันทึกคอร์ส ${course.title}`,
         href: `/courses/${course.slug}`,
       });
@@ -293,8 +294,14 @@ function ProfileContent() {
     <div className="space-y-8">
       {/* 1 — Identity ------------------------------------------------ */}
       <Card className="overflow-hidden">
-        <div className="kb-hero h-24" aria-hidden />
-        <CardBody className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <CoverEditor
+          coverUrl={profile.cover_url}
+          onChanged={() => settings.refetch()}
+        />
+        {/* `relative z-10`: the banner above is positioned, and a positioned
+            element paints over a static one whatever the DOM order says —
+            without this the cover would cover the avatar pulled up into it. */}
+        <CardBody className="relative z-10 -mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
             <Avatar
               src={profile.avatar_url}

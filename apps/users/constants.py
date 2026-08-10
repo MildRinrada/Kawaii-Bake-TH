@@ -107,6 +107,19 @@ ALLOWED_AVATAR_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".webp"})
 ALLOWED_AVATAR_FORMATS = frozenset({"JPEG", "PNG", "WEBP"})
 
 # --------------------------------------------------------------------------
+# Cover (profile banner) upload rules
+# --------------------------------------------------------------------------
+# A separate directory so a storage lifecycle rule can treat banners
+# differently from avatars later without moving files.
+COVER_UPLOAD_DIR = "covers"
+# Larger than an avatar because a banner is wide: the client crops before
+# uploading, but a 6:1 strip at a usable resolution is still ~1600px across.
+COVER_MAX_SIZE_BYTES = 4 * 1024 * 1024
+# Same allow-list as avatars, and for the same reason — SVG excluded.
+ALLOWED_COVER_EXTENSIONS = ALLOWED_AVATAR_EXTENSIONS
+ALLOWED_COVER_FORMATS = ALLOWED_AVATAR_FORMATS
+
+# --------------------------------------------------------------------------
 # Usernames that must never be claimed by a user, because they collide with
 # routes or would let a profile impersonate the platform.
 # --------------------------------------------------------------------------

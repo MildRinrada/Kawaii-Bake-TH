@@ -401,14 +401,14 @@ function CertificatesContent() {
       {!nothingAtAll ? (
         <div className="mb-7 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-surface bg-butter-soft/40 px-5 py-4 text-sm">
           <p className="flex items-baseline gap-1.5">
-            <Icon name="ui/scroll" className="size-4 text-butter-ink" />
+            <Icon name="ui/scroll" className="size-4" />
             <strong className="font-display text-lg text-fg">
               {issued.length}
             </strong>
             <span className="text-fg-muted">ใบประกาศที่ได้รับ</span>
           </p>
           <p className="flex items-baseline gap-1.5">
-            <Icon name="ui/graduation" className="size-4 text-butter-ink" />
+            <Icon name="ui/graduation" className="size-4" />
             <strong className="font-display text-lg text-fg">
               {completedCount}
             </strong>

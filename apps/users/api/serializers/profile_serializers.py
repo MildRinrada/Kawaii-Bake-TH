@@ -11,7 +11,7 @@ from typing import Any
 from rest_framework import serializers
 
 from apps.common.api.serializers import StrictSerializer
-from apps.users.api.serializers.user_serializers import AvatarUrlMixin
+from apps.users.api.serializers.user_serializers import AvatarUrlMixin, CoverUrlMixin
 from apps.users.constants import (
     BIO_MAX_LENGTH,
     DISPLAY_NAME_MAX_LENGTH,
@@ -40,11 +40,15 @@ class PublicProfileSerializer(AvatarUrlMixin):
     joined_at = serializers.DateTimeField(read_only=True)
 
 
-class OwnProfileSerializer(AvatarUrlMixin):
+class OwnProfileSerializer(AvatarUrlMixin, CoverUrlMixin):
     """The full profile as seen by its owner.
 
     Privacy settings are *not* included here; they live behind
     ``/users/preferences/`` so that this payload can never leak them.
+
+    ``cover_url`` is on this shape only. The public profile has no consumer
+    for it yet, and an unread field is surface with no test behind it — the
+    ``PublicProfileDTO`` gains one the day a public profile page renders it.
     """
 
     username = serializers.CharField(source="user.username", read_only=True)
@@ -103,3 +107,5 @@ class ProfileUpdateSerializer(StrictSerializer):
         required=False,
     )
     avatar = serializers.ImageField(required=False, allow_null=True)
+    # Uploaded already cropped by the browser; an explicit null removes it.
+    cover = serializers.ImageField(required=False, allow_null=True)

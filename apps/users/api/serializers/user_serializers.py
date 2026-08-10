@@ -26,6 +26,25 @@ class AvatarUrlMixin(serializers.Serializer):
         return request.build_absolute_uri(url) if request is not None else url
 
 
+class CoverUrlMixin(serializers.Serializer):
+    """Adds an absolute ``cover_url`` field.
+
+    Absolute for the same reason as ``avatar_url``: the frontend is a
+    different origin and cannot resolve a relative media path.
+    """
+
+    cover_url = serializers.SerializerMethodField()
+
+    def get_cover_url(self, obj: Any) -> str | None:
+        """Return the absolute URL of the cover, or ``None`` when unset."""
+        cover = getattr(obj, "cover", None)
+        if not cover:
+            return None
+        request = self.context.get("request")
+        url = cover.url
+        return request.build_absolute_uri(url) if request is not None else url
+
+
 class MeSerializer(AvatarUrlMixin):
     """The authentication-state payload returned by ``/auth/me/``.
 

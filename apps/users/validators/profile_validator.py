@@ -12,7 +12,10 @@ from apps.common.validators.image_validator import validate_uploaded_image
 from apps.users.constants import (
     ALLOWED_AVATAR_EXTENSIONS,
     ALLOWED_AVATAR_FORMATS,
+    ALLOWED_COVER_EXTENSIONS,
+    ALLOWED_COVER_FORMATS,
     AVATAR_MAX_SIZE_BYTES,
+    COVER_MAX_SIZE_BYTES,
     MAX_AGE_YEARS,
     MAX_DIETARY_RESTRICTIONS,
     MAX_FAVORITE_CATEGORIES,
@@ -40,6 +43,29 @@ def validate_avatar(uploaded_file: Any) -> None:
         allowed_extensions=ALLOWED_AVATAR_EXTENSIONS,
         allowed_formats=ALLOWED_AVATAR_FORMATS,
         label="Avatar",
+    )
+
+
+def validate_cover(uploaded_file: Any) -> None:
+    """Validate an uploaded cover banner.
+
+    The client crops before uploading, but that is a convenience, not a
+    guarantee: the bytes still arrive from an untrusted caller, so the same
+    byte-level format check that guards avatars runs here too.
+
+    Args:
+        uploaded_file: The uploaded file object.
+
+    Raises:
+        ValidationError: If the file is too large, has a disallowed extension,
+            or is not a decodable image in an allowed format.
+    """
+    validate_uploaded_image(
+        uploaded_file,
+        max_bytes=COVER_MAX_SIZE_BYTES,
+        allowed_extensions=ALLOWED_COVER_EXTENSIONS,
+        allowed_formats=ALLOWED_COVER_FORMATS,
+        label="Cover image",
     )
 
 

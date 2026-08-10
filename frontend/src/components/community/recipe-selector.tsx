@@ -129,7 +129,8 @@ export function RecipeSelectorDialog({
                     </span>
                     <span className="block truncate text-xs text-fg-subtle">
                       โดย{" "}
-                      {recipe.author.display_name || recipe.author.username} · ⏱{" "}
+                      {recipe.author.display_name || recipe.author.username} ·{" "}
+                      <Icon name="ui/clock" className="inline-block size-3 align-[-2px]" />{" "}
                       {recipe.total_minutes} นาที
                     </span>
                   </span>

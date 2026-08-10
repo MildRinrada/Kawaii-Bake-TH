@@ -538,7 +538,7 @@ export default function RecommendationsPage() {
           {inProgress.length > 0 ? (
             <Section
               title="เรียนต่อจากที่ค้างไว้"
-              description="เรียงตามคอร์สที่ใกล้จบก่อน — อีกนิดเดียวเอง"
+              description="เรียงตามคอร์สที่ใกล้จบก่อน อีกนิดเดียวเอง"
             >
               <div className="flex snap-x gap-4 overflow-x-auto pb-2">
                 {inProgress.map((course) => (
@@ -668,7 +668,7 @@ export default function RecommendationsPage() {
               even when the ranked feed was fully absorbed above. */}
           <Section
             title="อยากอบเลยวันนี้"
-            description="เลือกตามเวลาและระดับที่คุณมี — พาไปหน้าสูตรพร้อมตัวกรอง"
+            description="เลือกตามเวลาและระดับที่คุณมี | พาไปหน้าสูตรพร้อมตัวกรอง"
           >
               <div className="mb-4 flex flex-wrap gap-2">
                 <Link

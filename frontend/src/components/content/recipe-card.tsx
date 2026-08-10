@@ -4,6 +4,7 @@ import type { RecipeListItem } from "@/lib/api/models";
 import { Badge, DifficultyBadge, flavorFor } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { MediaFrame } from "@/components/content/media-frame";
+import { Icon } from "@/components/ui/icon";
 
 /**
  * Recipe discovery card: photo-led, clear hierarchy (title → meta →
@@ -35,7 +36,9 @@ export function RecipeCard({ recipe }: { recipe: RecipeListItem }) {
           <p className="line-clamp-2 text-sm text-fg-muted">{recipe.summary}</p>
           <p className="flex items-center justify-between text-xs text-fg-subtle">
             <span>โดย {recipe.author.display_name || recipe.author.username}</span>
-            <span>⏱ {recipe.total_minutes} นาที</span>
+            <span className="flex items-center gap-1">
+              <Icon name="ui/clock" className="size-3.5" /> {recipe.total_minutes} นาที
+            </span>
           </p>
         </div>
       </Card>

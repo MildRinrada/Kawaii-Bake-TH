@@ -12,6 +12,7 @@ from apps.core.models.base import TimeStampedModel
 from apps.users.constants import (
     AVATAR_UPLOAD_DIR,
     BIO_MAX_LENGTH,
+    COVER_UPLOAD_DIR,
     DISPLAY_NAME_MAX_LENGTH,
     LOCATION_MAX_LENGTH,
     BakingExperienceLevel,
@@ -34,6 +35,23 @@ def avatar_upload_to(instance: Profile, filename: str) -> str:
     """
     extension = Path(filename).suffix.lower()
     return f"{AVATAR_UPLOAD_DIR}/{uuid4().hex}{extension}"
+
+
+def cover_upload_to(instance: Profile, filename: str) -> str:
+    """Build the storage path for an uploaded cover banner.
+
+    Mirrors :func:`avatar_upload_to` — the client filename is used only for
+    its extension, never interpolated into the path.
+
+    Args:
+        instance: The profile the cover belongs to.
+        filename: The client-supplied filename, used only for its extension.
+
+    Returns:
+        A randomised path beneath the cover directory.
+    """
+    extension = Path(filename).suffix.lower()
+    return f"{COVER_UPLOAD_DIR}/{uuid4().hex}{extension}"
 
 
 class Profile(TimeStampedModel):
@@ -60,6 +78,15 @@ class Profile(TimeStampedModel):
         upload_to=avatar_upload_to,
         # Passed as a callable, not an instance: the migration records the
         # reference, so switching to S3 later needs no schema migration.
+        storage=get_media_storage,
+        blank=True,
+    )
+    # The wide banner behind the avatar on the profile page. Stored already
+    # cropped: the browser produces the final framing (a fixed-ratio pan/zoom
+    # crop) and uploads only that, so there is no original to re-crop from and
+    # no server-side image pipeline to maintain.
+    cover = models.ImageField(
+        upload_to=cover_upload_to,
         storage=get_media_storage,
         blank=True,
     )

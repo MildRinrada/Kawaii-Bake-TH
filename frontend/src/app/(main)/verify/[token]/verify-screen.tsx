@@ -53,9 +53,7 @@ export function VerifyScreen({ token }: { token: string }) {
         <div className="mx-auto max-w-xl py-10 text-center">
           {notFound ? (
             <>
-              <p aria-hidden className="text-5xl">
-                🔍
-              </p>
+              <Icon name="ui/search" className="mx-auto size-12 text-fg-subtle" />
               <h1 className="font-display mt-4 text-2xl font-medium text-fg">
                 ไม่พบใบประกาศนียบัตรนี้
               </h1>

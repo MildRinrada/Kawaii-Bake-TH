@@ -238,7 +238,8 @@ function SearchBox({
               onClick={() => choose(() => onSearch(term))}
               className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
             >
-              🔍 ค้นหา “{term}” ในชื่อสูตร
+              <Icon name="ui/search" className="size-4 shrink-0" />
+              ค้นหา “{term}” ในชื่อสูตร
             </button>
             <button
               type="button"
@@ -314,7 +315,7 @@ function SaveableRecipeCard({
             busy && "opacity-60",
           )}
         >
-          <Icon name={saved ? "ui/heart-filled" : "ui/heart"} className="size-5" />
+          <Icon name={saved ? "ui/heart-filled-2" : "ui/heart"} className="size-5" />
         </button>
       ) : null}
     </div>

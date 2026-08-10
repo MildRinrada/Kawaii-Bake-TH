@@ -71,7 +71,7 @@ export function LessonScreen({ lessonId }: { lessonId: string }) {
       } else {
         await api.post(`/lessons/${lessonId}/complete/`);
         setCompleted(true);
-        toast("เรียนจบบทเรียนแล้ว เก่งมาก! 🎉", "success");
+        toast("เรียนจบบทเรียนแล้ว เก่งมาก!", "success");
       }
     } catch (error) {
       toast(
@@ -121,7 +121,9 @@ export function LessonScreen({ lessonId }: { lessonId: string }) {
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <Badge tone="lavender">บทที่ {data.position + 1}</Badge>
         {data.duration_minutes ? (
-          <Badge>⏱ {data.duration_minutes} นาที</Badge>
+          <Badge>
+            <Icon name="ui/clock" className="size-3.5" /> {data.duration_minutes} นาที
+          </Badge>
         ) : null}
         {data.is_preview ? <Badge tone="butter">บทตัวอย่าง</Badge> : null}
       </div>
@@ -131,7 +133,8 @@ export function LessonScreen({ lessonId }: { lessonId: string }) {
 
       {data.video_url ? (
         <p className="mt-4 rounded-control bg-lavender-soft px-4 py-3 text-sm text-lavender-ink">
-          🎬 บทเรียนนี้มีวิดีโอประกอบ —{" "}
+          <Icon name="ui/camera" className="mr-1 inline-block size-4 align-[-3px]" />
+          บทเรียนนี้มีวิดีโอประกอบ —{" "}
           <a
             href={data.video_url}
             target="_blank"
@@ -156,7 +159,8 @@ export function LessonScreen({ lessonId }: { lessonId: string }) {
           href={`/recipes/${(data.recipe as { slug: string }).slug}`}
           className="mt-4 block rounded-control bg-peach-soft px-4 py-3 text-sm text-peach-ink transition-colors hover:bg-peach-soft/70 focus-visible:outline-2 focus-visible:outline-focus"
         >
-          🍰 สูตรประกอบบทเรียน:{" "}
+          <Icon name="ui/bowl" className="mr-1 inline-block size-4 align-[-3px]" />
+          สูตรประกอบบทเรียน:{" "}
           <span className="font-medium underline underline-offset-2">
             {(data.recipe as { title: string }).title}
           </span>

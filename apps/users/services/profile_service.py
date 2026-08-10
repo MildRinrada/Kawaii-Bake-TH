@@ -19,6 +19,7 @@ from apps.users.selectors import profile_selector
 from apps.users.validators.profile_validator import (
     validate_avatar,
     validate_birthday,
+    validate_cover,
     validate_dietary_restrictions,
     validate_favorite_categories,
 )
@@ -28,6 +29,7 @@ PROFILE_EDITABLE_FIELDS = frozenset(
         "display_name",
         "bio",
         "avatar",
+        "cover",
         "birthday",
         "location",
         "experience_level",
@@ -108,8 +110,18 @@ def update_profile(*, user_id: int, changes: Mapping[str, Any]) -> Profile:
     profile = get_own_profile(user_id=user_id)
     accepted = {k: v for k, v in changes.items() if k in PROFILE_EDITABLE_FIELDS}
 
-    if "avatar" in accepted and accepted["avatar"] is not None:
-        validate_avatar(accepted["avatar"])
+    # An explicit null on an image field means "remove it". The column is
+    # NOT NULL (``blank=True``, not ``null=True``), so the empty string — not
+    # ``None`` — is what an unset FileField holds; writing ``None`` would fail
+    # at save time instead of clearing the picture.
+    for field, validate in (("avatar", validate_avatar), ("cover", validate_cover)):
+        if field not in accepted:
+            continue
+        if accepted[field] is None:
+            accepted[field] = ""
+        else:
+            validate(accepted[field])
+
     if "birthday" in accepted:
         validate_birthday(accepted["birthday"])
 

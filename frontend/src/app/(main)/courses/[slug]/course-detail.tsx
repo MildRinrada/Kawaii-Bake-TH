@@ -25,6 +25,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LessonCard } from "@/components/content/lesson-card";
 import { MediaFrame } from "@/components/content/media-frame";
+import { Icon } from "@/components/ui/icon";
 
 type CourseProgress = components["schemas"]["CourseProgress"];
 
@@ -60,7 +61,7 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
     setEnrolling(true);
     try {
       await api.post(`/courses/${slug}/enroll/`);
-      toast("ลงทะเบียนเรียนสำเร็จ 🎉", "success");
+      toast("ลงทะเบียนเรียนสำเร็จ", "success");
       course.refetch();
     } catch {
       toast("ลงทะเบียนไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
@@ -171,7 +172,9 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
                     {progress.data.total_lessons} บทเรียน ({progress.data.percent}%)
                   </p>
                   {data.is_completed ? (
-                    <Badge tone="mint">🎉 เรียนจบคอร์สแล้ว</Badge>
+                    <Badge tone="mint">
+                      <Icon name="ui/party" className="size-3.5" /> เรียนจบคอร์สแล้ว
+                    </Badge>
                   ) : null}
                 </>
               ) : (

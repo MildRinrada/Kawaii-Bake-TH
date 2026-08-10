@@ -20,7 +20,8 @@ import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Icon, type AdminIconName } from "@/components/ui/icon";
+import { ArtIcon, Icon, type AdminIconName } from "@/components/ui/icon";
+import { BRAND_MARK } from "@/lib/assets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
 
@@ -237,9 +238,7 @@ function SidebarContent({
   return (
     <>
       <div className="flex h-14 items-center gap-2 border-b border-edge px-4">
-        <span aria-hidden className="text-lg">
-          🧁
-        </span>
+        <ArtIcon src={BRAND_MARK} className="size-7" />
         <div>
           <p className="text-sm font-semibold leading-tight text-fg">KawaiiBake</p>
           <p className="text-xs leading-tight text-fg-subtle">ผู้ดูแลระบบ</p>

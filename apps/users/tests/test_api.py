@@ -2,14 +2,51 @@
 
 from __future__ import annotations
 
+import io
+import os
+
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.users.constants import BakingCategory, ProfileVisibility
+from apps.users.constants import COVER_MAX_SIZE_BYTES, BakingCategory, ProfileVisibility
 from apps.users.tests.factories import create_user
+
+
+def make_image_file(
+    *,
+    name: str = "cover.png",
+    image_format: str = "PNG",
+    size: tuple[int, int] = (1200, 200),
+    compress: bool = True,
+) -> SimpleUploadedFile:
+    """Build a real, decodable image upload.
+
+    Args:
+        name: Client-side filename (used by the server only for its extension).
+        image_format: Pillow format to encode as.
+        size: Pixel dimensions.
+        compress: When ``False``, fills the image with random noise and skips
+            PNG compression, so the encoded file is genuinely large. That is
+            what makes a size-limit test exercise the size limit instead of
+            tripping the corrupt-image check first.
+
+    Returns:
+        An uploadable file containing a valid image.
+    """
+    buffer = io.BytesIO()
+    if compress:
+        image = Image.new("RGB", size, color="white")
+        image.save(buffer, format=image_format)
+    else:
+        image = Image.frombytes("RGB", size, os.urandom(size[0] * size[1] * 3))
+        image.save(buffer, format=image_format, compress_level=0)
+    buffer.seek(0)
+    return SimpleUploadedFile(name, buffer.read(), content_type="image/png")
 
 
 class ProfileApiTests(TestCase):
@@ -44,6 +81,7 @@ class ProfileApiTests(TestCase):
             set(response.json()),
             {
                 "avatar_url",
+                "cover_url",
                 "username",
                 "email",
                 "is_email_verified",
@@ -241,3 +279,140 @@ class AccountDeactivationApiTests(TestCase):
 
         follow_up = self.client.get(reverse("users:profile"))
         self.assertEqual(follow_up.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class ProfileCoverApiTests(TestCase):
+    """PATCH /api/v1/users/profile/update/ — the cover banner.
+
+    The browser crops before uploading, so these tests assert the parts that
+    survive a hostile client: the bytes are validated, the URL comes back
+    absolute, and clearing actually clears.
+    """
+
+    def setUp(self) -> None:
+        cache.clear()
+        self.client = APIClient()
+        self.user = create_user(username="baker")
+        self.url = reverse("users:profile_update")
+
+    def test_cover_is_absent_until_one_is_uploaded(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("users:profile"))
+
+        self.assertIsNone(response.json()["cover_url"])
+
+    def test_owner_can_upload_a_cover(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.patch(
+            self.url, {"cover": make_image_file()}, format="multipart"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        cover_url = response.json()["cover_url"]
+        self.assertIsNotNone(cover_url)
+        # Absolute, because the frontend is a different origin.
+        self.assertTrue(cover_url.startswith("http"))
+        self.assertIn("/covers/", cover_url)
+
+    def test_uploaded_cover_does_not_keep_the_client_filename(self) -> None:
+        # The client name is used only for its extension; interpolating it
+        # into a storage path is how traversal and collision bugs start.
+        self.client.force_login(self.user)
+
+        self.client.patch(
+            self.url,
+            {"cover": make_image_file(name="../../etc/passwd.png")},
+            format="multipart",
+        )
+
+        self.user.profile.refresh_from_db()
+        self.assertNotIn("passwd", self.user.profile.cover.name)
+        self.assertTrue(self.user.profile.cover.name.endswith(".png"))
+
+    def test_a_non_image_payload_is_rejected(self) -> None:
+        self.client.force_login(self.user)
+        fake = SimpleUploadedFile("evil.png", b"not-an-image", content_type="image/png")
+
+        response = self.client.patch(self.url, {"cover": fake}, format="multipart")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.user.profile.refresh_from_db()
+        self.assertFalse(self.user.profile.cover)
+
+    def test_an_svg_is_rejected(self) -> None:
+        # SVG can carry script; storing one would be stored XSS. A `.png`
+        # extension does not launder it — the bytes are what is checked.
+        self.client.force_login(self.user)
+        svg = SimpleUploadedFile(
+            "evil.png", b"<svg xmlns='http://www.w3.org/2000/svg'/>",
+            content_type="image/png",
+        )
+
+        response = self.client.patch(self.url, {"cover": svg}, format="multipart")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.user.profile.refresh_from_db()
+        self.assertFalse(self.user.profile.cover)
+
+    def test_an_oversized_cover_is_rejected_for_being_oversized(self) -> None:
+        # A *decodable* image over the cap, so this exercises the size rule
+        # rather than the corrupt-image rule that guards the tests above.
+        self.client.force_login(self.user)
+        oversized = make_image_file(name="big.png", size=(1400, 1400), compress=False)
+        self.assertGreater(oversized.size, COVER_MAX_SIZE_BYTES)
+
+        response = self.client.patch(self.url, {"cover": oversized}, format="multipart")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # The domain rule's own message, not the generic "not a valid image"
+        # that a corrupt file would produce — proof the size branch ran.
+        self.assertIn(
+            "Cover image must be smaller than 4 MB.",
+            response.json()["error"]["details"]["non_field_errors"],
+        )
+        self.user.profile.refresh_from_db()
+        self.assertFalse(self.user.profile.cover)
+
+    def test_explicit_null_removes_the_cover(self) -> None:
+        self.client.force_login(self.user)
+        self.client.patch(self.url, {"cover": make_image_file()}, format="multipart")
+
+        response = self.client.patch(self.url, {"cover": None}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.json()["cover_url"])
+        self.user.profile.refresh_from_db()
+        self.assertFalse(self.user.profile.cover)
+
+    def test_updating_another_field_leaves_the_cover_alone(self) -> None:
+        # A PATCH that never mentions the cover must not clobber it.
+        self.client.force_login(self.user)
+        self.client.patch(self.url, {"cover": make_image_file()}, format="multipart")
+        before = self.client.get(reverse("users:profile")).json()["cover_url"]
+
+        self.client.patch(self.url, {"display_name": "คุณเบเกอร์"}, format="json")
+
+        after = self.client.get(reverse("users:profile")).json()["cover_url"]
+        self.assertEqual(before, after)
+
+    def test_cover_upload_requires_authentication(self) -> None:
+        response = self.client.patch(
+            self.url, {"cover": make_image_file()}, format="multipart"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_the_cover_never_reaches_the_public_profile_payload(self) -> None:
+        # Scoping is deliberate: no public consumer exists, so no public
+        # surface. If a public profile page ships, this test is the reminder.
+        self.client.force_login(self.user)
+        self.client.patch(self.url, {"cover": make_image_file()}, format="multipart")
+        self.client.logout()
+
+        response = self.client.get(
+            reverse("users:public_profile", kwargs={"username": "baker"})
+        )
+
+        self.assertNotIn("cover_url", response.json())
