@@ -25,6 +25,7 @@ import { relativeThai } from "@/lib/datetime";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
+import { Icon } from "@/components/ui/icon";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
 import {
   AdminEmpty,
@@ -293,7 +294,7 @@ export default function AdminRecipesPage() {
                 className="mr-auto"
               >
                 <Button size="sm" variant="secondary">
-                  ✎ แก้ไขสูตร
+                  <Icon name="ui/edit" className="size-4" /> แก้ไขสูตร
                 </Button>
               </Link>
               {detail.data.status !== "published" ? (

@@ -104,6 +104,7 @@ LOCAL_APPS = [
     "apps.qa",
     "apps.recommendation",
     "apps.rewards",
+    "apps.security",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -119,6 +120,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.core.middleware.request_logging.RequestIDMiddleware",
+    # Last in, so `request.user` and `request.request_id` are already set
+    # when it inspects a request — it records who, not just what.
+    "apps.security.middleware.threat_watch.ThreatWatchMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -222,6 +226,11 @@ REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": "django.contrib.auth.models.AnonymousUser",
     "DEFAULT_PAGINATION_CLASS": "apps.common.api.pagination.DefaultPageNumberPagination",
     "PAGE_SIZE": env_int("API_PAGE_SIZE", 20),
+    # Only the anonymous security ingest opts into throttling; every other
+    # endpoint is either authenticated or already cheap.
+    "DEFAULT_THROTTLE_RATES": {
+        "security_signal": env("SECURITY_SIGNAL_RATE", "30/min"),
+    },
 }
 
 # --------------------------------------------------------------------------
@@ -255,8 +264,58 @@ SPECTACULAR_SETTINGS = {
         # PreferredLanguage and AssistantLanguage share the th/en value set
         # on purpose (ADR 0020 §8) — name the users one explicitly.
         "PreferredLanguageEnum": "apps.users.constants.PreferredLanguage.choices",
+        "SignalKindEnum": "apps.security.constants.SignalKind.choices",
+        "ThreatLevelEnum": "apps.security.constants.ThreatLevel.choices",
+        "ReviewStateEnum": "apps.security.constants.ReviewState.choices",
     },
 }
+
+
+# --------------------------------------------------------------------------
+# Threat watching (ADR 0025)
+# --------------------------------------------------------------------------
+# Read back through `apps.security.config`, never directly, so a test can
+# override one switch without knowing its env var name.
+
+# Master switch for the server-side detectors. Off means the middleware
+# passes every request straight through and records nothing.
+SECURITY_WATCH_ENABLED = env_bool("SECURITY_WATCH_ENABLED", True)
+
+# Whether an active block is enforced. Separate from watching on purpose:
+# an operator may want to observe for a week before enforcing anything.
+SECURITY_BLOCKING_ENABLED = env_bool("SECURITY_BLOCKING_ENABLED", True)
+
+# Whether reaching `critical` blocks an address with no human involved.
+# Default OFF — a heuristic block is an outage for whoever shares that
+# address, and shared/NAT addresses are the norm on mobile networks.
+SECURITY_AUTO_BLOCK = env_bool("SECURITY_AUTO_BLOCK", False)
+SECURITY_AUTO_BLOCK_MINUTES = env_int("SECURITY_AUTO_BLOCK_MINUTES", 60)
+
+# Never scored, never blocked. Put the operator's own address here before
+# testing the honeypot, or the first test locks them out of the dashboard
+# that would let them undo it.
+SECURITY_TRUSTED_IPS = env_list("SECURITY_TRUSTED_IPS", ["127.0.0.1", "::1"])
+
+# The browser guard, served to the frontend via `/api/v1/security/client-policy/`:
+#   off    - ship nothing
+#   detect - observe and report, never interfere
+#   deter  - additionally intercept F12 / Ctrl+Shift+I / Ctrl+U / right-click
+# Devtools CANNOT actually be prevented from a web page (ADR 0025); `deter`
+# is a speed bump plus a signal, and is deliberately not the default.
+SECURITY_CLIENT_GUARD_MODE = env("SECURITY_CLIENT_GUARD_MODE", "detect")
+
+# Leave signed-in visitors alone. The people most likely to open devtools
+# here are staff and the most engaged learners.
+SECURITY_GUARD_EXEMPT_AUTHENTICATED = env_bool(
+    "SECURITY_GUARD_EXEMPT_AUTHENTICATED", True
+)
+
+# Whether the public ingest endpoint accepts browser-reported signals.
+SECURITY_CLIENT_REPORTS_ENABLED = env_bool("SECURITY_CLIENT_REPORTS_ENABLED", True)
+
+# Shared secret letting the Next.js edge forward a visitor's real address
+# for trap hits it saw and Django did not. Empty disables forwarding.
+SECURITY_INGEST_SECRET = env("SECURITY_INGEST_SECRET", "")
 
 
 # --------------------------------------------------------------------------

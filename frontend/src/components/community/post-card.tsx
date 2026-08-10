@@ -20,6 +20,7 @@ import type { GalleryPost, RecipeListItem } from "@/lib/api/models";
 import { relativeThai } from "@/lib/datetime";
 import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
+import { Icon } from "@/components/ui/icon";
 import { Card } from "@/components/ui/card";
 import { CommunityImageGallery } from "@/components/community/image-gallery";
 import { RecipeAttachmentCard } from "@/components/community/recipe-attachment-card";
@@ -31,10 +32,10 @@ import { RecipeAttachmentCard } from "@/components/community/recipe-attachment-c
  */
 function kindBadge(post: GalleryPost) {
   if (post.recipe) {
-    return { label: "แชร์สูตร 📖", tone: "bg-lavender-soft text-lavender-ink" };
+    return { label: "แชร์สูตร", icon: "ui/book-open" as const, tone: "bg-lavender-soft text-lavender-ink" };
   }
   if (post.images.length > 0) {
-    return { label: "ผลงานของฉัน 🍰", tone: "bg-berry-soft text-berry-ink" };
+    return { label: "ผลงานของฉัน", icon: "ui/star" as const, tone: "bg-berry-soft text-berry-ink" };
   }
   return null;
 }
@@ -63,7 +64,7 @@ export function CommunityPostCard({
       }
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast("คัดลอกลิงก์โพสต์แล้ว 🔗", "success");
+      toast("คัดลอกลิงก์โพสต์แล้ว", "success");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Share sheet dismissed, or the clipboard was refused.
@@ -73,14 +74,18 @@ export function CommunityPostCard({
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-4">
-        <Avatar name={post.author_handle} />
+        <Avatar src={post.author_avatar_url} name={post.author_display_name} />
         <div className="min-w-0 flex-1">
           <Heading className="font-display truncate text-sm font-medium text-fg">
-            {post.author_handle}
+            {post.author_display_name}
           </Heading>
           <p className="flex items-center gap-1.5 text-xs text-fg-subtle">
-            <span aria-hidden>@{post.author_handle}</span>
-            <span aria-hidden>·</span>
+            {post.author_display_name !== post.author_handle ? (
+              <>
+                <span aria-hidden>@{post.author_handle}</span>
+                <span aria-hidden>·</span>
+              </>
+            ) : null}
             <time dateTime={post.created_at}>{relativeThai(post.created_at)}</time>
             {post.status === "unpublished" ? (
               <span className="rounded bg-surface-sunken px-1.5 py-0.5 text-fg-muted">
@@ -91,8 +96,9 @@ export function CommunityPostCard({
         </div>
         {badge ? (
           <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${badge.tone}`}
+            className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${badge.tone}`}
           >
+            <Icon name={badge.icon} className="size-3.5" />
             {badge.label}
           </span>
         ) : null}
@@ -125,7 +131,7 @@ export function CommunityPostCard({
           href={`/community/posts/${post.id}`}
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span aria-hidden>💬</span>
+          <Icon name="ui/chat" className="size-4" />
           เปิดโพสต์
         </Link>
         <button
@@ -134,7 +140,7 @@ export function CommunityPostCard({
           aria-label={`คัดลอกลิงก์โพสต์ของ ${post.author_handle}`}
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span aria-hidden>{copied ? "✓" : "🔗"}</span>
+          <Icon name={copied ? "ui/check" : "ui/link"} className="size-4" />
           {copied ? "คัดลอกแล้ว" : "แชร์"}
         </button>
         {post.images.length > 1 ? (

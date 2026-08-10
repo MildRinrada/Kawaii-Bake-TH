@@ -3,7 +3,7 @@
 
 import { cn } from "@/lib/cn";
 
-const SIZES = { sm: "size-7 text-xs", md: "size-9 text-sm", lg: "size-16 text-xl" };
+const SIZES = { sm: "size-10 text-xs", md: "size-13 text-sm", lg: "size-16 text-xl" };
 
 /**
  * Avatar with a warm initial fallback — the first grapheme of the

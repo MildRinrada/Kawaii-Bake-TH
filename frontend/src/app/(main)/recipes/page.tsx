@@ -33,6 +33,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CategoryThumb, CategoryTile } from "@/components/content/category-tile";
+import { Icon } from "@/components/ui/icon";
 import { RecipeCard } from "@/components/content/recipe-card";
 import { cn } from "@/lib/cn";
 
@@ -46,7 +48,7 @@ const DIFFICULTIES = [
 ];
 
 const TIME_CAPS = [
-  { value: "30", label: "⚡ ไม่เกิน 30 นาที" },
+  { value: "30", label: "ไม่เกิน 30 นาที" },
   { value: "60", label: "ไม่เกิน 1 ชม." },
   { value: "120", label: "ไม่เกิน 2 ชม." },
 ];
@@ -202,7 +204,8 @@ function SearchBox({
                   }
                   className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
                 >
-                  🧁 <span className="truncate">{recipe.title}</span>
+                  <Icon name="ui/sparkle" className="size-3.5 shrink-0" />
+                  <span className="truncate">{recipe.title}</span>
                   <span className="ml-auto shrink-0 text-xs text-fg-subtle">
                     {recipe.total_minutes} นาที
                   </span>
@@ -220,7 +223,8 @@ function SearchBox({
                   onClick={() => choose(() => onCategory(category.slug))}
                   className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
                 >
-                  {category.icon || "🍰"} {category.name}
+                  <CategoryThumb slug={category.slug} />
+                  {category.name}
                   <span className="ml-auto text-xs text-fg-subtle">
                     {category.recipe_count} สูตร
                   </span>
@@ -241,7 +245,7 @@ function SearchBox({
               onClick={() => choose(() => onIngredient(term))}
               className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
             >
-              🧂 หาสูตรที่ใช้ “{term}” เป็นวัตถุดิบ
+              <Icon name="ui/salt" className="size-3.5" /> หาสูตรที่ใช้ “{term}” เป็นวัตถุดิบ
             </button>
           </div>
         </div>
@@ -278,7 +282,7 @@ function SaveableRecipeCard({
       } else {
         await api.post(`/recipes/${recipe.slug}/favorite/`);
         onToggle(recipe.slug, true);
-        toast("บันทึกเข้ารายการโปรดแล้ว 🧁", "success");
+        toast("บันทึกเข้ารายการโปรดแล้ว", "success");
       }
     } catch {
       toast("ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
@@ -310,7 +314,7 @@ function SaveableRecipeCard({
             busy && "opacity-60",
           )}
         >
-          <span aria-hidden>{saved ? "♥" : "♡"}</span>
+          <Icon name={saved ? "ui/heart-filled" : "ui/heart"} className="size-5" />
         </button>
       ) : null}
     </div>
@@ -492,8 +496,8 @@ function RecipesContent() {
         title="สูตรขนม"
         description={
           data
-            ? `ค้นพบสูตรถัดไปของคุณ — ทั้งหมด ${data.count} สูตร ตั้งแต่ของหวานมือใหม่ถึงเพสตรีขั้นสูง`
-            : "ค้นพบสูตรถัดไปของคุณ ตั้งแต่ของหวานมือใหม่ถึงเพสตรีขั้นสูง"
+            ? `ค้นพบสูตรใหม่ที่น่าลอง ทั้งหมด ${data.count} สูตร ตั้งแต่เมนูสำหรับมือใหม่ไปจนถึง Pastry ขั้นสูง`
+            : "ค้นพบสูตรถัดไปของคุณ ตั้งแต่เมนูสำหรับมือใหม่ไปจนถึง Pastry ขั้นสูง"
         }
         actions={
           // The primary recipe-authoring entry point. Community posting
@@ -512,39 +516,26 @@ function RecipesContent() {
         onCategory={(slug) => toggleInList(selectedCategories, slug, "category")}
       />
 
-      {/* Quick categories — horizontal scroll on mobile */}
+      {/* Quick categories — compact square photo tiles, horizontal scroll */}
       {categories.data && categories.data.length > 0 ? (
         <div
           className="mt-4 flex snap-x gap-2.5 overflow-x-auto pb-2"
           role="group"
           aria-label="หมวดขนม"
         >
-          {categories.data.map((category) => {
-            const active = selectedCategories.includes(category.slug);
-            return (
-              <button
-                key={category.slug}
-                type="button"
-                aria-pressed={active}
-                onClick={() =>
-                  toggleInList(selectedCategories, category.slug, "category")
-                }
-                className={cn(
-                  "flex shrink-0 snap-start items-center gap-1.5 rounded-full px-4 py-2 text-sm shadow-raised transition-colors",
-                  "focus-visible:outline-2 focus-visible:outline-focus",
-                  active
-                    ? "bg-accent font-medium text-fg-inverted"
-                    : "bg-surface text-fg-muted hover:text-fg",
-                )}
-              >
-                <span aria-hidden>{category.icon || "🍰"}</span>
-                {category.name}
-                <span className={cn("text-xs", active ? "opacity-80" : "text-fg-subtle")}>
-                  {category.recipe_count}
-                </span>
-              </button>
-            );
-          })}
+          {categories.data.map((category) => (
+            <CategoryTile
+              key={category.slug}
+              compact
+              slug={category.slug}
+              name={category.name}
+              count={category.recipe_count}
+              active={selectedCategories.includes(category.slug)}
+              onClick={() =>
+                toggleInList(selectedCategories, category.slug, "category")
+              }
+            />
+          ))}
         </div>
       ) : null}
 
@@ -567,12 +558,12 @@ function RecipesContent() {
           <span className="text-xs font-medium text-fg-subtle">กำลังกรอง:</span>
           {search ? (
             <FilterChip active onClick={() => setParams({ search: null, ordering: null })}>
-              “{search}” ✕
+              <>“{search}” <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ) : null}
           {ingredient ? (
             <FilterChip active onClick={() => setParams({ ingredient: null })}>
-              🧂 {ingredient} ✕
+              <><Icon name="ui/salt" className="size-3.5" /> {ingredient} <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ) : null}
           {selectedCategories.map((slug) => (
@@ -581,7 +572,7 @@ function RecipesContent() {
               active
               onClick={() => toggleInList(selectedCategories, slug, "category")}
             >
-              {categoryName(slug)} ✕
+              <>{categoryName(slug)} <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ))}
           {selectedDifficulties.map((value) => (
@@ -590,12 +581,12 @@ function RecipesContent() {
               active
               onClick={() => toggleInList(selectedDifficulties, value, "difficulty")}
             >
-              {DIFFICULTIES.find((item) => item.value === value)?.label} ✕
+              <>{DIFFICULTIES.find((item) => item.value === value)?.label} <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ))}
           {maxMinutes ? (
             <FilterChip active onClick={() => setParams({ max_total_minutes: null })}>
-              ≤ {maxMinutes} นาที ✕
+              <>≤ {maxMinutes} นาที <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ) : null}
           <button
@@ -674,7 +665,7 @@ function RecipesContent() {
                       })
                     }
                   >
-                    {category.icon || "🍰"} {category.name}
+                    <CategoryThumb slug={category.slug} /> {category.name}
                   </Button>
                 ))}
               </div>

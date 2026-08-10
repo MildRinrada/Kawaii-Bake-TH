@@ -19,6 +19,7 @@ import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { useDebounced } from "@/lib/admin/use-paged-list";
 import { Button } from "@/components/ui/button";
 import { MediaFrame } from "@/components/content/media-frame";
+import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function RecipeSelectorDialog({
@@ -74,7 +75,7 @@ export function RecipeSelectorDialog({
           aria-label="ปิด"
           className="rounded-control px-2 text-fg-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
         >
-          ✕
+          <Icon name="ui/close" className="size-4" />
         </button>
       </div>
 

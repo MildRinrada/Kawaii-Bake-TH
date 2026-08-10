@@ -26,11 +26,12 @@ import type {
   RecipeListItem,
   RecommendedRecipe,
 } from "@/lib/api/models";
+import { BANNER } from "@/lib/assets";
 import { REASON_LABELS } from "@/lib/recommendations";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge, DifficultyBadge, flavorFor } from "@/components/ui/badge";
+import { Badge, DifficultyBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -39,6 +40,8 @@ import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/ui/page-container";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArtIcon, Icon } from "@/components/ui/icon";
+import { CategoryTile } from "@/components/content/category-tile";
 import { CourseCard } from "@/components/content/course-card";
 import { MediaFrame } from "@/components/content/media-frame";
 import { RecipeCard } from "@/components/content/recipe-card";
@@ -102,12 +105,9 @@ function CardGridSkeleton({ count = 3 }: { count?: number }) {
 /* Hero                                                               */
 /* ------------------------------------------------------------------ */
 
-const HERO_DECOR = [
-  { icon: "🍓", className: "right-[24%] top-10 text-4xl", tilt: "-8deg" },
-  { icon: "🥐", className: "right-[8%] top-24 text-6xl", tilt: "6deg" },
-  { icon: "🧁", className: "right-[18%] bottom-14 text-5xl", tilt: "-4deg" },
-  { icon: "🍪", className: "right-[4%] bottom-6 text-4xl", tilt: "10deg" },
-];
+/* The banner is one wide illustration from `public/banners/`, anchored
+   right so it never sits under the headline, and purely decorative — the
+   hero's words stay real HTML for search engines and screen readers. */
 
 function Hero() {
   const router = useRouter();
@@ -123,21 +123,14 @@ function Hero() {
 
   return (
     <div className="kb-hero relative overflow-hidden border-b border-edge">
-      <div aria-hidden className="absolute inset-0 hidden lg:block">
-        {HERO_DECOR.map((item) => (
-          <span
-            key={item.icon}
-            className={cn("kb-float absolute select-none opacity-80", item.className)}
-            style={{ "--kb-tilt": item.tilt } as React.CSSProperties}
-          >
-            {item.icon}
-          </span>
-        ))}
-      </div>
+      <ArtIcon
+        src={BANNER.home}
+        className="kb-float pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[58%] object-cover object-right lg:block"
+      />
       <PageContainer className="relative py-14 sm:py-20">
         <div className="max-w-2xl">
           <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-surface/70 px-4 py-1.5 text-sm text-fg-muted shadow-raised">
-            <span aria-hidden>🧁</span> แพลตฟอร์มเรียนทำเบเกอรี่ภาษาไทย
+            แพลตฟอร์มเรียนทำเบเกอรี่ภาษาไทย
           </p>
           <h1 className="font-display text-3xl font-medium leading-snug text-fg sm:text-5xl sm:leading-snug">
             อบขนมให้อร่อย
@@ -145,12 +138,14 @@ function Hero() {
             เรียนรู้ได้ทุกวัน <span className="text-accent">ทีละขั้นตอน</span>
           </h1>
           <p className="mt-4 max-w-lg text-fg-muted">
-            คอร์สเรียนจากผู้สอนตัวจริง สูตรขนมพร้อมวิธีทำละเอียด แบบทดสอบ
-            ใบประกาศนียบัตร และผู้ช่วย AI ที่ตอบเรื่องอบขนมเป็นภาษาไทย
+            เรียนกับผู้สอนตัวจริง พร้อมสูตรและวิธีทำแบบละเอียด แบบทดสอบ
+            ใบประกาศนียบัตร และผู้ช่วย AI ที่ช่วยตอบคำถามเรื่องการอบขนมเป็นภาษาไทย
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href="/courses">
-              <Button size="lg">เริ่มเรียนเลย</Button>
+              <Button size="lg">
+                เริ่มเรียนเลย
+              </Button>
             </Link>
             <Link href="/recipes">
               <Button size="lg" variant="secondary">
@@ -172,7 +167,7 @@ function Hero() {
               className="rounded-full bg-surface/90"
             />
             <Button type="submit" variant="secondary" aria-label="ค้นหา">
-              🔍
+              <Icon name="ui/search" />
             </Button>
           </form>
         </div>
@@ -202,7 +197,7 @@ function ContinueLearning() {
 
   return (
     <Section
-      title="เรียนต่อจากที่ค้างไว้ 📖"
+      title="เรียนต่อจากที่ค้างไว้"
       description="กลับเข้าบทเรียนล่าสุดของคุณได้เลย"
       className="mt-10"
     >
@@ -230,7 +225,7 @@ function ContinueLearning() {
             </div>
             <Link href={`/courses/${course.slug}`} className="mt-4 block">
               <Button size="sm" className="w-full">
-                {course.completed_at ? "ทบทวนคอร์ส" : "เรียนต่อ →"}
+                {course.completed_at ? "ทบทวนคอร์ส" : "เรียนต่อ"}
               </Button>
             </Link>
           </div>
@@ -247,21 +242,21 @@ function ContinueLearning() {
 const SKILL_LEVELS = [
   {
     difficulty: "beginner",
-    icon: "🌱",
+    icon: "sprout" as const,
     name: "เริ่มต้นได้เลย",
     description: "ยังไม่เคยอบก็เริ่มได้ — อุปกรณ์ วัตถุดิบ และสูตรแรกที่สำเร็จแน่",
     className: "bg-mint-soft text-mint-ink",
   },
   {
     difficulty: "intermediate",
-    icon: "🥐",
+    icon: "croissant" as const,
     name: "ระดับกลาง",
     description: "อบเป็นแล้ว อยากไปต่อ — เทคนิคแป้ง ครีม และการขึ้นรูป",
     className: "bg-butter-soft text-butter-ink",
   },
   {
     difficulty: "advanced",
-    icon: "👩‍🍳",
+    icon: "chef-hat" as const,
     name: "ขั้นสูง",
     description: "เก็บรายละเอียดระดับร้าน — งานตกแต่งและสูตรที่ท้าทาย",
     className: "bg-peach-soft text-peach-ink",
@@ -286,9 +281,7 @@ function SkillLevels() {
               level.className,
             )}
           >
-            <span aria-hidden className="text-3xl">
-              {level.icon}
-            </span>
+            <Icon name={`ui/${level.icon}`} className="size-8" />
             <h3 className="font-display mt-3 text-lg font-medium">
               {level.name}
             </h3>
@@ -334,7 +327,7 @@ function FeaturedCourses() {
       ) : courses.error ? (
         <ErrorState error={courses.error} onRetry={courses.refetch} />
       ) : !courses.data || courses.data.results.length === 0 ? (
-        <EmptyState icon="🎓" title="ยังไม่มีคอร์สเรียน" description="คอร์สแรกกำลังจะเปิดเร็ว ๆ นี้" />
+        <EmptyState icon={<Icon name="ui/graduation" className="size-8 text-fg-subtle" />} title="ยังไม่มีคอร์สเรียน" description="คอร์สแรกกำลังจะเปิดเร็ว ๆ นี้" />
       ) : (
         <div className="space-y-5">
           <FeaturedCourseCard course={courses.data.results[0]} />
@@ -365,7 +358,7 @@ function FeaturedCourseCard({ course }: { course: CourseListItem }) {
         </div>
         <div className="flex flex-col justify-center gap-3 p-6 md:w-1/2 md:p-8">
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge tone="butter">⭐ คอร์สแนะนำ</Badge>
+            <Badge tone="butter"><Icon name="ui/star" className="size-3.5" /> คอร์สแนะนำ</Badge>
             <DifficultyBadge level={course.difficulty} />
             {course.is_enrolled ? <Badge tone="mint">ลงเรียนแล้ว</Badge> : null}
           </div>
@@ -407,7 +400,7 @@ function RecommendationFeed() {
   const authenticated = status === "authenticated";
   return (
     <Section
-      title={authenticated ? "แนะนำสำหรับคุณ ✨" : "กำลังเป็นที่นิยม 🔥"}
+      title={authenticated ? "แนะนำสำหรับคุณ" : "กำลังเป็นที่นิยม"}
       description={
         authenticated
           ? "คัดจากหมวดที่คุณชอบ ของที่บันทึก และคอร์สที่เรียน"
@@ -426,7 +419,7 @@ function RecommendationFeed() {
                 <p className="mt-2 flex flex-wrap gap-1.5">
                   {item.reasons.slice(0, 2).map((reason) => (
                     <Badge key={reason} tone="lavender">
-                      ✨ {REASON_LABELS[reason] ?? reason}
+                      <Icon name="ui/sparkle" className="size-3.5" /> {REASON_LABELS[reason] ?? reason}
                     </Badge>
                   ))}
                 </p>
@@ -489,15 +482,6 @@ function RecipeDiscovery() {
 /* Category explorer                                                  */
 /* ------------------------------------------------------------------ */
 
-// Static class strings — Tailwind only generates classes it can see.
-const TILE_TONES: Record<string, string> = {
-  berry: "bg-berry-soft text-berry-ink",
-  peach: "bg-peach-soft text-peach-ink",
-  butter: "bg-butter-soft text-butter-ink",
-  lavender: "bg-lavender-soft text-lavender-ink",
-  mint: "bg-mint-soft text-mint-ink",
-};
-
 function CategoryExplorer() {
   const categories = useApiQuery(
     (signal) => api.get<Category[]>("/recipe-categories/", { signal }),
@@ -519,28 +503,20 @@ function CategoryExplorer() {
       {categories.loading ? (
         <div aria-busy="true" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-28 w-full rounded-surface" />
+            <Skeleton key={index} className="aspect-4/3 w-full rounded-surface" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {items.slice(0, 8).map((category) => (
-            <Link
+            <CategoryTile
               key={category.slug}
+              aspect="landscape"
+              slug={category.slug}
+              name={category.name}
+              count={category.recipe_count}
               href={`/recipes?category=${category.slug}` as Route}
-              className={cn(
-                "group rounded-surface p-5 text-center shadow-raised transition-[transform,box-shadow] duration-150",
-                "hover:-translate-y-0.5 hover:shadow-overlay",
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-                TILE_TONES[flavorFor(category.slug)],
-              )}
-            >
-              <span aria-hidden className="text-3xl">
-                {category.icon || "🍰"}
-              </span>
-              <p className="font-display mt-2 font-medium">{category.name}</p>
-              <p className="text-xs opacity-80">{category.recipe_count} สูตร</p>
-            </Link>
+            />
           ))}
         </div>
       )}
@@ -640,7 +616,7 @@ function CommunityPreview() {
   // empty community is exactly when that matters most.
   return (
     <Section
-      title="จากครัวของชุมชน 🏡"
+      title="จากครัวของชุมชน"
       description="ผลงานจริงและคำถามล่าสุดจากเพื่อนนักอบ"
       href="/community"
       hrefLabel="ไปที่ชุมชน →"
@@ -659,12 +635,12 @@ function CommunityPreview() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.images[0].url}
-                    alt={post.caption || `ผลงานของ ${post.author_handle}`}
+                    alt={post.caption || `ผลงานของ ${post.author_display_name}`}
                     loading="lazy"
                     className="aspect-square w-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
                   <figcaption className="absolute inset-x-0 bottom-0 truncate bg-fg/55 px-2 py-1 text-xs text-fg-inverted">
-                    @{post.author_handle}
+                    {post.author_display_name}
                   </figcaption>
                 </figure>
               ))}
@@ -686,12 +662,12 @@ function CommunityPreview() {
                 const body = (
                   <Card className="p-4 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-overlay">
                     <p className="font-display line-clamp-1 font-medium text-fg">
-                      💬 {thread.title}
+                      <Icon name="ui/chat" className="size-3.5" /> {thread.title}
                     </p>
                     <p className="mt-1 flex items-center justify-between text-xs text-fg-subtle">
                       <span>ถามโดย @{thread.author_handle}</span>
                       {thread.accepted_answer ? (
-                        <Badge tone="mint">มีคำตอบแล้ว ✓</Badge>
+                        <Badge tone="mint"><Icon name="ui/check" className="size-3.5" /> มีคำตอบแล้ว</Badge>
                       ) : null}
                     </p>
                   </Card>

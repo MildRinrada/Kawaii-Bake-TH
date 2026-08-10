@@ -11,7 +11,7 @@ from apps.gallery.selectors.gallery_visibility import visible_q
 def _base_queryset() -> QuerySet[GalleryPost]:
     """The shape every read shares: author, references and ordered images."""
     return GalleryPost.objects.select_related(
-        "author", "recipe", "course"
+        "author", "author__profile", "recipe", "course"
     ).prefetch_related(
         Prefetch(
             "images", queryset=GalleryImage.objects.order_by("position", "id")

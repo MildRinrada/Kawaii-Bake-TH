@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
+import { Icon } from "@/components/ui/icon";
 import { PageContainer } from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -87,13 +88,14 @@ export function VerifyScreen({ token }: { token: string }) {
           }`}
         >
           <p
-            className={`font-display text-lg font-medium ${
+            className={`font-display flex items-center justify-center gap-1.5 text-lg font-medium ${
               revoked ? "text-danger" : "text-mint-ink"
             }`}
           >
+            <Icon name={revoked ? "ui/close" : "ui/check"} className="size-5" />
             {revoked
-              ? "✕ ใบประกาศนียบัตรนี้ถูกเพิกถอนแล้ว"
-              : "✓ ใบประกาศนียบัตรนี้ถูกต้อง"}
+              ? "ใบประกาศนียบัตรนี้ถูกเพิกถอนแล้ว"
+              : "ใบประกาศนียบัตรนี้ถูกต้อง"}
           </p>
           <p className="mt-1 text-sm text-fg-muted">
             {revoked

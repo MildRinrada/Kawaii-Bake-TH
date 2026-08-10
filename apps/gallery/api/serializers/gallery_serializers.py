@@ -1,10 +1,16 @@
 """Serializers for gallery payloads.
 
-One public shape per endpoint (no per-viewer conditional fields), the
-author as public handle only.
+One public shape per endpoint (no per-viewer conditional fields). The
+author is public profile info — handle, display name, avatar — the same
+three fields every other content app already shows for an author or
+instructor (see ``apps.recipes.api.serializers.recipe_serializers.
+AuthorRefSerializer``, the precedent this mirrors). None of it is the
+email/identity data the platform actually treats as private.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 from rest_framework import serializers
 
@@ -52,6 +58,8 @@ class GalleryPostSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(read_only=True)
     author_handle = serializers.CharField(read_only=True, source="author.username")
+    author_display_name = serializers.SerializerMethodField()
+    author_avatar_url = serializers.SerializerMethodField()
     caption = serializers.CharField(read_only=True)
     status = serializers.CharField(read_only=True)
     recipe = _RecipeRefSerializer(read_only=True, allow_null=True)
@@ -59,6 +67,20 @@ class GalleryPostSerializer(serializers.Serializer):
     images = GalleryImageSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+
+    def get_author_display_name(self, obj: Any) -> str:
+        """Return the author's display name, falling back to the handle."""
+        profile = getattr(obj.author, "profile", None)
+        return (profile.display_name if profile else "") or obj.author.username
+
+    def get_author_avatar_url(self, obj: Any) -> str | None:
+        """Return the author's absolute avatar URL, if any."""
+        profile = getattr(obj.author, "profile", None)
+        avatar = getattr(profile, "avatar", None) if profile else None
+        if not avatar:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(avatar.url) if request else avatar.url
 
 
 class GalleryPostCreateSerializer(StrictSerializer):

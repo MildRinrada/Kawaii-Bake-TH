@@ -9,6 +9,7 @@ import { RequireAuth } from "@/lib/auth/require-auth";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Icon } from "@/components/ui/icon";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecipeCard } from "@/components/content/recipe-card";
@@ -26,7 +27,7 @@ function FavoritesContent() {
     <>
       <PageHeader
         title="รายการโปรด"
-        description="สูตรและคอร์สที่คุณบันทึกไว้ — เห็นเฉพาะสิ่งที่ยังเปิดดูได้"
+        description="สูตรและคอร์สที่คุณบันทึกไว้ เห็นเฉพาะสิ่งที่ยังเปิดดูได้"
       />
       {loading ? (
         <div aria-busy="true" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -38,7 +39,7 @@ function FavoritesContent() {
         <ErrorState error={error} onRetry={refetch} />
       ) : !data || data.results.length === 0 ? (
         <EmptyState
-          icon="♡"
+          icon={<Icon name="ui/heart" className="size-8 text-fg-subtle" />}
           title="ยังไม่มีรายการโปรด"
           description="กดปุ่มหัวใจในหน้าสูตรหรือคอร์สเพื่อบันทึกไว้ที่นี่"
         />

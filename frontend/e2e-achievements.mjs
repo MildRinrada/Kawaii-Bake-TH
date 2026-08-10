@@ -32,7 +32,7 @@ try {
   await guest.goto(`${BASE}/achievements`);
   await expect(guest, "text=/เข้าสู่ระบบ/", "anonymous is sent to the existing login flow");
   const guestBody = await guest.textContent("body");
-  if (guestBody.includes("ปลดล็อกแล้ว ✨")) {
+  if (guestBody.includes("ปลดล็อกแล้ว")) {
     throw new Error("private achievement data rendered for an anonymous visitor");
   }
   ok("no private achievement data leaks to an anonymous visitor");
@@ -99,14 +99,14 @@ try {
 
   /* ---------- Earned + locked sections ---------- */
   if (truth.earned > 0) {
-    await expect(page, "text=ปลดล็อกแล้ว ✨", "earned section renders");
+    await expect(page, "text=ปลดล็อกแล้ว", "earned section renders");
     await expect(page, `text=${truth.earnedTitles[0]}`, "an earned badge from the ledger is shown");
   } else {
     await expect(page, "text=เส้นทางนักอบขนมของคุณกำลังเริ่มต้น", "empty state renders for a learner with no badges");
     await expect(page, 'a[href="/courses"]', "empty state links to a real course route");
   }
 
-  await expect(page, "text=รอให้คุณปลดล็อก 🔒", "locked section renders");
+  await expect(page, "text=รอให้คุณปลดล็อก", "locked section renders");
   await expect(page, `text=${truth.lockedTitles[0]}`, "a locked badge from the catalogue is shown");
 
   // No invented progress bars on locked badges.
@@ -172,7 +172,7 @@ try {
   if (truth.earned > 0) {
     await page.click(`button[aria-label*="${truth.earnedTitles[0]}"]`);
     await expect(page, "dialog[open]", "earned badge detail opens");
-    await expect(page, "text=✓ ปลดล็อกแล้ว", "earned detail confirms the unlocked state");
+    await expect(page, "text=ปลดล็อกแล้ว", "earned detail confirms the unlocked state");
     await expect(page, "text=ได้รับเมื่อ", "earned date is shown");
     await expect(page, ".kb-badge-pop", "badge reveal animation plays on open");
     const sprinkles = await page.locator(".kb-sprinkle").count();

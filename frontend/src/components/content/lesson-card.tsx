@@ -31,7 +31,7 @@ export function LessonCard({
       <span
         aria-hidden
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-full font-display text-sm font-medium",
+          "flex size-13 shrink-0 items-center justify-center rounded-full font-display text-sm font-medium",
           completed ? "bg-mint-soft text-mint-ink" : "bg-lavender-soft text-lavender-ink",
         )}
       >

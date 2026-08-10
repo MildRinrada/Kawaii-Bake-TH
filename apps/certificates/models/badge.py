@@ -20,7 +20,9 @@ class BadgeDefinition(models.Model):
     title_en = models.CharField(max_length=100)
     description_th = models.CharField(max_length=255, blank=True)
     description_en = models.CharField(max_length=255, blank=True)
-    # An emoji or a frontend asset key — no image upload; badges are UI.
+    # A frontend asset key (matches a file under `public/achievements/`),
+    # never emoji or an uploaded image — the artwork itself is curated in
+    # the frontend's static asset library, not here (see its README).
     icon = models.CharField(max_length=50, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -21,6 +21,136 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/security/events/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of events, newest first. */
+        get: operations["admin_security_events_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/security/profiles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of profiles. */
+        get: operations["admin_security_profiles_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/security/profiles/{profile_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return the profile plus its most recent events.
+         *
+         *     Raises:
+         *         ThreatProfileNotFoundError: If the profile does not exist.
+         */
+        get: operations["admin_security_profiles_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/security/profiles/{profile_id}/block/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Start a time-boxed block. */
+        post: operations["admin_security_profiles_block_create"];
+        /** @description Lift a block immediately. */
+        delete: operations["admin_security_profiles_block_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/security/profiles/{profile_id}/review/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Move the profile out of the review queue.
+         *
+         *     Changes no score and deletes no evidence; fresh activity puts the
+         *     profile straight back in the queue.
+         */
+        post: operations["admin_security_profiles_review_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/security/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return live totals, per-band counts and the top offenders. */
+        get: operations["admin_security_summary_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/security/vocabulary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return every signal kind, level and review state with its label. */
+        get: operations["admin_security_vocabulary_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assistant/conversations/": {
         parameters: {
             query?: never;
@@ -1636,6 +1766,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/security/client-policy/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return the env-configured guard mode.
+         *
+         *     Read on every page load, so it must stay a settings read with no
+         *     database access.
+         */
+        get: operations["security_client_policy_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/client-signals/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Record the signal and acknowledge, revealing nothing back. */
+        post: operations["security_client_signals_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/edge-signals/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Verify the secret, then record against the visitor's address. */
+        post: operations["security_edge_signals_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{username}/": {
         parameters: {
             query?: never;
@@ -1870,6 +2056,10 @@ export interface components {
         BasisEnum: "per_serving" | "per_100g";
         /** @enum {unknown} */
         BlankEnum: "";
+        /** @description How long to block an address for. */
+        BlockRequestRequest: {
+            minutes: number;
+        };
         /** @description A category in the category listing. */
         Category: {
             readonly id: number;
@@ -1934,6 +2124,59 @@ export interface components {
             readonly claimed: number;
             readonly points: number;
             readonly balance: number;
+        };
+        /**
+         * @description What the browser guard is allowed to do, as configured by env.
+         *
+         *     Served to anyone, including anonymous visitors — it contains no user
+         *     data and describes only this deployment's own posture. Publishing it
+         *     is not a leak: the guard's behaviour is visible in the shipped
+         *     JavaScript regardless, and a client that cannot read the policy would
+         *     have to hard-code one, which is exactly the duplication this endpoint
+         *     exists to prevent.
+         */
+        ClientPolicy: {
+            guard_mode: components["schemas"]["GuardModeEnum"];
+            exempt_authenticated: boolean;
+            report_signals: boolean;
+        };
+        /**
+         * @description * `console_tamper` - console_tamper
+         *     * `context_menu_attempt` - context_menu_attempt
+         *     * `devtools_opened` - devtools_opened
+         *     * `view_source_attempt` - view_source_attempt
+         * @enum {string}
+         */
+        ClientSignalKindEnum: "console_tamper" | "context_menu_attempt" | "devtools_opened" | "view_source_attempt";
+        /**
+         * @description One browser-reported observation.
+         *
+         *     ``kind`` is constrained to the client-reportable set at the schema
+         *     level as well as in the service, so the published OpenAPI document
+         *     tells the truth about what this endpoint accepts.
+         *
+         *     There is deliberately **no ``ip`` field**. The address is taken from
+         *     the connection; accepting one from the body would let any visitor
+         *     attribute events to anyone.
+         */
+        ClientSignalRequest: {
+            kind: components["schemas"]["ClientSignalKindEnum"];
+            /** @description The frontend route the visitor was on. */
+            path?: string;
+            /** @description Bounded client context; string values only, few keys. */
+            detail?: {
+                [key: string]: string;
+            };
+        };
+        /**
+         * @description The ingest endpoint's acknowledgement.
+         *
+         *     Says only whether the signal was stored. It never reports the
+         *     caller's score or level: telling a probe how close it is to being
+         *     blocked turns the dashboard into a tuning aid for the attacker.
+         */
+        ClientSignalResult: {
+            recorded: boolean;
         };
         /**
          * @description * `recipe` - Recipe
@@ -2086,6 +2329,35 @@ export interface components {
          * @enum {string}
          */
         DietaryRestrictionsEnum: "none" | "vegan" | "vegetarian" | "gluten_free" | "dairy_free" | "nut_free" | "egg_free";
+        /**
+         * @description * `automation_agent` - automation_agent
+         *     * `honeypot_path` - honeypot_path
+         *     * `missing_user_agent` - missing_user_agent
+         *     * `path_traversal` - path_traversal
+         *     * `scanner_agent` - scanner_agent
+         *     * `sensitive_file_probe` - sensitive_file_probe
+         *     * `sqli_probe` - sqli_probe
+         *     * `xss_probe` - xss_probe
+         * @enum {string}
+         */
+        EdgeSignalKindEnum: "automation_agent" | "honeypot_path" | "missing_user_agent" | "path_traversal" | "scanner_agent" | "sensitive_file_probe" | "sqli_probe" | "xss_probe";
+        /**
+         * @description One signal forwarded by the trusted frontend edge.
+         *
+         *     Unlike :class:`ClientSignalSerializer` this one **does** carry an
+         *     ``ip`` — the visitor's, as the edge saw it. That is only safe because
+         *     the caller proves itself with the shared secret first; the field is
+         *     the whole reason the secret exists.
+         */
+        EdgeSignalRequest: {
+            kind: components["schemas"]["EdgeSignalKindEnum"];
+            ip: string;
+            path?: string;
+            user_agent?: string;
+            detail?: {
+                [key: string]: string;
+            };
+        };
         /** @description Validates a verification-link submission. */
         EmailVerificationConfirmRequest: {
             uid: string;
@@ -2127,6 +2399,10 @@ export interface components {
         GalleryPost: {
             readonly id: number;
             readonly author_handle: string;
+            /** @description Return the author's display name, falling back to the handle. */
+            readonly author_display_name: string;
+            /** @description Return the author's absolute avatar URL, if any. */
+            readonly author_avatar_url: string | null;
             readonly caption: string;
             readonly status: string;
             readonly recipe: components["schemas"]["_RecipeRef"] | null;
@@ -2157,6 +2433,13 @@ export interface components {
             readonly streak: components["schemas"]["Streak"];
             readonly recent_transactions: components["schemas"]["XPTransaction"][];
         };
+        /**
+         * @description * `off` - off
+         *     * `detect` - detect
+         *     * `deter` - deter
+         * @enum {string}
+         */
+        GuardModeEnum: "off" | "detect" | "deter";
         /** @description One recipe ingredient with its substitution candidates. */
         IngredientSubstitution: {
             readonly ingredient: string;
@@ -2715,6 +2998,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["RewardTransaction"][];
         };
+        PaginatedSecurityEventList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["SecurityEvent"][];
+        };
         PaginatedThreadList: {
             /** @example 123 */
             count: number;
@@ -2729,6 +3027,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Thread"][];
+        };
+        PaginatedThreatProfileList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["ThreatProfile"][];
         };
         /** @description Validates a self-service password change. */
         PasswordChangeRequest: {
@@ -3236,6 +3549,11 @@ export interface components {
             rating: number;
             comment?: string;
         };
+        /** @description An operator's triage decision. */
+        ReviewRequestRequest: {
+            state: components["schemas"]["StateEnum"];
+            note?: string;
+        };
         /**
          * @description * `active` - active
          *     * `hidden` - hidden
@@ -3267,6 +3585,73 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
+        /** @description One row of the event log. */
+        SecurityEvent: {
+            readonly id: number;
+            readonly kind: string;
+            /** @description Return the human label for the signal kind. */
+            readonly kind_label: string;
+            readonly severity: string;
+            /** Format: double */
+            readonly score_delta: number;
+            readonly ip: string;
+            readonly user_agent: string;
+            readonly path: string;
+            readonly method: string;
+            readonly status_code: number | null;
+            /** @description Return the signed-in user's public handle, never their email. */
+            readonly actor_handle: string;
+            readonly request_id: string;
+            readonly detail: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /** @description The dashboard's headline counters. */
+        SecuritySummary: {
+            /** Format: date-time */
+            generated_at: string;
+            profiles_total: number;
+            profiles_by_level: {
+                [key: string]: number;
+            };
+            profiles_blocked: number;
+            profiles_open: number;
+            events_total: number;
+            events_24h: number;
+            events_7d: number;
+            events_by_kind_7d: {
+                [key: string]: number;
+            };
+            top_offenders: {
+                [key: string]: unknown;
+            }[];
+        };
+        /**
+         * @description The label vocabulary, so the dashboard never hard-codes it.
+         *
+         *     Filters render from this. A signal kind added on the backend appears
+         *     in the admin's filter list without a frontend deploy, which is the
+         *     whole reason it is an endpoint rather than a constant in TypeScript.
+         */
+        SecurityVocabulary: {
+            kinds: {
+                [key: string]: unknown;
+            }[];
+            levels: {
+                [key: string]: unknown;
+            }[];
+            review_states: {
+                [key: string]: unknown;
+            }[];
+        };
+        /**
+         * @description * `acknowledged` - acknowledged
+         *     * `ignored` - ignored
+         * @enum {string}
+         */
+        StateEnum: "acknowledged" | "ignored";
         /** @description One submitted preparation step. */
         StepWriteRequest: {
             body: string;
@@ -3341,6 +3726,80 @@ export interface components {
          * @enum {string}
          */
         ThreadModerationStatusEnum: "active" | "hidden";
+        /**
+         * @description One offender row.
+         *
+         *     ``score`` is the **stored** value; ``current_score`` is that value
+         *     decayed to now. Both are exposed because they answer different
+         *     questions — "how bad was it at its worst" and "how bad is it right
+         *     now" — and a client that only saw one would have to guess the other.
+         */
+        ThreatProfile: {
+            readonly id: number;
+            readonly ip: string;
+            /** Format: double */
+            readonly score: number;
+            /**
+             * Format: double
+             * @description Return the score decayed to this instant.
+             */
+            readonly current_score: number;
+            readonly level: string;
+            readonly event_count: number;
+            readonly last_kind: string;
+            /** @description Return the human label for the most recent signal kind. */
+            readonly last_kind_label: string;
+            readonly last_path: string;
+            readonly last_user_agent: string;
+            /** Format: date-time */
+            readonly first_seen_at: string;
+            /** Format: date-time */
+            readonly last_seen_at: string;
+            /** Format: date-time */
+            readonly blocked_until: string | null;
+            /** @description Whether a block is in force right now. */
+            readonly is_blocked: boolean;
+            readonly review_state: string;
+            /** Format: date-time */
+            readonly reviewed_at: string | null;
+            /** @description Return the reviewing staff member's public handle. */
+            readonly reviewed_by_handle: string;
+            readonly note: string;
+        };
+        /** @description An offender plus the evidence behind its score. */
+        ThreatProfileDetail: {
+            readonly id: number;
+            readonly ip: string;
+            /** Format: double */
+            readonly score: number;
+            /**
+             * Format: double
+             * @description Return the score decayed to this instant.
+             */
+            readonly current_score: number;
+            readonly level: string;
+            readonly event_count: number;
+            readonly last_kind: string;
+            /** @description Return the human label for the most recent signal kind. */
+            readonly last_kind_label: string;
+            readonly last_path: string;
+            readonly last_user_agent: string;
+            /** Format: date-time */
+            readonly first_seen_at: string;
+            /** Format: date-time */
+            readonly last_seen_at: string;
+            /** Format: date-time */
+            readonly blocked_until: string | null;
+            /** @description Whether a block is in force right now. */
+            readonly is_blocked: boolean;
+            readonly review_state: string;
+            /** Format: date-time */
+            readonly reviewed_at: string | null;
+            /** @description Return the reviewing staff member's public handle. */
+            readonly reviewed_by_handle: string;
+            readonly note: string;
+            readonly recent_events: components["schemas"]["SecurityEvent"][];
+        };
         /**
          * @description * `g` - g
          *     * `kg` - kg
@@ -3460,6 +3919,198 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Badge"][];
+                };
+            };
+        };
+    };
+    admin_security_events_list: {
+        parameters: {
+            query?: {
+                ip?: string;
+                kind?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+                severity?: string;
+                since_hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSecurityEventList"];
+                };
+            };
+        };
+    };
+    admin_security_profiles_list: {
+        parameters: {
+            query?: {
+                blocked?: boolean;
+                level?: string;
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                review_state?: string;
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedThreatProfileList"];
+                };
+            };
+        };
+    };
+    admin_security_profiles_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreatProfileDetail"];
+                };
+            };
+        };
+    };
+    admin_security_profiles_block_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockRequestRequest"];
+                "multipart/form-data": components["schemas"]["BlockRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BlockRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreatProfile"];
+                };
+            };
+        };
+    };
+    admin_security_profiles_block_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreatProfile"];
+                };
+            };
+        };
+    };
+    admin_security_profiles_review_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRequestRequest"];
+                "multipart/form-data": components["schemas"]["ReviewRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReviewRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreatProfile"];
+                };
+            };
+        };
+    };
+    admin_security_summary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecuritySummary"];
+                };
+            };
+        };
+    };
+    admin_security_vocabulary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityVocabulary"];
                 };
             };
         };
@@ -6180,6 +6831,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RewardTransaction"];
+                };
+            };
+        };
+    };
+    security_client_policy_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientPolicy"];
+                };
+            };
+        };
+    };
+    security_client_signals_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientSignalRequest"];
+                "multipart/form-data": components["schemas"]["ClientSignalRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ClientSignalRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientSignalResult"];
+                };
+            };
+        };
+    };
+    security_edge_signals_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EdgeSignalRequest"];
+                "multipart/form-data": components["schemas"]["EdgeSignalRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["EdgeSignalRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientSignalResult"];
                 };
             };
         };

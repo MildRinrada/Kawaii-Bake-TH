@@ -21,6 +21,8 @@
   --color-accent: var(--kb-accent);
   --color-accent-hover: var(--kb-accent-hover);
   --color-accent-subtle: var(--kb-accent-subtle);
+  --color-pastel-blue: var(--kb-pastel-blue);
+  --color-pastel-blue-hover: var(--kb-pastel-blue-hover);
   --color-danger: var(--kb-danger);
   --color-danger-subtle: var(--kb-danger-subtle);
   --color-success: var(--kb-success);
@@ -38,6 +40,8 @@
   --font-sans: var(--kb-font-sans);
   --font-display: var(--kb-font-display);
   --font-mono: var(--kb-font-mono);
+  /* Certificate signature line only — see layout.tsx. */
+  --font-signature: var(--kb-font-signature);
 
   /* Flavor family — decorative/categorical accents */
   --color-berry-soft: var(--kb-berry-soft);

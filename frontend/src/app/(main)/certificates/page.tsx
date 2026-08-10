@@ -24,6 +24,7 @@ import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { RequireAuth } from "@/lib/auth/require-auth";
 import { useToast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -86,7 +87,7 @@ function CertificateViewer({
         // Share sheet dismissed — fall through to copying.
       }
     }
-    await copy(url, "คัดลอกลิงก์ตรวจสอบแล้ว 🔗");
+    await copy(url, "คัดลอกลิงก์ตรวจสอบแล้ว");
   }
 
   return (
@@ -106,7 +107,7 @@ function CertificateViewer({
           aria-label="ปิดใบประกาศนียบัตร"
           className="flex size-11 items-center justify-center rounded-full hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span aria-hidden>✕</span>
+          <Icon name="ui/close" className="size-4" />
         </button>
       </div>
 
@@ -141,9 +142,9 @@ function CertificateViewer({
               <dt className="text-xs text-fg-subtle">สถานะ</dt>
               <dd>
                 {certificate.status === "revoked" ? (
-                  <Badge tone="danger">✕ ถูกเพิกถอน</Badge>
+                  <Badge tone="danger"><Icon name="ui/close" className="size-3.5" /> ถูกเพิกถอน</Badge>
                 ) : (
-                  <Badge tone="mint">✓ ตรวจสอบได้</Badge>
+                  <Badge tone="mint"><Icon name="ui/check" className="size-3.5" /> ตรวจสอบได้</Badge>
                 )}
               </dd>
             </div>
@@ -161,20 +162,20 @@ function CertificateViewer({
 
       <div className="kb-no-print border-t border-edge bg-surface px-4 py-4 sm:px-6">
         <div className="mx-auto flex w-full max-w-3xl flex-wrap justify-center gap-2.5">
-          <Button onClick={() => window.print()}>🖨 พิมพ์ / บันทึกเป็น PDF</Button>
+          <Button onClick={() => window.print()}><Icon name="ui/print" className="size-4" /> พิมพ์ / บันทึกเป็น PDF</Button>
           <Button variant="secondary" onClick={() => void share()}>
-            ↗ แชร์
+            <Icon name="ui/share" className="size-4" /> แชร์
           </Button>
           <Button
             variant="secondary"
             onClick={() =>
               void copy(
                 verificationUrl(certificate.verification_token),
-                "คัดลอกลิงก์ตรวจสอบแล้ว 🔗",
+                "คัดลอกลิงก์ตรวจสอบแล้ว",
               )
             }
           >
-            🔗 คัดลอกลิงก์ตรวจสอบ
+            <Icon name="ui/link" className="size-4" /> คัดลอกลิงก์ตรวจสอบ
           </Button>
           <Button
             variant="ghost"
@@ -217,9 +218,9 @@ function CertificateCard({
             {certificate.course_title}
           </h2>
           {certificate.status === "revoked" ? (
-            <Badge tone="danger">✕ ถูกเพิกถอน</Badge>
+            <Badge tone="danger"><Icon name="ui/close" className="size-3.5" /> ถูกเพิกถอน</Badge>
           ) : (
-            <Badge tone="mint">✓ ได้รับแล้ว</Badge>
+            <Badge tone="mint"><Icon name="ui/check" className="size-3.5" /> ได้รับแล้ว</Badge>
           )}
         </div>
         <p className="text-xs text-fg-subtle">
@@ -250,7 +251,7 @@ function PendingCard({
     setBusy(true);
     try {
       await api.post(`/courses/${course.slug}/certificate/`);
-      toast("ออกใบประกาศนียบัตรเรียบร้อย 🎉", "success");
+      toast("ออกใบประกาศนียบัตรเรียบร้อย", "success");
       onIssued();
     } catch (error) {
       if (error instanceof ApiError && error.code === "course_not_completed") {
@@ -267,10 +268,7 @@ function PendingCard({
     <Card className="flex h-full flex-col border-butter-ink/20 bg-butter-soft/30">
       <CardBody className="flex flex-1 flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
-          <span aria-hidden className="text-3xl">
-            🎓
-          </span>
-          <Badge tone="butter">⏳ รอออกใบ</Badge>
+          <Badge tone="butter"><Icon name="ui/timer" className="size-3.5" /> รอออกใบ</Badge>
         </div>
         <h2 className="font-display font-medium text-fg">{course.title}</h2>
         <p className="text-sm text-fg-muted">
@@ -298,9 +296,7 @@ function InProgressCard({ course }: { course: MyCourseProgress }) {
     <Card className="flex h-full flex-col">
       <CardBody className="flex flex-1 flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
-          <span aria-hidden className="text-3xl opacity-60">
-            📘
-          </span>
+          <Icon name="ui/book" className="size-8 text-fg-subtle" />
           <Badge tone="lavender">กำลังเรียน</Badge>
         </div>
         <h2 className="font-display font-medium text-fg">{course.title}</h2>
@@ -405,14 +401,14 @@ function CertificatesContent() {
       {!nothingAtAll ? (
         <div className="mb-7 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-surface bg-butter-soft/40 px-5 py-4 text-sm">
           <p className="flex items-baseline gap-1.5">
-            <span aria-hidden>📜</span>
+            <Icon name="ui/scroll" className="size-4 text-butter-ink" />
             <strong className="font-display text-lg text-fg">
               {issued.length}
             </strong>
             <span className="text-fg-muted">ใบประกาศที่ได้รับ</span>
           </p>
           <p className="flex items-baseline gap-1.5">
-            <span aria-hidden>🎓</span>
+            <Icon name="ui/graduation" className="size-4 text-butter-ink" />
             <strong className="font-display text-lg text-fg">
               {completedCount}
             </strong>
@@ -420,7 +416,8 @@ function CertificatesContent() {
           </p>
           {latest ? (
             <p className="text-fg-muted">
-              <span aria-hidden>✨</span> ล่าสุด {formatThaiDate(latest.issued_at)}
+              <Icon name="ui/sparkle" className="size-3.5 align-[-2px]" /> ล่าสุด{" "}
+              {formatThaiDate(latest.issued_at)}
             </p>
           ) : null}
         </div>
@@ -461,7 +458,7 @@ function CertificatesContent() {
 
       {nothingAtAll ? (
         <EmptyState
-          icon="📜"
+          icon={<Icon name="ui/scroll" className="size-8 text-fg-subtle" />}
           title="ยังไม่มีใบประกาศนียบัตร"
           description="เรียนคอร์สให้จบครบทุกบทเรียน แล้วขอรับใบประกาศนียบัตรที่ตรวจสอบได้จริง"
           action={

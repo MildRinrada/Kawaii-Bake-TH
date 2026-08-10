@@ -41,6 +41,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { CourseCard } from "@/components/content/course-card";
+import { Icon } from "@/components/ui/icon";
 import { MediaFrame } from "@/components/content/media-frame";
 import { RecipeCard } from "@/components/content/recipe-card";
 import { cn } from "@/lib/cn";
@@ -85,7 +86,7 @@ function Reasons({ reasons, max = 2 }: { reasons: string[]; max?: number }) {
     <p className="mt-2 flex flex-wrap gap-1.5">
       {reasons.slice(0, max).map((reason) => (
         <Badge key={reason} tone="lavender">
-          ✨ {REASON_LABELS[reason] ?? reason}
+          <Icon name="ui/sparkle" className="size-3.5" /> {REASON_LABELS[reason] ?? reason}
         </Badge>
       ))}
     </p>
@@ -167,7 +168,7 @@ function TastePanel({
       });
     });
     if (ok) {
-      toast("ปรับคำแนะนำให้ใหม่แล้ว ✨", "success");
+      toast("ปรับคำแนะนำให้ใหม่แล้ว", "success");
       onSaved();
     }
   }
@@ -183,7 +184,7 @@ function TastePanel({
         {onboarding ? (
           <div>
             <h2 className="font-display text-lg font-medium text-fg">
-              บอกเราหน่อยว่าชอบอบอะไร 🧁
+              บอกเราหน่อยว่าชอบอบอะไร
             </h2>
             <p className="mt-1 text-sm text-fg-muted">
               เลือกหมวดที่ชอบและระดับของคุณ
@@ -279,7 +280,7 @@ function HeroRecommendation({
   async function saveForLater() {
     try {
       await api.post(`/recipes/${recipe.slug}/favorite/`);
-      toast("บันทึกเข้ารายการโปรดแล้ว 🔖", "success");
+      toast("บันทึกเข้ารายการโปรดแล้ว", "success");
     } catch {
       toast("บันทึกไม่สำเร็จ ลองอีกครั้งนะ", "danger");
     }
@@ -293,7 +294,15 @@ function HeroRecommendation({
       <div className="flex flex-col justify-center gap-3 p-6 md:w-1/2 md:p-8">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge tone="berry">
-            {authenticated ? "🎯 แนะนำให้ลองต่อไป" : "🔥 กำลังเป็นที่นิยม"}
+            {authenticated ? (
+              <>
+                <Icon name="ui/target" className="size-3.5" /> แนะนำให้ลองต่อไป
+              </>
+            ) : (
+              <>
+                <Icon name="ui/fire" className="size-3.5" /> กำลังเป็นที่นิยม
+              </>
+            )}
           </Badge>
           <DifficultyBadge level={recipe.difficulty} />
           {recipe.categories.slice(0, 1).map((category) => (
@@ -308,7 +317,8 @@ function HeroRecommendation({
         <p className="line-clamp-2 text-sm text-fg-muted">{recipe.summary}</p>
         <Reasons reasons={item.reasons} max={3} />
         <p className="text-xs text-fg-subtle">
-          ⏱ ประมาณ {recipe.total_minutes} นาที · โดย{" "}
+          <Icon name="ui/timer" className="size-3.5 align-[-2px]" /> ประมาณ{" "}
+          {recipe.total_minutes} นาที · โดย{" "}
           {recipe.author.display_name || recipe.author.username}
         </p>
         <div className="mt-1 flex flex-wrap gap-2.5">
@@ -317,7 +327,7 @@ function HeroRecommendation({
           </Link>
           {authenticated ? (
             <Button variant="secondary" onClick={() => void saveForLater()}>
-              🔖 บันทึกไว้ก่อน
+              <Icon name="ui/bookmark" className="size-4" /> บันทึกไว้ก่อน
             </Button>
           ) : null}
         </div>
@@ -445,14 +455,14 @@ export default function RecommendationsPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-medium text-fg sm:text-3xl">
-            แนะนำสำหรับคุณ ✨
+            แนะนำสำหรับคุณ
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-fg-muted">
             {authenticated
               ? "คัดจากหมวดที่คุณชอบ ของที่บันทึก รีวิว และคอร์สที่เรียนอยู่"
               : "เข้าสู่ระบบเพื่อรับคำแนะนำที่ตรงกับรสมือของคุณ"}
             {authenticated && level ? (
-              <Badge tone="lavender">👩‍🍳 {LEVEL_LABELS[level] ?? level}</Badge>
+              <Badge tone="lavender"><Icon name="ui/chef-hat" className="size-3.5" /> {LEVEL_LABELS[level] ?? level}</Badge>
             ) : null}
           </p>
         </div>
@@ -463,7 +473,13 @@ export default function RecommendationsPage() {
             aria-expanded={panelOpen}
             onClick={() => setPanelOpen((value) => !value)}
           >
-            {panelOpen ? "ปิดการปรับความสนใจ" : "⚙️ ปรับความสนใจ"}
+            {panelOpen ? (
+              "ปิดการปรับความสนใจ"
+            ) : (
+              <>
+                <Icon name="ui/sliders" className="size-4" /> ปรับความสนใจ
+              </>
+            )}
           </Button>
         ) : null}
       </div>
@@ -509,7 +525,7 @@ export default function RecommendationsPage() {
       ) : !hero ? (
         <div className="mt-6">
           <EmptyState
-            icon="✨"
+            icon={<Icon name="ui/sparkle" className="size-8 text-fg-subtle" />}
             title="ยังไม่มีคำแนะนำตอนนี้"
             description="ลองกลับมาใหม่เมื่อมีสูตรและคอร์สเพิ่มขึ้น"
           />
@@ -521,7 +537,7 @@ export default function RecommendationsPage() {
           {/* Continue learning */}
           {inProgress.length > 0 ? (
             <Section
-              title="เรียนต่อจากที่ค้างไว้ 📖"
+              title="เรียนต่อจากที่ค้างไว้"
               description="เรียงตามคอร์สที่ใกล้จบก่อน — อีกนิดเดียวเอง"
             >
               <div className="flex snap-x gap-4 overflow-x-auto pb-2">
@@ -548,7 +564,7 @@ export default function RecommendationsPage() {
                     </div>
                     <Link href={`/courses/${course.slug}`} className="mt-4 block">
                       <Button size="sm" className="w-full">
-                        เรียนต่อ →
+                        เรียนต่อ
                       </Button>
                     </Link>
                   </div>
@@ -560,7 +576,7 @@ export default function RecommendationsPage() {
           {/* Learning progression */}
           {authenticated && nextCourses.length > 0 ? (
             <Section
-              title="ก้าวถัดไปของคุณ 🎯"
+              title="ก้าวถัดไปของคุณ"
               description="เส้นทางเรียนที่ต่อยอดจากระดับและคอร์สของคุณ"
             >
               <div className="rounded-surface bg-surface-sunken/60 p-5 sm:p-6">
@@ -574,7 +590,7 @@ export default function RecommendationsPage() {
                       <span className="text-fg-muted">· เรียนจบแล้ว</span>
                       {completedCourses.slice(0, 2).map((course) => (
                         <Badge key={course.slug} tone="mint">
-                          ✓ {course.title}
+                          <Icon name="ui/check" className="size-3.5" /> {course.title}
                         </Badge>
                       ))}
                     </>
@@ -605,7 +621,7 @@ export default function RecommendationsPage() {
           {/* Based on your interests */}
           {interestBucket.length > 0 ? (
             <Section
-              title="จากหมวดที่คุณชอบ 💐"
+              title="จากหมวดที่คุณชอบ"
               description={
                 profile.data && profile.data.favorite_categories.length > 0
                   ? `คุณบอกว่าชอบ: ${profile.data.favorite_categories.join(", ")}`
@@ -628,7 +644,7 @@ export default function RecommendationsPage() {
           {/* Because you saved */}
           {savedBucket.length > 0 ? (
             <Section
-              title="เพราะคุณบันทึกไว้ 🔖"
+              title="เพราะคุณบันทึกไว้"
               description={
                 firstFavorite?.title
                   ? `ต่อยอดจาก “${firstFavorite.title}” และรายการโปรดอื่น ๆ ของคุณ`
@@ -651,7 +667,7 @@ export default function RecommendationsPage() {
           {/* Explore / recipes to bake now — the shortcuts stay useful
               even when the ranked feed was fully absorbed above. */}
           <Section
-            title="อยากอบเลยวันนี้ 🥣"
+            title="อยากอบเลยวันนี้"
             description="เลือกตามเวลาและระดับที่คุณมี — พาไปหน้าสูตรพร้อมตัวกรอง"
           >
               <div className="mb-4 flex flex-wrap gap-2">
@@ -659,19 +675,19 @@ export default function RecommendationsPage() {
                   href={"/recipes?max_total_minutes=30" as Route}
                   className="rounded-full bg-surface px-3.5 py-1.5 text-sm text-fg-muted shadow-raised hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
                 >
-                  ⚡ เสร็จใน 30 นาที
+                  <Icon name="ui/zap" className="size-3.5" /> เสร็จใน 30 นาที
                 </Link>
                 <Link
                   href={"/recipes?difficulty=easy" as Route}
                   className="rounded-full bg-surface px-3.5 py-1.5 text-sm text-fg-muted shadow-raised hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
                 >
-                  🌱 ง่ายสำหรับมือใหม่
+                  <Icon name="ui/sprout" className="size-3.5" /> ง่ายสำหรับมือใหม่
                 </Link>
                 <Link
                   href={"/recipes?difficulty=hard,expert" as Route}
                   className="rounded-full bg-surface px-3.5 py-1.5 text-sm text-fg-muted shadow-raised hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
                 >
-                  🏆 ท้าทายฝีมือ
+                  <Icon name="ui/trophy" className="size-3.5" /> ท้าทายฝีมือ
                 </Link>
               </div>
               {exploreBucket.length > 0 ? (

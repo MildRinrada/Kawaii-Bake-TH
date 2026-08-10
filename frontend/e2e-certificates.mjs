@@ -46,8 +46,8 @@ try {
   // starts from the earned state. Both paths are asserted.
   await page.goto(`${BASE}/certificates`);
   await expect(page, "text=ใบประกาศนียบัตรของฉัน", "page renders");
-  await page.waitForSelector("text=/⏳ รอออกใบ|✓ ได้รับแล้ว/");
-  const pending = await page.locator("text=⏳ รอออกใบ").count();
+  await page.waitForSelector("text=/รอออกใบ|ได้รับแล้ว/");
+  const pending = await page.locator("text=รอออกใบ").count();
 
   if (pending) {
     await expect(page, "text=เรียนจบแล้ว รอออกใบประกาศ", "completed course shows as PENDING, not issued");
@@ -56,12 +56,12 @@ try {
 
     // ---------- Issue through the real endpoint ----------
     await page.click('button:has-text("ขอรับใบประกาศนียบัตร")');
-    await expect(page, "text=ออกใบประกาศนียบัตรเรียบร้อย 🎉", "issuing succeeds via the real API");
+    await expect(page, "text=ออกใบประกาศนียบัตรเรียบร้อย", "issuing succeeds via the real API");
   } else {
     ok("certificate already issued by an earlier run — earned path asserted instead");
     ok("issuing is permanent, so the pending state is not re-created");
   }
-  await expect(page, "text=✓ ได้รับแล้ว", "the certificate now shows as earned");
+  await expect(page, "text=ได้รับแล้ว", "the certificate now shows as earned");
   await expect(page, "text=ใบประกาศที่ได้รับ", "achievement summary appears");
   await expect(page, "text=Certificate of Completion", "certificate artwork renders from real fields");
   await expect(page, "text=/KB-\\d{4}-\\d+/", "real certificate number is shown");
@@ -75,12 +75,12 @@ try {
   // ---------- Full-screen viewer ----------
   await page.click('button:has-text("ดูใบประกาศนียบัตร")');
   await expect(page, 'div[role="dialog"]', "full-screen viewer opens");
-  await expect(page, "text=🖨 พิมพ์ / บันทึกเป็น PDF", "print/save-as-PDF action offered (honest label)");
+  await expect(page, "text=พิมพ์ / บันทึกเป็น PDF", "print/save-as-PDF action offered (honest label)");
   await expect(page, "text=ผู้ออกใบ", "detail metadata shows issuer");
   await page.screenshot({ path: `${SHOT_DIR}/34-cert-viewer.png` });
 
   // ---------- Copy the verification link, then verify anonymously ----------
-  await page.click('button:has-text("🔗 คัดลอกลิงก์ตรวจสอบ")');
+  await page.click('button:has-text("คัดลอกลิงก์ตรวจสอบ")');
   await expect(page, "text=คัดลอกลิงก์ตรวจสอบแล้ว", "verification link copied");
   const verifyUrl = await page.evaluate(() => navigator.clipboard.readText());
   if (!/\/verify\/[0-9a-f-]{36}$/.test(verifyUrl)) {
@@ -92,7 +92,7 @@ try {
   const anon = await browser.newContext({ viewport: { width: 1360, height: 950 } });
   const anonPage = await anon.newPage();
   await anonPage.goto(verifyUrl);
-  await expect(anonPage, "text=✓ ใบประกาศนียบัตรนี้ถูกต้อง", "anonymous visitor sees a VALID verdict");
+  await expect(anonPage, "text=ใบประกาศนียบัตรนี้ถูกต้อง", "anonymous visitor sees a VALID verdict");
   await expect(anonPage, "text=พื้นฐานการอบขนมปังสำหรับมือใหม่", "verified course title shown");
   await expect(anonPage, "text=MildBakes", "recipient handle shown (never an email)");
   const anonBody = await anonPage.textContent("body");
@@ -110,7 +110,7 @@ try {
   // ---------- Mobile ----------
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto(verifyUrl);
-  await mobile.waitForSelector("text=✓ ใบประกาศนียบัตรนี้ถูกต้อง");
+  await mobile.waitForSelector("text=ใบประกาศนียบัตรนี้ถูกต้อง");
   ok("verification page works on mobile");
   await mobile.screenshot({ path: `${SHOT_DIR}/36-verify-mobile.png`, fullPage: true });
   await mobile.close();

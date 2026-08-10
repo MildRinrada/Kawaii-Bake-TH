@@ -38,6 +38,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Rating } from "@/components/ui/rating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Icon } from "@/components/ui/icon";
 import { MediaFrame } from "@/components/content/media-frame";
 import { RecipeCard } from "@/components/content/recipe-card";
 import { CommunityPostCard } from "@/components/community/post-card";
@@ -179,7 +180,7 @@ function TimerDock({
                 timer.remaining === 0 ? "text-success" : "text-fg",
               )}
             >
-              {timer.remaining === 0 ? "เสร็จแล้ว! 🔔" : formatClock(timer.remaining)}
+              {timer.remaining === 0 ? "เสร็จแล้ว!" : formatClock(timer.remaining)}
             </p>
           </div>
           {timer.remaining > 0 ? (
@@ -187,7 +188,7 @@ function TimerDock({
               type="button"
               onClick={() => onToggle(timer.id)}
               aria-label={timer.running ? "พักเวลา" : "จับเวลาต่อ"}
-              className="flex size-9 items-center justify-center rounded-full bg-surface-sunken hover:bg-edge focus-visible:outline-2 focus-visible:outline-focus"
+              className="flex size-13 items-center justify-center rounded-full bg-surface-sunken hover:bg-edge focus-visible:outline-2 focus-visible:outline-focus"
             >
               <span aria-hidden>{timer.running ? "⏸" : "▶"}</span>
             </button>
@@ -196,9 +197,9 @@ function TimerDock({
             type="button"
             onClick={() => onDismiss(timer.id)}
             aria-label="ปิดตัวจับเวลา"
-            className="flex size-9 items-center justify-center rounded-full hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
+            className="flex size-13 items-center justify-center rounded-full hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
           >
-            <span aria-hidden>✕</span>
+            <Icon name="ui/close" className="size-4" />
           </button>
         </div>
       ))}
@@ -227,7 +228,7 @@ function FavoriteButton({ slug }: { slug: string }) {
       } else {
         await api.post(`/recipes/${slug}/favorite/`);
         setFavorited(true);
-        toast("บันทึกเข้ารายการโปรดแล้ว 🧁", "success");
+        toast("บันทึกเข้ารายการโปรดแล้ว", "success");
       }
     } catch {
       toast("ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
@@ -242,7 +243,11 @@ function FavoriteButton({ slug }: { slug: string }) {
       loading={busy}
       onClick={() => void toggle()}
     >
-      {favorited ? "♥ อยู่ในรายการโปรด" : "♡ บันทึกเข้ารายการโปรด"}
+      <Icon
+        name={favorited ? "ui/heart-filled" : "ui/heart"}
+        className="size-4"
+      />
+      {favorited ? "อยู่ในรายการโปรด" : "บันทึกเข้ารายการโปรด"}
     </Button>
   );
 }
@@ -255,7 +260,7 @@ function ShareButton() {
         await navigator.share({ url: window.location.href, title: document.title });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        toast("คัดลอกลิงก์แล้ว 🔗", "success");
+        toast("คัดลอกลิงก์แล้ว", "success");
       }
     } catch {
       // User dismissed the share sheet — nothing to report.
@@ -263,7 +268,7 @@ function ShareButton() {
   }
   return (
     <Button variant="secondary" onClick={() => void share()}>
-      ↗ แชร์
+      <Icon name="ui/share" className="size-4" /> แชร์
     </Button>
   );
 }
@@ -293,7 +298,7 @@ function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) 
       await api.post(`/recipes/${slug}/reviews/`, {
         body: { rating: stars, comment },
       });
-      toast("ขอบคุณสำหรับรีวิวนะ 🧡", "success");
+      toast("ขอบคุณสำหรับรีวิวนะ", "success");
       setStars(0);
       setComment("");
       onPosted();
@@ -301,7 +306,7 @@ function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) 
       if (err instanceof ApiError && err.code === "already_reviewed") {
         setError("คุณรีวิวสูตรนี้ไปแล้ว — แก้ไขได้จากรีวิวเดิมของคุณ");
       } else if (err instanceof ApiError && err.code === "own_content") {
-        setError("รีวิวสูตรของตัวเองไม่ได้นะ 😉");
+        setError("รีวิวสูตรของตัวเองไม่ได้นะ");
       } else {
         setError("ส่งรีวิวไม่สำเร็จ ลองใหม่อีกครั้ง");
       }
@@ -327,11 +332,12 @@ function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) 
             aria-checked={stars === value}
             aria-label={`${value} ดาว`}
             onClick={() => setStars(value)}
-            className="rounded-full p-1 text-2xl focus-visible:outline-2 focus-visible:outline-focus"
+            className="rounded-full p-1 text-butter-ink focus-visible:outline-2 focus-visible:outline-focus"
           >
-            <span aria-hidden className={value <= stars ? "" : "opacity-30 grayscale"}>
-              ⭐
-            </span>
+            <Icon
+              name="ui/star"
+              className={cn("size-13", value > stars && "opacity-30")}
+            />
           </button>
         ))}
       </div>
@@ -451,24 +457,29 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
           <FavoriteButton slug={slug} />
           <ShareButton />
           <a href="#workspace">
-            <Button variant="secondary">⬇ ไปที่สูตรเลย</Button>
+            <Button variant="secondary"><Icon name="ui/arrow-down" className="size-4" /> ไปที่สูตรเลย</Button>
           </a>
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" id="overview">
-        {[
-          ["⏱ เตรียม", `${data.prep_minutes} นาที`],
-          ["🔥 อบ/ทำ", `${data.cook_minutes} นาที`],
-          ["🕒 รวม", `${data.total_minutes} นาที`],
-          ["🍽 ได้", `${data.servings} ที่`],
-        ].map(([label, value]) => (
+        {(
+          [
+            { icon: "timer", label: "เตรียม", value: `${data.prep_minutes} นาที` },
+            { icon: "fire", label: "อบ/ทำ", value: `${data.cook_minutes} นาที` },
+            { icon: "clock", label: "รวม", value: `${data.total_minutes} นาที` },
+            { icon: "plate", label: "ได้", value: `${data.servings} ที่` },
+          ] as const
+        ).map((item) => (
           <div
-            key={label}
+            key={item.label}
             className="rounded-control bg-surface-sunken px-4 py-3 text-center"
           >
-            <p className="text-xs text-fg-muted">{label}</p>
-            <p className="font-display font-medium text-fg">{value}</p>
+            <p className="flex items-center justify-center gap-1 text-xs text-fg-muted">
+              <Icon name={`ui/${item.icon}`} className="size-3.5" />
+              {item.label}
+            </p>
+            <p className="font-display font-medium text-fg">{item.value}</p>
           </div>
         ))}
       </div>
@@ -803,14 +814,14 @@ function Workspace({
             ))}
           </nav>
           <span className="ml-auto flex items-center gap-3 text-xs text-fg-muted">
-            <span>🕒 {data.total_minutes} นาที</span>
-            <span>🍽 {session.servings} ที่</span>
+            <span className="flex items-center gap-1"><Icon name="ui/clock" className="size-4" /> {data.total_minutes} นาที</span>
+            <span className="flex items-center gap-1"><Icon name="ui/plate" className="size-4" /> {session.servings} ที่</span>
             <span aria-live="polite">
               ✓ {doneCount}/{steps.length} ขั้น
             </span>
           </span>
           <Button size="sm" onClick={openFocus}>
-            👩‍🍳 โหมดทำขนม
+            <Icon name="ui/chef-hat" className="size-4" /> โหมดทำขนม
           </Button>
         </div>
       </div>
@@ -969,7 +980,7 @@ function Workspace({
                     onClick={() => setSubsOpen((value) => !value)}
                     className="flex w-full items-center justify-between rounded-control px-2 py-1.5 text-sm font-medium text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
                   >
-                    🧂 ไม่มีวัตถุดิบครบ? ดูของทดแทน
+                    <Icon name="ui/salt" className="size-4" /> ไม่มีวัตถุดิบครบ? ดูของทดแทน
                     <span aria-hidden>{subsOpen ? "▲" : "▼"}</span>
                   </button>
                   {subsOpen ? (
@@ -1051,7 +1062,7 @@ function Workspace({
                         <span
                           aria-hidden
                           className={cn(
-                            "font-display flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-medium",
+                            "font-display flex size-13 shrink-0 items-center justify-center rounded-full text-sm font-medium",
                             isDone
                               ? "bg-mint-soft text-mint-ink"
                               : isActive
@@ -1116,7 +1127,7 @@ function Workspace({
               </ol>
               {activeStep === -1 && steps.length > 0 ? (
                 <p className="mt-5 rounded-control bg-mint-soft px-4 py-3 text-center text-sm font-medium text-mint-ink">
-                  🎉 ทำครบทุกขั้นแล้ว — อย่าลืมมารีวิวเล่าผลงานนะ
+                  <Icon name="ui/party" className="size-4 shrink-0" /> ทำครบทุกขั้นแล้ว — อย่าลืมมารีวิวเล่าผลงานนะ
                 </p>
               ) : null}
             </CardBody>
@@ -1124,7 +1135,7 @@ function Workspace({
 
           {/* Personal notes */}
           <Card>
-            <CardHeader title="โน้ตส่วนตัว 📝" />
+            <CardHeader title="โน้ตส่วนตัว" />
             <CardBody>
               <Textarea
                 value={session.notes}
@@ -1170,7 +1181,7 @@ function Workspace({
         >
           <div className="flex items-center justify-between border-b border-edge px-4 py-3 sm:px-6">
             <p className="font-display font-medium text-fg">
-              👩‍🍳 ขั้นที่ {focusIndex + 1} จาก {steps.length}
+              <Icon name="ui/chef-hat" className="size-4" /> ขั้นที่ {focusIndex + 1} จาก {steps.length}
             </p>
             <button
               type="button"
@@ -1178,7 +1189,7 @@ function Workspace({
               aria-label="ปิดโหมดทำขนม"
               className="flex size-11 items-center justify-center rounded-full hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
             >
-              <span aria-hidden>✕</span>
+              <Icon name="ui/close" className="size-4" />
             </button>
           </div>
           <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-6 overflow-y-auto px-6 py-8">
@@ -1238,7 +1249,7 @@ function Workspace({
               >
                 {focusIndex < steps.length - 1
                   ? "ทำเสร็จแล้ว → ขั้นถัดไป"
-                  : "เสร็จเรียบร้อย 🎉"}
+                  : "เสร็จเรียบร้อย"}
               </Button>
             </div>
           </div>

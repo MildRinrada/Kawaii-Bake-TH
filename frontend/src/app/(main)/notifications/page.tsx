@@ -13,15 +13,17 @@ import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Icon, type UiIconName } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
 
-const EVENT_ICONS: Record<string, string> = {
-  review_received: "⭐",
-  course_enrollment: "🎓",
-  achievement_earned: "🏅",
-  qa_answer_received: "💬",
-  qa_answer_accepted: "✅",
+/** One glyph per wired event type; unknown types fall back to the bell. */
+const EVENT_ICONS: Record<string, UiIconName> = {
+  review_received: "star",
+  course_enrollment: "graduation",
+  achievement_earned: "medal",
+  qa_answer_received: "chat",
+  qa_answer_accepted: "check-circle",
 };
 
 function NotificationsContent() {
@@ -76,7 +78,7 @@ function NotificationsContent() {
         <ErrorState error={error} onRetry={refetch} />
       ) : !data || data.results.length === 0 ? (
         <EmptyState
-          icon="🔔"
+          icon={<Icon name="ui/bell" className="size-8 text-fg-subtle" />}
           title="ยังไม่มีการแจ้งเตือน"
           description="เมื่อมีคนรีวิวผลงานหรือมีความเคลื่อนไหว จะแจ้งไว้ที่นี่"
         />
@@ -96,9 +98,12 @@ function NotificationsContent() {
               >
                 <span
                   aria-hidden
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-lg"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-fg-muted"
                 >
-                  {EVENT_ICONS[item.event_type] ?? "🔔"}
+                  <Icon
+                    name={`ui/${EVENT_ICONS[item.event_type] ?? "bell"}`}
+                    className="size-5"
+                  />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className={cn("text-sm text-fg", unread && "font-medium")}>

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Icon } from "@/components/ui/icon";
 import { PageContainer } from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -27,7 +28,12 @@ function GateState({ error }: { error: ApiError }) {
   const isAuth = error.status === 401;
   return (
     <EmptyState
-      icon={isAuth ? "🔐" : "🎓"}
+      icon={
+        <Icon
+          name={isAuth ? "ui/lock" : "ui/graduation"}
+          className="size-8 text-fg-subtle"
+        />
+      }
       title={isAuth ? "เข้าสู่ระบบเพื่อเรียนบทนี้" : "บทเรียนนี้สำหรับผู้ลงทะเบียน"}
       description={
         isAuth

@@ -20,13 +20,15 @@ import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Icon, type AdminIconName } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
 
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  /** A glyph from `public/icons/admin/`; masked, so it takes the row colour. */
+  icon: AdminIconName;
   /** Set when the page can only report a backend gap. */
   limited?: boolean;
 }
@@ -39,41 +41,42 @@ interface NavGroup {
 export const ADMIN_NAV: NavGroup[] = [
   {
     title: "ภาพรวม",
-    items: [{ href: "/admin/dashboard", label: "แดชบอร์ด", icon: "▦" }],
+    items: [{ href: "/admin/dashboard", label: "แดชบอร์ด", icon: "dashboard" }],
   },
   {
     title: "เนื้อหา",
     items: [
-      { href: "/admin/recipes", label: "สูตรอาหาร", icon: "🍰" },
-      { href: "/admin/courses", label: "คอร์สเรียน", icon: "🎓" },
-      { href: "/admin/lessons", label: "บทเรียน", icon: "📑" },
-      { href: "/admin/categories", label: "หมวดหมู่", icon: "🏷" },
-      { href: "/admin/quizzes", label: "แบบทดสอบ", icon: "✎" },
+      { href: "/admin/recipes", label: "สูตรอาหาร", icon: "recipes" },
+      { href: "/admin/courses", label: "คอร์สเรียน", icon: "courses" },
+      { href: "/admin/lessons", label: "บทเรียน", icon: "lessons" },
+      { href: "/admin/categories", label: "หมวดหมู่", icon: "categories" },
+      { href: "/admin/quizzes", label: "แบบทดสอบ", icon: "quizzes" },
     ],
   },
   {
     title: "ชุมชน",
     items: [
-      { href: "/admin/reviews", label: "รีวิว", icon: "★" },
-      { href: "/admin/questions", label: "คลังคำถาม", icon: "?" },
+      { href: "/admin/reviews", label: "รีวิว", icon: "reviews" },
+      { href: "/admin/questions", label: "คลังคำถาม", icon: "questions" },
     ],
   },
   {
     title: "การเรียนและรางวัล",
     items: [
-      { href: "/admin/progress", label: "ความคืบหน้า", icon: "◷", limited: true },
-      { href: "/admin/certificates", label: "ใบประกาศ", icon: "📜", limited: true },
-      { href: "/admin/achievements", label: "ความสำเร็จ", icon: "🏅", limited: true },
-      { href: "/admin/favorites", label: "รายการโปรด", icon: "♥", limited: true },
+      { href: "/admin/progress", label: "ความคืบหน้า", icon: "progress", limited: true },
+      { href: "/admin/certificates", label: "ใบประกาศ", icon: "certificates", limited: true },
+      { href: "/admin/achievements", label: "ความสำเร็จ", icon: "achievements", limited: true },
+      { href: "/admin/favorites", label: "รายการโปรด", icon: "favorites", limited: true },
     ],
   },
   {
     title: "ระบบ",
     items: [
-      { href: "/admin/users", label: "ผู้ใช้", icon: "👤", limited: true },
-      { href: "/admin/notifications", label: "การแจ้งเตือน", icon: "🔔", limited: true },
-      { href: "/admin/assistant", label: "ผู้ช่วย AI", icon: "✦", limited: true },
-      { href: "/admin/recommendations", label: "การแนะนำ", icon: "◈", limited: true },
+      { href: "/admin/users", label: "ผู้ใช้", icon: "users", limited: true },
+      { href: "/admin/notifications", label: "การแจ้งเตือน", icon: "notifications", limited: true },
+      { href: "/admin/assistant", label: "ผู้ช่วย AI", icon: "assistant", limited: true },
+      { href: "/admin/recommendations", label: "การแนะนำ", icon: "recommendations", limited: true },
+      { href: "/admin/security", label: "ความปลอดภัย", icon: "security" },
     ],
   },
 ];
@@ -264,9 +267,7 @@ function SidebarContent({
                           : "border-l-2 border-transparent pl-3.5 text-fg-muted hover:bg-surface-sunken hover:text-fg",
                       )}
                     >
-                      <span aria-hidden className="w-4 text-center text-xs">
-                        {item.icon}
-                      </span>
+                      <Icon name={`admin/${item.icon}`} className="size-4" />
                       <span className="truncate">{item.label}</span>
                       {item.limited ? (
                         <span
@@ -329,7 +330,7 @@ function AdminHeader({
         type="button"
         onClick={onOpenNav}
         aria-label="เปิดเมนู"
-        className="flex size-9 items-center justify-center rounded-md text-fg-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus lg:hidden"
+        className="flex size-13 items-center justify-center rounded-md text-fg-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus lg:hidden"
       >
         <span aria-hidden>☰</span>
       </button>
@@ -357,7 +358,7 @@ function AdminHeader({
         <Link
           href="/notifications"
           aria-label={`การแจ้งเตือน${unread > 0 ? ` (ยังไม่อ่าน ${unread})` : ""}`}
-          className="relative flex size-9 items-center justify-center rounded-md text-fg-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
+          className="relative flex size-13 items-center justify-center rounded-md text-fg-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
         >
           <span aria-hidden>🔔</span>
           {unread > 0 ? (

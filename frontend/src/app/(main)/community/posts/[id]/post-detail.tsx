@@ -32,6 +32,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
+import { Icon } from "@/components/ui/icon";
 import { PageContainer } from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityImageGallery } from "@/components/community/image-gallery";
@@ -86,9 +87,6 @@ export function PostDetailScreen({ id }: { id: string }) {
         <div className="mx-auto max-w-md py-12 text-center">
           {notFound ? (
             <>
-              <p aria-hidden className="text-5xl">
-                🍰
-              </p>
               <h1 className="font-display mt-3 text-xl font-medium text-fg">
                 ไม่พบโพสต์นี้
               </h1>
@@ -172,10 +170,15 @@ export function PostDetailScreen({ id }: { id: string }) {
 
         <Card className="mt-3 overflow-hidden">
           <div className="flex items-center gap-3 px-5 pt-5">
-            <Avatar name={data.author_handle} size="lg" className="size-11 text-base" />
+            <Avatar
+              src={data.author_avatar_url}
+              name={data.author_display_name}
+              size="lg"
+              className="size-11 text-base"
+            />
             <div className="min-w-0">
               <h1 className="font-display truncate text-base font-medium text-fg">
-                {data.author_handle}
+                {data.author_display_name}
               </h1>
               <p className="text-xs text-fg-subtle">
                 <time dateTime={data.created_at}>
@@ -246,7 +249,7 @@ export function PostDetailScreen({ id }: { id: string }) {
                   setEditing(true);
                 }}
               >
-                ✎ แก้ไขข้อความ
+                <Icon name="ui/edit" className="size-4" /> แก้ไขข้อความ
               </Button>
               <Button
                 size="sm"

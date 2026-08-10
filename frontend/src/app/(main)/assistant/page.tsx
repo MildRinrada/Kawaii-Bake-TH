@@ -16,6 +16,8 @@ import { RequireAuth } from "@/lib/auth/require-auth";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { LottieLoop } from "@/components/ui/lottie-asset";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { PageContainer } from "@/components/ui/page-container";
@@ -110,7 +112,7 @@ function AssistantContent() {
   return (
     <>
       <PageHeader
-        title="ผู้ช่วย AI 🤖"
+        title="ผู้ช่วย AI"
         description="ถามเรื่องการอบขนมเป็นภาษาไทยได้เลย"
         actions={
           <Button variant="secondary" size="sm" onClick={() => void newConversation()}>
@@ -158,7 +160,7 @@ function AssistantContent() {
           {activeId === null ? (
             <CardBody className="flex flex-1 items-center justify-center">
               <EmptyState
-                icon="💬"
+                icon={<LottieLoop src="/lottie/Anima Bot.lottie" className="size-22" />}
                 title="เริ่มคุยกับผู้ช่วยได้เลย"
                 description="สร้างบทสนทนาใหม่ แล้วถามได้ทุกเรื่อง — แป้ง เนย เตาอบ เทคนิค"
                 action={
@@ -181,7 +183,8 @@ function AssistantContent() {
                   <ErrorState error={detail.error} onRetry={detail.refetch} />
                 ) : detail.data?.messages.results.length === 0 ? (
                   <p className="py-8 text-center text-sm text-fg-muted">
-                    พิมพ์คำถามแรกของคุณด้านล่างได้เลย 👇
+                    พิมพ์คำถามแรกของคุณด้านล่างได้เลย{" "}
+                    <Icon name="ui/arrow-down" className="size-4 align-[-3px]" />
                   </p>
                 ) : (
                   detail.data?.messages.results.map((message) => (

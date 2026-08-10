@@ -936,6 +936,58 @@ per-request `COUNT(*)` becomes the bottleneck, preserves it exactly.
 - **Deactivation invalidates live sessions** on their next request, because the
   auth backend re-checks `is_active` on every session restore.
 
+## Security & threat watching — `/api/v1/security/` and `/api/v1/admin/security/`
+
+Public — two endpoints, both anonymous-safe:
+
+| Method | Path | Auth | Success | Notes |
+|---|---|---|---|---|
+| GET | `/security/client-policy/` | **anonymous** | 200 | `{guard_mode, exempt_authenticated, report_signals}` — the env-configured browser-guard posture. A settings read; no database access, no user data |
+| POST | `/security/client-signals/` | **anonymous** | 201 | Report one browser-observed signal. Accepts **only** `devtools_opened`, `view_source_attempt`, `context_menu_attempt`, `console_tamper`; anything else ⇒ 400. Throttled (`SECURITY_SIGNAL_RATE`, default `30/min`). Answers `{"recorded": bool}` and nothing more |
+
+Staff (`is_staff`) — the dashboard. Every view declares `IsAdminUser` itself;
+the `admin/` prefix is naming, not permission:
+
+| Method | Path | Auth | Success | Notes |
+|---|---|---|---|---|
+| GET | `/admin/security/summary/` | staff | 200 | Totals, per-band profile counts (all four bands always present), 24h/7d event counts, per-kind counts, top 5 offenders |
+| GET | `/admin/security/vocabulary/` | staff | 200 | Every signal kind, level and review state with its label, so the dashboard's filters are never hard-coded client-side |
+| GET | `/admin/security/events/` | staff | 200 | Paginated, newest first. Filters `kind`, `severity`, `ip`, `search` (path/UA), `since_hours`. An unknown filter value is a 400, not a silent ignore |
+| GET | `/admin/security/profiles/` | staff | 200 | Paginated offenders. Filters `level`, `review_state`, `blocked`, `search`; `ordering` ∈ `-score\|score\|-last_seen_at\|last_seen_at` |
+| GET | `/admin/security/profiles/{id}/` | staff | 200 / 404 | Profile plus its 20 most recent events |
+| POST | `/admin/security/profiles/{id}/block/` | staff | 200 | `{minutes}` (1 … 43200). Blocks always expire |
+| DELETE | `/admin/security/profiles/{id}/block/` | staff | 200 | Lift immediately |
+| POST | `/admin/security/profiles/{id}/review/` | staff | 200 | `{state: acknowledged\|ignored, note?}`. `open` is rejected — a profile returns to the queue only through fresh activity |
+
+A source's `level` is banded from a decaying score (half-life 12h):
+`low < 15 ≤ medium < 45 ≤ high < 85 ≤ critical`. `score` is the stored
+value, `current_score` the same value decayed to now. Events are
+append-only and carry the severity of their **own** weight, so re-tuning
+weights never rewrites history; the profile is a cache that
+`manage.py recount_threats --dry-run` re-derives from the event log.
+
+Detection is server-side and cannot be forged by a client: trap paths
+(`/.env`, `/wp-login.php`, …), backup-file suffixes, traversal, SQLi/XSS
+markers, attack-tool user agents, scripted clients, 404 sweeps, auth-failure
+bursts and request floods. Search-engine crawlers are matched *before* the
+automation list and scored zero. See ADR 0025 — including the part that says
+plainly that a web page cannot prevent DevTools from opening.
+
+### Security configuration
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `SECURITY_WATCH_ENABLED` | `true` | Master switch for the server-side detectors |
+| `SECURITY_BLOCKING_ENABLED` | `true` | Whether an active block is enforced (observe-only when off) |
+| `SECURITY_AUTO_BLOCK` | `false` | Block automatically on reaching `critical` |
+| `SECURITY_AUTO_BLOCK_MINUTES` | `60` | Length of an automatic block |
+| `SECURITY_TRUSTED_IPS` | `127.0.0.1,::1` | Never scored, never blocked — put the operator's address here **before** testing a honeypot |
+| `SECURITY_CLIENT_GUARD_MODE` | `detect` | `off` / `detect` (observe only) / `deter` (also intercept F12, Ctrl+Shift+I/J, Ctrl+U, right-click). An unrecognised value falls back to `off` |
+| `SECURITY_GUARD_EXEMPT_AUTHENTICATED` | `true` | Leave signed-in visitors alone |
+| `SECURITY_CLIENT_REPORTS_ENABLED` | `true` | Whether the public ingest stores anything |
+| `SECURITY_SIGNAL_RATE` | `30/min` | Throttle on the public ingest |
+| `SECURITY_INGEST_SECRET` | *(empty)* | Shared secret letting the Next.js edge forward a visitor's real address for trap hits Django never sees. Empty disables forwarding |
+
 ## Email links point at the frontend
 
 Reset and verification emails link to `FRONTEND_BASE_URL`, not Django:

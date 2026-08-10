@@ -26,6 +26,7 @@ import {
   describeImageProblem,
 } from "@/lib/community";
 import { Avatar } from "@/components/ui/avatar";
+import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { RecipeAttachmentCard } from "@/components/community/recipe-attachment-card";
 import { RecipeSelectorDialog } from "@/components/community/recipe-selector";
@@ -126,7 +127,7 @@ export function PostComposerForm({
       // Re-read so the caller renders exactly what the server stored,
       // images and all, instead of a locally assembled guess.
       const saved = await api.get<GalleryPost>(`/gallery/${postId}/`);
-      toast("เผยแพร่โพสต์แล้ว 🎉", "success");
+      toast("เผยแพร่โพสต์แล้ว", "success");
       setCaption("");
       setImages([]);
       setAttachment(null);
@@ -183,7 +184,7 @@ export function PostComposerForm({
           onClick={() => fileInput.current?.click()}
           disabled={images.length >= MAX_IMAGES_PER_POST}
         >
-          📷 รูปภาพ
+          <Icon name="ui/camera" className="size-4" /> รูปภาพ
         </Button>
         <Button
           type="button"
@@ -191,7 +192,7 @@ export function PostComposerForm({
           size="sm"
           onClick={() => setPickerOpen(true)}
         >
-          🍰 แนบสูตร
+          <Icon name="ui/paperclip" className="size-4" /> แนบสูตร
         </Button>
         <span className="text-xs text-fg-subtle">
           {images.length}/{MAX_IMAGES_PER_POST} · {ALLOWED_IMAGE_LABEL}

@@ -11,9 +11,11 @@
 
 import { api, type Paginated } from "@/lib/api/client";
 import type { Achievement } from "@/lib/api/models";
+import { badgeArt } from "@/lib/assets";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { relativeThai } from "@/lib/datetime";
 import { ErrorState } from "@/components/ui/error-state";
+import { ArtIcon } from "@/components/ui/icon";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
 import {
   AdminEmpty,
@@ -53,7 +55,10 @@ export default function AdminAchievementsPage() {
               header: "เหรียญ",
               render: (row) => (
                 <span className="flex items-center gap-2">
-                  <span aria-hidden>{row.badge?.icon || "🏅"}</span>
+                  <ArtIcon
+                    src={badgeArt(row.achievement_type, true)}
+                    className="size-6"
+                  />
                   <span className="font-medium">
                     {row.badge?.title_th || row.achievement_type}
                   </span>

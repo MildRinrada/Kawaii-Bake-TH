@@ -29,8 +29,8 @@ try {
   // ---------- Hero + workspace ----------
   await page.goto(RECIPE);
   await expect(page, "text=คุกกี้ช็อกโกแลตชิพนุ่มหนึบ", "hero renders");
-  await expect(page, "text=⬇ ไปที่สูตรเลย", "jump-to-recipe CTA present");
-  await expect(page, 'button:has-text("👩‍🍳 โหมดทำขนม")', "sticky bar with focus-mode entry renders");
+  await expect(page, "text=ไปที่สูตรเลย", "jump-to-recipe CTA present");
+  await expect(page, 'button:has-text("โหมดทำขนม")', "sticky bar with focus-mode entry renders");
   await expect(page, "text=โดคุกกี้", "ingredient groups render (โดคุกกี้)");
   await expect(page, "text=ช็อกโกแลตและตกแต่ง", "second ingredient group renders");
   await expect(page, "text=250 g", "base quantity shows (250 g flour)");
@@ -83,19 +83,19 @@ try {
   await page.screenshot({ path: `${SHOT_DIR}/20-workspace-desktop.png`, fullPage: true });
 
   // ---------- Focus mode ----------
-  await page.click('button:has-text("👩‍🍳 โหมดทำขนม")');
+  await page.click('button:has-text("โหมดทำขนม")');
   await expect(page, 'div[role="dialog"][aria-label="โหมดทำขนม"]', "focus mode opens");
   await expect(page, "text=ขั้นที่ 2 จาก 3", "focus mode resumes at the active step");
   await page.click('button:has-text("ทำเสร็จแล้ว → ขั้นถัดไป")');
   await expect(page, "text=ขั้นที่ 3 จาก 3", "next-step advances and marks done");
   await page.screenshot({ path: `${SHOT_DIR}/21-focus-mode.png` });
-  await page.click('button:has-text("เสร็จเรียบร้อย 🎉")');
+  await page.click('button:has-text("เสร็จเรียบร้อย")');
   await expect(page, "text=ทำครบทุกขั้นแล้ว", "completing all steps shows the celebration state");
 
   // ---------- Notes persistence ----------
   await page.fill('textarea[placeholder*="เตาบ้านเรา"]', "เตาบ้านเราต้องอบเพิ่ม 2 นาที");
   await page.reload();
-  await page.waitForSelector("text=โน้ตส่วนตัว 📝");
+  await page.waitForSelector("text=โน้ตส่วนตัว");
   const noteValue = await page.locator('textarea[placeholder*="เตาบ้านเรา"]').inputValue();
   if (noteValue.includes("อบเพิ่ม 2 นาที")) ok("personal note persists");
   else throw new Error("note lost");
@@ -133,7 +133,7 @@ try {
   await expect(page, "text=โพสต์จากชุมชนเกี่ยวกับสูตรนี้", "recipe page shows the community section");
 
   await page.goto(RECIPE);
-  await page.waitForSelector("text=โน้ตส่วนตัว 📝");
+  await page.waitForSelector("text=โน้ตส่วนตัว");
 
   // ---------- Review form (logged in) ----------
   await page.goto(`${BASE}/login`);
@@ -148,7 +148,7 @@ try {
   await page.fill('textarea[placeholder*="เล่าผลลัพธ์"]', "หนึบจริง อบตามเวลาพอดีเลย");
   await page.click('button:has-text("ส่งรีวิว")');
   const reviewResult = await Promise.race([
-    page.waitForSelector("text=ขอบคุณสำหรับรีวิวนะ 🧡").then(() => "posted"),
+    page.waitForSelector("text=ขอบคุณสำหรับรีวิวนะ").then(() => "posted"),
     page.waitForSelector("text=คุณรีวิวสูตรนี้ไปแล้ว").then(() => "already"),
   ]);
   ok(`review submit handled (${reviewResult}) with friendly Thai feedback`);
@@ -157,9 +157,9 @@ try {
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto(RECIPE);
   await mobile.waitForSelector("text=คุกกี้ช็อกโกแลตชิพนุ่มหนึบ");
-  await mobile.waitForSelector('button:has-text("👩‍🍳 โหมดทำขนม")');
+  await mobile.waitForSelector('button:has-text("โหมดทำขนม")');
   ok("mobile workspace renders with sticky controls");
-  await mobile.click('button:has-text("👩‍🍳 โหมดทำขนม")');
+  await mobile.click('button:has-text("โหมดทำขนม")');
   await mobile.waitForSelector('div[role="dialog"][aria-label="โหมดทำขนม"]');
   ok("mobile focus mode opens full-screen");
   await mobile.screenshot({ path: `${SHOT_DIR}/22-focus-mobile.png` });

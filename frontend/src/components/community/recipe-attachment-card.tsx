@@ -22,6 +22,7 @@ import Link from "next/link";
 
 import type { RecipeListItem, Schemas } from "@/lib/api/models";
 import { Badge, DifficultyBadge, flavorFor } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
 import { MediaFrame } from "@/components/content/media-frame";
 
 type Ref = Schemas["_RecipeRef"] | Schemas["_CourseRef"] | null;
@@ -57,7 +58,7 @@ export function RecipeAttachmentCard({
         </span>
         <span className="min-w-0 flex-1 py-0.5">
           <span className="flex items-center gap-1.5 text-xs text-fg-subtle">
-            <span aria-hidden>🍰</span>
+            <Icon name="ui/paperclip" className="size-4" />
             โพสต์นี้แนบสูตร
           </span>
           <span className="font-display mt-0.5 block truncate font-medium text-fg group-hover:text-accent-hover">
@@ -88,9 +89,7 @@ export function RecipeAttachmentCard({
       href={target.href as "/recipes/[slug]"}
       className="flex items-center gap-2.5 rounded-control border border-edge bg-surface-sunken/60 px-3 py-2 transition-colors hover:border-accent/50 hover:bg-accent-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
-      <span aria-hidden className="text-sm">
-        🔗
-      </span>
+      <Icon name="ui/paperclip" className="size-4 text-fg-subtle" />
       <span className="min-w-0 flex-1">
         <span className="block text-xs text-fg-subtle">
           โพสต์นี้แนบ{target.kind}

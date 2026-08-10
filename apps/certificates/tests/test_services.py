@@ -63,10 +63,25 @@ class IssuanceGateTests(TestCase):
 
         self.assertTrue(created)
         self.assertRegex(certificate.certificate_number, r"^KB-\d{4}-\d{6}$")
+        # No display name was ever set on this profile, so the snapshot
+        # falls back to the handle.
         self.assertEqual(certificate.student_name, self.student.username)
         self.assertEqual(certificate.course_title, course.title)
         self.assertIsNotNone(certificate.completed_at)
         self.assertIsNotNone(certificate.issued_at)
+
+    def test_the_snapshot_prefers_the_real_name_over_the_handle(self) -> None:
+        self.student.profile.display_name = "สมชาย ใจดี"
+        self.student.profile.save(update_fields=["display_name"])
+        course = build_completed_course(
+            student=self.student, instructor=self.instructor
+        )
+
+        certificate, _created = certificate_service.issue_if_completed(
+            user_id=self.student.id, course_slug=course.slug
+        )
+
+        self.assertEqual(certificate.student_name, "สมชาย ใจดี")
 
     def test_duplicate_issue_returns_the_same_certificate(self) -> None:
         course = build_completed_course(

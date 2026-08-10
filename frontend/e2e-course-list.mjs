@@ -27,9 +27,9 @@ try {
   // ---------- Anonymous catalog ----------
   await page.goto(`${BASE}/courses`);
   await expect(page, "text=/ทั้งหมด \\d+ คอร์ส/", "header shows real course count");
-  await expect(page, 'button:has-text("🌱 เริ่มต้นได้เลย")', "learning-path level tiles render");
+  await expect(page, 'button:has-text("เริ่มต้นได้เลย")', "learning-path level tiles render");
   await expect(page, "text=/\\d+ คอร์ส/", "level tiles show real per-level counts");
-  await expect(page, "text=⭐ คอร์สแนะนำ", "featured course renders with extra weight");
+  await expect(page, "text=คอร์สแนะนำ", "featured course renders with extra weight");
   await expect(page, "text=ฟรี", "access label (ฟรี) is visible without opening the course");
   await expect(page, "text=สอนโดย", "instructor identity shows on cards");
   await page.screenshot({ path: `${SHOT_DIR}/27-courses-anon.png`, fullPage: true });
@@ -41,7 +41,7 @@ try {
   });
 
   // ---------- Level tile filters ----------
-  await page.click('button:has-text("🌱 เริ่มต้นได้เลย") >> nth=0');
+  await page.click('button:has-text("เริ่มต้นได้เลย") >> nth=0');
   await page.waitForURL("**difficulty=beginner**");
   await expect(page, "text=กำลังกรอง:", "level selection appears in the active filter summary");
   await page.click("text=ล้างทั้งหมด");
@@ -62,7 +62,7 @@ try {
   await page.click('button:has-text("ล้าง")');
 
   // ---------- Stored aggregates on cards (no N+1) ----------
-  await expect(page, "text=⏱ 40 นาที", "total duration from the list payload shows on the card");
+  await expect(page, "text=40 นาที", "total duration from the list payload shows on the card");
   await expect(page, "text=4.7", "rating aggregate shows on the reviewed course");
 
   // ---------- No-results recovery ----------
@@ -98,12 +98,12 @@ try {
   });
 
   if (inProgress > 0) {
-    await expect(page, "text=เรียนต่อจากที่ค้างไว้ 📖", "continue-learning strip appears before the catalog");
+    await expect(page, "text=เรียนต่อจากที่ค้างไว้", "continue-learning strip appears before the catalog");
     await expect(page, "text=/เรียนแล้ว \\d+ จาก \\d+/", "strip shows real lesson counts");
     await expect(page, 'button:has-text("เรียนต่อ →")', "enrolled card CTA becomes Continue");
     await expect(page, 'div[role="progressbar"]', "progress bar shows directly on the card");
   } else {
-    if (await page.locator("text=เรียนต่อจากที่ค้างไว้ 📖").count()) {
+    if (await page.locator("text=เรียนต่อจากที่ค้างไว้").count()) {
       throw new Error("continue-learning strip rendered with nothing in progress");
     }
     ok("no course is in progress, so the continue-learning strip is correctly absent");
@@ -126,9 +126,9 @@ try {
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto(`${BASE}/courses`);
   await mobile.waitForSelector('h1:has-text("คอร์สเรียน")');
-  await mobile.waitForSelector('button:has-text("🌱 เริ่มต้นได้เลย")');
+  await mobile.waitForSelector('button:has-text("เริ่มต้นได้เลย")');
   ok("mobile renders level tiles");
-  await mobile.click('button:has-text("⚙️ ตัวกรอง")');
+  await mobile.click('button:has-text("ตัวกรอง")');
   await expect(mobile, 'div[role="dialog"][aria-label="ตัวกรองคอร์ส"]', "mobile bottom-sheet filter opens");
   await mobile.click('div[role="dialog"] button:has-text("ดูผลลัพธ์")');
   await mobile.screenshot({ path: `${SHOT_DIR}/29-courses-mobile.png`, fullPage: true });

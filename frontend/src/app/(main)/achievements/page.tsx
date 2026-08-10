@@ -25,6 +25,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Route } from "next";
 
 import { api, type Paginated } from "@/lib/api/client";
+import { badgeArt } from "@/lib/assets";
 import type { Achievement, GamificationSummary, Schemas } from "@/lib/api/models";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { RequireAuth } from "@/lib/auth/require-auth";
@@ -32,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { ArtIcon, Icon } from "@/components/ui/icon";
 import { PageContainer } from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
@@ -111,23 +113,31 @@ interface BadgeState {
 /* Celebration                                                         */
 /* ------------------------------------------------------------------ */
 
-const SPRINKLES = ["🧁", "🍪", "✨", "🍰", "⭐", "🍩", "✨", "🥐"];
+const SPRINKLE_TONES = [
+  "text-berry-ink",
+  "text-peach-ink",
+  "text-butter-ink",
+  "text-lavender-ink",
+  "text-mint-ink",
+  "text-berry-ink",
+  "text-peach-ink",
+  "text-butter-ink",
+] as const;
 
 function Sprinkles() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      {SPRINKLES.map((glyph, index) => (
-        <span
+      {SPRINKLE_TONES.map((tone, index) => (
+        <Icon
           key={index}
-          className="kb-sprinkle absolute text-lg"
+          name={index % 2 ? "ui/star" : "ui/sparkle"}
+          className={cn("kb-sprinkle absolute size-6", tone)}
           style={{
             left: `${8 + index * 11}%`,
             animationDelay: `${index * 70}ms`,
             ["--kb-spin" as string]: `${index % 2 ? 240 : -200}deg`,
           }}
-        >
-          {glyph}
-        </span>
+        />
       ))}
     </div>
   );
@@ -178,13 +188,16 @@ function BadgeDetail({
             <span
               aria-hidden
               className={cn(
-                "mx-auto flex size-24 items-center justify-center rounded-full text-5xl",
+                "mx-auto flex size-24 items-center justify-center rounded-full",
                 earned
                   ? cn(toneFor(state.badge.slug), "kb-badge-pop shadow-raised")
-                  : "bg-surface-sunken grayscale",
+                  : "bg-surface-sunken",
               )}
             >
-              {earned ? state.badge.icon || "🏅" : "🔒"}
+              <ArtIcon
+                src={badgeArt(state.badge.slug, earned !== null)}
+                className="size-20"
+              />
             </span>
 
             <h2 className="font-display mt-4 text-lg font-medium text-fg">
@@ -198,7 +211,7 @@ function BadgeDetail({
 
             {earned ? (
               <div className="mt-4 rounded-control bg-success-subtle px-3 py-2">
-                <p className="text-sm font-medium text-success">✓ ปลดล็อกแล้ว</p>
+                <p className="flex items-center justify-center gap-1 text-sm font-medium text-success"><Icon name="ui/check" className="size-4" /> ปลดล็อกแล้ว</p>
                 <p className="text-xs text-fg-muted">
                   ได้รับเมื่อ {thaiDate(earned.awarded_at)}
                 </p>
@@ -259,18 +272,18 @@ function BadgeCard({
         <span
           aria-hidden
           className={cn(
-            "relative flex size-16 items-center justify-center rounded-full text-3xl",
+            "relative flex size-16 items-center justify-center rounded-full",
             earned
               ? cn(toneFor(state.badge.slug), "shadow-raised")
-              : "bg-surface-sunken text-fg-subtle grayscale",
+              : "bg-surface-sunken",
           )}
         >
-          {earned ? state.badge.icon || "🏅" : state.badge.icon || "🏅"}
-          {!earned ? (
-            <span className="absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full bg-surface text-xs shadow-raised">
-              🔒
-            </span>
-          ) : null}
+          {/* The locked artwork carries its own padlock, so an unearned
+              badge needs no extra overlay to read as locked. */}
+          <ArtIcon
+            src={badgeArt(state.badge.slug, earned)}
+            className="size-13"
+          />
         </span>
 
         <h3
@@ -287,7 +300,7 @@ function BadgeCard({
         <p className="mt-auto pt-1 text-xs">
           {earned ? (
             <span className="text-success">
-              ✓ {thaiDate(state.earned!.awarded_at)}
+              <Icon name="ui/check" className="size-3.5 align-[-2px]" /> {thaiDate(state.earned!.awarded_at)}
             </span>
           ) : (
             <span className="text-fg-subtle">รอให้คุณปลดล็อก</span>
@@ -357,9 +370,6 @@ function AchievementsContent() {
     return (
       <Card>
         <CardBody className="py-10 text-center">
-          <p aria-hidden className="text-4xl">
-            🏆
-          </p>
           <p className="font-display mt-3 font-medium text-fg">
             โหลดความสำเร็จไม่สำเร็จ
           </p>
@@ -382,7 +392,8 @@ function AchievementsContent() {
       {/* ---- Header ------------------------------------------------ */}
       <header className="mb-6">
         <h1 className="font-display text-2xl font-medium text-fg sm:text-3xl">
-          ความสำเร็จของฉัน 🏆
+          <Icon name="ui/trophy" className="inline-block size-7 align-[-5px] text-butter-ink" />{" "}
+          ความสำเร็จของฉัน
         </h1>
         <p className="mt-1 text-sm text-fg-muted">
           ทุกครั้งที่คุณเรียนรู้และลงมือทำ คืออีกหนึ่งก้าวของนักอบขนม
@@ -407,7 +418,7 @@ function AchievementsContent() {
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label="ความคืบหน้าการปลดล็อกความสำเร็จ"
-              className="mt-1.5 h-3 w-full overflow-hidden rounded-full bg-surface-sunken"
+              className="mt-1.5 h-3 w-full overflow-hidden "
             >
               <div
                 className="h-full rounded-full bg-accent/80 transition-[width] duration-500"
@@ -462,9 +473,7 @@ function AchievementsContent() {
 
             {standing.data?.streak ? (
               <div className="text-center">
-                <p className="text-2xl" aria-hidden>
-                  🔥
-                </p>
+                <Icon name="ui/fire" className="mx-auto size-7 text-peach-ink" />
                 <p className="text-sm font-medium text-fg">
                   {standing.data.streak.current} วัน
                 </p>
@@ -537,7 +546,7 @@ function AchievementsContent() {
       ) : total === 0 ? (
         <Card>
           <EmptyState
-            icon="🧁"
+            icon={<Icon name="ui/trophy" className="size-8 text-fg-subtle" />}
             title="ยังไม่มีเหรียญให้เก็บในตอนนี้"
             description="ทีมงานกำลังเตรียมความสำเร็จชุดใหม่ให้คุณ"
           />
@@ -546,8 +555,8 @@ function AchievementsContent() {
         <>
           <Card className="mb-6">
             <EmptyState
-              icon="🧁"
-              title="เส้นทางนักอบขนมของคุณกำลังเริ่มต้น 🧁"
+              icon={<Icon name="ui/sprout" className="size-8 text-fg-subtle" />}
+              title="เส้นทางนักอบขนมของคุณกำลังเริ่มต้น"
               description="เรียนคอร์สแรก ทำสูตรแรก หรือเริ่มบทเรียนเพื่อปลดล็อกความสำเร็จ"
               action={
                 <Link href="/courses">
@@ -563,7 +572,7 @@ function AchievementsContent() {
           {unlocked.length > 0 ? (
             <section>
               <h2 className="font-display mb-3 text-lg font-medium text-fg">
-                ปลดล็อกแล้ว ✨{" "}
+                <Icon name="ui/sparkle" className="inline-block size-4 align-[-3px]" /> ปลดล็อกแล้ว{" "}
                 <span className="text-sm font-normal text-fg-muted">
                   {unlocked.length} เหรียญ
                 </span>
@@ -600,9 +609,7 @@ function LockedSection({
     return (
       <Card>
         <CardBody className="py-8 text-center">
-          <p aria-hidden className="text-3xl">
-            🎉
-          </p>
+          <Icon name="ui/party" className="mx-auto size-8 text-accent" />
           <p className="font-display mt-2 font-medium text-fg">
             เก็บครบทุกเหรียญในหมวดนี้แล้ว!
           </p>
@@ -614,7 +621,7 @@ function LockedSection({
   return (
     <section>
       <h2 className="font-display mb-1 text-lg font-medium text-fg">
-        รอให้คุณปลดล็อก 🔒{" "}
+        <Icon name="ui/lock" className="inline-block size-4 align-[-3px]" /> รอให้คุณปลดล็อก{" "}
         <span className="text-sm font-normal text-fg-muted">
           {locked.length} เหรียญ
         </span>

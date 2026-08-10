@@ -32,6 +32,11 @@
   --kb-accent-hover: #b93b69;
   --kb-accent-subtle: #fde9f1;
 
+    /* Primary action — raspberry: warm, confident, AA with white text */
+  --kb-pastel-blue: #7ab8e5;
+  --kb-pastel-blue-hover: #5a9fd1;
+  --kb-pastel-blue-subtle: #e6f2fb;
+
   /* The flavor family — decorative/categorical, each soft + ink pair.
      Semantic roles: berry=primary family, peach=recipes/food warmth,
      butter=highlights & rewards, lavender=learning/AI, mint=success/fresh. */
@@ -76,4 +81,6 @@
     system-ui, sans-serif;
   --kb-font-display: var(--font-display), "Mitr", var(--kb-font-sans);
   --kb-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Certificate signature line only — Latin-only, see layout.tsx. */
+  --kb-font-signature: var(--font-signature), cursive;
 }

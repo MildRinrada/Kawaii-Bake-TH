@@ -33,7 +33,7 @@ try {
   await expect(page, "text=สำรวจตามหมวดขนม", "category explorer renders");
   await expect(page, "text=จากครัวของชุมชน", "community preview renders");
   await expect(page, "text=ทำไมคุกกี้ของฉันแข็งเกินไป?", "community shows a real question");
-  await expect(page, "text=มีคำตอบแล้ว ✓", "accepted-answer badge shows");
+  await expect(page, "text=มีคำตอบแล้ว", "accepted-answer badge shows");
   await expect(page, 'nav[aria-label="เมนูเรียนรู้"]', "structured footer renders");
   await page.screenshot({ path: `${SHOT_DIR}/12-home-anon-desktop.png`, fullPage: true });
 
@@ -72,10 +72,19 @@ try {
     );
     return (await response.json()).count;
   });
+  // Scoped to the section heading (`h2`) — the nav also carries a
+  // "แนะนำสำหรับคุณ" link to /recommendations, which a bare text locator
+  // matches too.
+  const sectionHeading = page.locator("h2", { hasText: "แนะนำสำหรับคุณ" });
   if (recommended > 0) {
-    await expect(page, "text=แนะนำสำหรับคุณ ✨", "recommendation feed becomes personal");
+    await sectionHeading.waitFor({ state: "visible", timeout: 15_000 });
+    ok("recommendation feed becomes personal");
   } else {
-    if (await page.locator("text=แนะนำสำหรับคุณ ✨").count()) {
+    // The page runs its own fetch of the same endpoint; give it a beat to
+    // resolve and render null before asserting the section is absent —
+    // otherwise this races the component's in-flight request.
+    await page.waitForTimeout(1000);
+    if (await sectionHeading.count()) {
       throw new Error("recommendation section rendered with no recommendations");
     }
     ok("engine returned nothing, so the recommendation section is correctly absent");

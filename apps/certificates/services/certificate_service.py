@@ -29,6 +29,29 @@ from apps.users.selectors import user_selector
 logger = logging.getLogger("kawaiibake.certificates")
 
 
+def _printable_name(student) -> str:  # noqa: ANN001 - apps.users.models.User
+    """The name a certificate should print: the real name, not the handle.
+
+    Falls back to the username only when no display name was ever set —
+    the same rule ``AuthorRefSerializer`` uses everywhere else a name is
+    shown. This is a one-time snapshot taken at issuance
+    (``Certificate.student_name`` never changes afterward, see the model
+    docstring); a learner renaming their profile later does not retitle
+    certificates already printed, the same way a paper certificate would
+    not rewrite itself.
+
+    Args:
+        student: The issuing user, or ``None``.
+
+    Returns:
+        The name to print, or ``""`` if there is no student.
+    """
+    if student is None:
+        return ""
+    profile = getattr(student, "profile", None)
+    return (profile.display_name if profile else "") or student.username
+
+
 def issue_if_completed(
     *, user_id: int, course_slug: str, viewer_is_staff: bool = False
 ) -> tuple[Certificate, bool]:
@@ -81,7 +104,7 @@ def issue_if_completed(
         certificate = certificate_repository.issue_certificate(
             user_id=user_id,
             course_id=course.id,
-            student_name=student.username if student else "",
+            student_name=_printable_name(student),
             course_title=course.title,
             completed_at=completed_at,
         )

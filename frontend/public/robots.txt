@@ -1,0 +1,56 @@
+# KawaiiBake — crawler policy
+#
+# This file is a REQUEST, not a control. A crawler that ignores it is not
+# breaking anything technical; enforcement lives in the threat-watch app
+# on the backend (ADR 0025), which scores unknown automation and probes.
+#
+# We want to be indexed: recipes and courses are the product's shop
+# window. What we do not want is bulk scraping of user-facing surfaces
+# that carry other people's content, and crawling of routes that need a
+# session and would only ever return a redirect.
+
+User-agent: *
+Allow: /
+Allow: /recipes
+Allow: /courses
+Allow: /community
+
+# Private or session-only surfaces. Nothing here renders for an
+# anonymous visitor, so crawling it wastes everyone's budget.
+Disallow: /admin
+Disallow: /profile
+Disallow: /settings
+Disallow: /favorites
+Disallow: /notifications
+Disallow: /achievements
+Disallow: /certificates
+Disallow: /assistant
+Disallow: /learn
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /verify
+
+# Search result pages are infinite in combination and duplicate the
+# canonical listing pages.
+Disallow: /*?search=
+Disallow: /*?page=
+
+# Aggressive commercial scrapers. They advertise themselves honestly, so
+# asking costs nothing; the backend scores them either way.
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Slow the rest down rather than banning them.
+User-agent: *
+Crawl-delay: 5

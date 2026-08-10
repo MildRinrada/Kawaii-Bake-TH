@@ -4,7 +4,7 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "secondary" | "tertiary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -19,8 +19,10 @@ const VARIANTS: Record<Variant, string> = {
     "bg-accent text-fg-inverted shadow-raised hover:bg-accent-hover active:translate-y-px disabled:bg-fg-subtle disabled:shadow-none",
   secondary:
     "border border-edge-strong/60 bg-surface text-fg hover:border-accent/50 hover:bg-accent-subtle hover:text-accent-hover active:translate-y-px disabled:text-fg-subtle",
+  tertiary:
+    "bg-pastel-blue text-fg-inverted shadow-raised hover:bg-pastel-blue-hover active:translate-y-px disabled:bg-fg-subtle disabled:shadow-none",
   ghost:
-    "text-fg-muted hover:bg-accent-subtle hover:text-accent-hover disabled:text-fg-subtle",
+    "text-fg-muted hover:bg-pastel-blue-subtle hover:text-pastel-blue-hover disabled:text-fg-subtle",
   danger:
     "bg-danger text-fg-inverted shadow-raised hover:opacity-90 active:translate-y-px disabled:bg-fg-subtle",
 };

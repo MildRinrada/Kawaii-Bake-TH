@@ -13,6 +13,7 @@
 import { chromium } from "playwright";
 
 const BASE = "http://localhost:3000";
+const API = "http://localhost:8000/api/v1";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 const LEARNER = { email: "p16-learner@example.com", password: "Rhubarb!Tart2024" };
 const STAMP = Date.now() % 100000;
@@ -131,14 +132,32 @@ try {
   });
   await expect(page, 'img[src^="blob:"]', "picked image previews locally before upload");
 
-  await page.click('button:has-text("🍰 แนบสูตร")');
+  await page.click('button:has-text("แนบสูตร")');
   await expect(page, 'dialog[aria-label="เลือกสูตรที่จะแนบ"]', "recipe selector opens");
 
   // Drafts must not be offerable: the backend only accepts a reference to
   // a publicly visible recipe, so the selector reads the public feed.
-  await page.fill('input[aria-label="ค้นหาสูตร"]', "บราวนี่");
-  await page.waitForTimeout(1000);
-  await expect(page, "text=/ไม่พบสูตรที่ตรงกับ/", "a draft recipe is not offerable as an attachment");
+  // The title is read live — hard-coding one broke the moment that recipe
+  // was published.
+  const hidden = await page.evaluate(async (api) => {
+    const mine = await (
+      await fetch(`${api}/recipes/?scope=mine&page_size=100`, {
+        credentials: "include",
+      })
+    ).json();
+    const draft = mine.results.find((row) => row.status !== "published");
+    return draft ? draft.title : null;
+  }, API);
+  const absentTerm = hidden ?? "ขนมที่ไม่มีอยู่จริงเลยสักสูตร";
+  await page.fill('input[aria-label="ค้นหาสูตร"]', absentTerm);
+  await page.waitForTimeout(1200);
+  await expect(
+    page,
+    "text=/ไม่พบสูตรที่ตรงกับ/",
+    hidden
+      ? `a draft recipe is not offerable as an attachment (${hidden})`
+      : "no draft to test with — an unmatched search shows the empty state",
+  );
 
   await page.fill('input[aria-label="ค้นหาสูตร"]', "คุกกี้");
   await page.waitForTimeout(1000);
@@ -147,7 +166,7 @@ try {
   await firstResult.click();
   await expect(page, "text=โพสต์นี้แนบสูตร", "attachment renders as a reference card, not as the post");
   ok(`recipe attached by search, never by id (${attachedTitle.slice(0, 20)}…)`);
-  await expect(page, "text=🍰 แนบสูตร", "composer toolbar offers photo and recipe actions");
+  await expect(page, "text=แนบสูตร", "composer toolbar offers photo and recipe actions");
   await page.screenshot({ path: `${SHOT_DIR}/63-community-compose.png`, fullPage: true });
 
   /* ---- Publish ---- */
@@ -165,7 +184,7 @@ try {
   /* ---- It appears in the feed ---- */
   await page.goto(`${BASE}/community`);
   await expect(page, `text=${CAPTION}`, "the post appears in the community feed");
-  await expect(page, "text=แชร์สูตร 📖", "a post with a recipe carries the derived kind badge");
+  await expect(page, "text=แชร์สูตร", "a post with a recipe carries the derived kind badge");
   // The rich attachment card needs fields the feed payload lacks; the page
   // enriches them from the public recipe list in one read.
   await expect(page, 'a[aria-label^="ดูสูตร"]', "attachment renders as a rich recipe card in the feed");

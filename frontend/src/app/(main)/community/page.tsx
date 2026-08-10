@@ -37,6 +37,8 @@ import { PageContainer } from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityPostCard } from "@/components/community/post-card";
 import { PostComposerForm } from "@/components/community/post-composer-form";
+import { Icon } from "@/components/ui/icon";
+import { CategoryTile } from "@/components/content/category-tile";
 import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 10;
@@ -49,7 +51,7 @@ function PostSkeleton() {
   return (
     <Card className="overflow-hidden" aria-hidden>
       <div className="flex items-center gap-3 p-4">
-        <Skeleton className="size-9 rounded-full" />
+        <Skeleton className="size-13 rounded-full" />
         <div className="flex-1 space-y-1.5">
           <Skeleton className="h-3.5 w-32" />
           <Skeleton className="h-3 w-20" />
@@ -116,8 +118,8 @@ function InlineComposer({ onPublished }: { onPublished: (post: GalleryPost) => v
           </div>
           <div className="flex flex-wrap gap-2 border-t border-edge pt-3">
             {[
-              { icon: "📷", label: "รูปภาพ" },
-              { icon: "🍰", label: "แนบสูตร" },
+              { icon: "ui/camera" as const, label: "รูปภาพ" },
+              { icon: "ui/paperclip" as const, label: "แนบสูตร" },
             ].map((item) => (
               <button
                 key={item.label}
@@ -125,7 +127,7 @@ function InlineComposer({ onPublished }: { onPublished: (post: GalleryPost) => v
                 onClick={() => setOpen(true)}
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
               >
-                <span aria-hidden>{item.icon}</span>
+                <Icon name={item.icon} className="size-4" />
                 {item.label}
               </button>
             ))}
@@ -240,10 +242,10 @@ function CommunityFeed() {
         {/* ---- Hero ---------------------------------------------- */}
         <header className="kb-hero mb-5 rounded-surface px-5 py-6 sm:px-7 sm:py-8">
           <h1 className="font-display text-2xl font-medium text-fg sm:text-3xl">
-            ชุมชนคนรักการอบขนม 🧁
+            ชุมชนคนรักการอบขนม
           </h1>
           <p className="mt-1.5 max-w-lg text-sm text-fg-muted">
-            แบ่งปันผลงาน ถามปัญหา และเรียนรู้จากคนทำขนมด้วยกัน
+            มาแบ่งปันผลงาน ถามคำถาม และเรียนรู้เรื่องอบขนมไปด้วยกัน
           </p>
           <div className="mt-4">
             {status === "authenticated" ? (
@@ -270,25 +272,33 @@ function CommunityFeed() {
           <div
             role="group"
             aria-label="กรองโพสต์ตามหมวดของสูตรที่แนบ"
-            className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+            className="-mx-1 flex snap-x items-start gap-2.5 overflow-x-auto px-1 pb-1"
           >
-            <FilterChip
-              active={!category}
+            <button
+              type="button"
+              aria-pressed={!category}
               onClick={() => setFilter({ category: null })}
+              className={cn(
+                "flex aspect-square w-20 shrink-0 snap-start items-center justify-center rounded-surface text-sm font-medium shadow-raised transition-colors sm:w-24",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                !category
+                  ? "bg-accent text-fg-inverted"
+                  : "bg-surface text-fg-muted hover:text-fg",
+              )}
             >
               ทั้งหมด
-            </FilterChip>
+            </button>
             {(categories.data ?? []).map((item) => (
-              <FilterChip
+              <CategoryTile
                 key={item.slug}
+                compact
+                slug={item.slug}
+                name={item.name}
                 active={category === item.slug}
                 onClick={() =>
                   setFilter({ category: category === item.slug ? null : item.slug })
                 }
-              >
-                {item.icon ? `${item.icon} ` : "#"}
-                {item.name}
-              </FilterChip>
+              />
             ))}
           </div>
           <p className="mt-1.5 text-xs text-fg-subtle">
@@ -329,9 +339,6 @@ function CommunityFeed() {
           ) : feed.error ? (
             <Card>
               <CardBody className="py-10 text-center">
-                <p aria-hidden className="text-4xl">
-                  🧁
-                </p>
                 <p className="font-display mt-3 font-medium text-fg">
                   ไม่สามารถโหลดโพสต์ได้
                 </p>
@@ -343,14 +350,8 @@ function CommunityFeed() {
           ) : posts.length === 0 ? (
             <Card>
               <CardBody className="flex flex-col items-center gap-3 py-14 text-center">
-                <span
-                  aria-hidden
-                  className="flex size-16 items-center justify-center rounded-full bg-butter-soft text-3xl"
-                >
-                  🧁
-                </span>
                 <p className="font-display text-base font-medium text-fg">
-                  {filtered ? "ยังไม่มีโพสต์ในหมวดนี้ 🧁" : "ยังไม่มีโพสต์ในชุมชน"}
+                  {filtered ? "ยังไม่มีโพสต์ในหมวดนี้" : "ยังไม่มีโพสต์ในชุมชน"}
                 </p>
                 <p className="max-w-sm text-sm text-fg-muted">
                   มาเป็นคนแรกที่แบ่งปันผลงานกันไหม?
@@ -467,44 +468,16 @@ function CommunityFeed() {
                 เกี่ยวกับชุมชนนี้
               </p>
               <p>
-                แชร์ผลงาน ถามเทคนิค และแนบสูตรที่คุณใช้ได้ —
-                โพสต์ทุกอันแสดงต่อสาธารณะ
+                แชร์ผลงานของคุณ ถามเทคนิค หรือแนบสูตรที่ใช้ก็ได้ ทุกโพสต์จะแสดงเป็นสาธารณะ
               </p>
               <p>
-                ระบบไลก์ คอมเมนต์ และบันทึกโพสต์ยังไม่เปิดใช้งานในเวอร์ชันนี้
+                ตอนนี้ระบบไลก์ คอมเมนต์ และบันทึกโพสต์ยังไม่เปิดให้ใช้งาน
               </p>
             </CardBody>
           </Card>
         </div>
       </aside>
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm transition-colors",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-        active
-          ? "border-accent bg-accent-subtle font-medium text-fg"
-          : "border-edge bg-surface text-fg-muted hover:border-edge-strong hover:text-fg",
-      )}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -522,8 +495,20 @@ function RecentBakers({
   active: string | null;
   onPick: (handle: string) => void;
 }) {
-  const handles = [...new Set(posts.map((post) => post.author_handle))].slice(0, 6);
-  if (handles.length === 0) return null;
+  // Filtering is by handle (the API's `?author=` takes a username), but
+  // the avatar and label shown are the real display name and photo — the
+  // handle stays the unique key underneath.
+  const bakers = new Map<string, { displayName: string; avatarUrl: string | null }>();
+  for (const post of posts) {
+    if (!bakers.has(post.author_handle)) {
+      bakers.set(post.author_handle, {
+        displayName: post.author_display_name,
+        avatarUrl: post.author_avatar_url,
+      });
+    }
+  }
+  const entries = [...bakers.entries()].slice(0, 6);
+  if (entries.length === 0) return null;
 
   return (
     <Card>
@@ -532,7 +517,7 @@ function RecentBakers({
           นักอบขนมในฟีดนี้
         </h2>
         <ul className="mt-3 space-y-1">
-          {handles.map((handle) => (
+          {entries.map(([handle, baker]) => (
             <li key={handle}>
               <button
                 type="button"
@@ -545,9 +530,9 @@ function RecentBakers({
                     : "hover:bg-surface-sunken",
                 )}
               >
-                <Avatar name={handle} size="sm" />
+                <Avatar src={baker.avatarUrl} name={baker.displayName} size="sm" />
                 <span className="min-w-0 flex-1 truncate text-sm text-fg">
-                  {handle}
+                  {baker.displayName}
                 </span>
                 {active === handle ? (
                   <span className="shrink-0 text-xs text-accent">กำลังดู</span>

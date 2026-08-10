@@ -40,6 +40,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Rating } from "@/components/ui/rating";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Icon } from "@/components/ui/icon";
+import { CategoryThumb } from "@/components/content/category-tile";
 import { MediaFrame } from "@/components/content/media-frame";
 import { cn } from "@/lib/cn";
 
@@ -48,19 +50,19 @@ const PAGE_SIZE = 12;
 const LEVELS = [
   {
     value: "beginner",
-    icon: "🌱",
+    icon: "sprout" as const,
     name: "เริ่มต้นได้เลย",
     detail: "ไม่ต้องมีพื้นฐาน — อุปกรณ์ การตวง และโดแรกของคุณ",
   },
   {
     value: "intermediate",
-    icon: "🥐",
+    icon: "croissant" as const,
     name: "ระดับกลาง",
     detail: "ต่อยอดจากพื้นฐาน — กลูเตน ครีม และการขึ้นรูป",
   },
   {
     value: "advanced",
-    icon: "👩‍🍳",
+    icon: "chef-hat" as const,
     name: "ขั้นสูง",
     detail: "งานละเอียดระดับร้าน — ลามิเนตและการตกแต่งขั้นสูง",
   },
@@ -102,7 +104,7 @@ function FilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "rounded-full px-3.5 py-1.5 text-sm transition-colors",
+        "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors",
         "focus-visible:outline-2 focus-visible:outline-focus",
         active
           ? "bg-accent font-medium text-fg-inverted shadow-raised"
@@ -145,7 +147,7 @@ function CourseLearningCard({
   const cta = course.is_completed
     ? "ทบทวนคอร์ส"
     : course.is_enrolled
-      ? "เรียนต่อ →"
+      ? "เรียนต่อ"
       : "เริ่มเรียนเลย";
 
   return (
@@ -157,17 +159,18 @@ function CourseLearningCard({
         <MediaFrame src={course.thumbnail_url} seed={course.slug} />
         {course.is_completed ? (
           <span className="absolute right-3 top-3 rounded-full bg-success px-3 py-1 text-xs font-medium text-fg-inverted shadow-raised">
-            ✓ เรียนจบแล้ว
+            <Icon name="ui/check" className="size-3.5" /> เรียนจบแล้ว
           </span>
         ) : null}
       </Link>
       <div className="flex flex-1 flex-col gap-2.5 p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <DifficultyBadge level={course.difficulty} />
-          <Badge tone="neutral">📚 {course.lesson_count} บทเรียน</Badge>
+          <Badge tone="neutral"><Icon name="ui/book" className="size-3.5" /> {course.lesson_count} บทเรียน</Badge>
           {course.total_duration_minutes > 0 ? (
             <Badge tone="neutral">
-              ⏱ {formatDuration(course.total_duration_minutes)}
+              <Icon name="ui/timer" className="size-3.5" />{" "}
+              {formatDuration(course.total_duration_minutes)}
             </Badge>
           ) : null}
           <Badge tone="mint">ฟรี</Badge>
@@ -250,7 +253,7 @@ function CourseLearningCard({
                     <span className="min-w-0 flex-1 truncate text-fg">
                       {lesson.title}
                     </span>
-                    {lesson.is_preview ? <span title="ดูตัวอย่างได้">👁</span> : null}
+                    {lesson.is_preview ? <Icon name="ui/eye" label="ดูตัวอย่างได้" className="size-3.5" /> : null}
                     {lesson.duration_minutes ? (
                       <span className="shrink-0">{lesson.duration_minutes} นาที</span>
                     ) : null}
@@ -296,9 +299,9 @@ function FeaturedCourse({
   const lessons = syllabus.data ?? [];
   const previewCount = lessons.filter((lesson) => lesson.is_preview).length;
   const cta = course.is_completed
-    ? "ทบทวนคอร์ส ✓"
+    ? "ทบทวนคอร์ส"
     : course.is_enrolled
-      ? "เรียนต่อจากที่ค้างไว้ →"
+      ? "เรียนต่อจากที่ค้างไว้"
       : "เริ่มเรียนเลย";
 
   return (
@@ -311,7 +314,7 @@ function FeaturedCourse({
       </Link>
       <div className="flex flex-col justify-center gap-3 p-6 md:w-1/2 md:p-8">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge tone="butter">⭐ คอร์สแนะนำ</Badge>
+          <Badge tone="butter"><Icon name="ui/star" className="size-3.5" /> คอร์สแนะนำ</Badge>
           <DifficultyBadge level={course.difficulty} />
           <Badge tone="mint">ฟรี</Badge>
         </div>
@@ -333,7 +336,7 @@ function FeaturedCourse({
           ) : null}
         </div>
         <p className="text-xs text-fg-subtle">
-          📚 {course.lesson_count} บทเรียน
+          <Icon name="ui/book" className="size-3.5" /> {course.lesson_count} บทเรียน
           {course.total_duration_minutes > 0 ? (
             <> · รวม {formatDuration(course.total_duration_minutes)}</>
           ) : null}
@@ -347,7 +350,7 @@ function FeaturedCourse({
                 <span className="min-w-0 flex-1 truncate text-fg">
                   {lesson.title}
                 </span>
-                {lesson.is_preview ? <span title="ดูตัวอย่างได้">👁</span> : null}
+                {lesson.is_preview ? <Icon name="ui/eye" label="ดูตัวอย่างได้" className="size-3.5" /> : null}
               </li>
             ))}
             {lessons.length > 3 ? (
@@ -564,7 +567,7 @@ function CoursesContent() {
               toggleInList(selectedDifficulties, level.value, "difficulty")
             }
           >
-            {level.icon} {level.name}
+            <Icon name={`ui/${level.icon}`} className="size-3.5" /> {level.name}
           </FilterChip>
         ))}
       </div>
@@ -612,7 +615,7 @@ function CoursesContent() {
     <PageContainer>
       <PageHeader
         title="คอร์สเรียน"
-        description={`เรียนเบเกอรี่เป็นลำดับขั้นจากครูตัวจริง — ทั้งหมด ${overview.data?.count ?? "…"} คอร์ส พร้อมแบบทดสอบและใบประกาศนียบัตร`}
+        description={`เรียนเบเกอรี่เป็นลำดับขั้นจากครูตัวจริง ทั้งหมด ${overview.data?.count ?? "…"} คอร์ส พร้อมแบบทดสอบและใบประกาศนียบัตร`}
       />
 
       {/* Search — debounced, server-side */}
@@ -675,7 +678,7 @@ function CoursesContent() {
                 )}
               >
                 <p className="font-display font-medium">
-                  {level.icon} {level.name}
+                  <Icon name={`ui/${level.icon}`} className="size-3.5" /> {level.name}
                   <span className="ml-2 text-xs font-normal opacity-80">
                     {count} คอร์ส
                   </span>
@@ -701,7 +704,7 @@ function CoursesContent() {
       {!filtered && inProgress.length > 0 ? (
         <section className="mt-10" aria-label="เรียนต่อ">
           <h2 className="font-display mb-4 text-xl font-medium text-fg">
-            เรียนต่อจากที่ค้างไว้ 📖
+            เรียนต่อจากที่ค้างไว้
           </h2>
           <div className="flex snap-x gap-4 overflow-x-auto pb-2">
             {inProgress.map((course) => (
@@ -727,7 +730,7 @@ function CoursesContent() {
                 </div>
                 <Link href={`/courses/${course.slug}`} className="mt-4 block">
                   <Button size="sm" className="w-full">
-                    เรียนต่อ →
+                    เรียนต่อ
                   </Button>
                 </Link>
               </div>
@@ -740,7 +743,7 @@ function CoursesContent() {
       {!filtered && recommendedItems.length > 0 ? (
         <section className="mt-10" aria-label="คอร์สแนะนำสำหรับคุณ">
           <h2 className="font-display mb-1 text-xl font-medium text-fg">
-            แนะนำตามระดับของคุณ ✨
+            แนะนำตามระดับของคุณ
           </h2>
           <p className="mb-4 text-sm text-fg-muted">
             คัดจากระดับ หมวดที่ชอบ และคอร์สที่คุณเรียน
@@ -756,7 +759,7 @@ function CoursesContent() {
                   <p className="mt-2 flex flex-wrap gap-1.5">
                     {item.reasons.slice(0, 2).map((reason) => (
                       <Badge key={reason} tone="lavender">
-                        ✨ {REASON_LABELS[reason] ?? reason}
+                        <Icon name="ui/sparkle" className="size-3.5" /> {REASON_LABELS[reason] ?? reason}
                       </Badge>
                     ))}
                   </p>
@@ -792,7 +795,7 @@ function CoursesContent() {
                     : "bg-surface text-fg-muted hover:text-fg",
                 )}
               >
-                <span aria-hidden>{category.icon || "🍰"}</span>
+                <CategoryThumb slug={category.slug} />
                 {category.name}
               </button>
             );
@@ -809,7 +812,7 @@ function CoursesContent() {
           aria-expanded={sheetOpen}
           onClick={() => setSheetOpen(true)}
         >
-          ⚙️ ตัวกรอง{activeFilterCount ? ` (${activeFilterCount})` : ""}
+          <Icon name="ui/sliders" className="size-4" /> ตัวกรอง{activeFilterCount ? ` (${activeFilterCount})` : ""}
         </Button>
       </div>
 
@@ -819,7 +822,7 @@ function CoursesContent() {
           <span className="text-xs font-medium text-fg-subtle">กำลังกรอง:</span>
           {search ? (
             <FilterChip active onClick={() => setParams({ search: null })}>
-              “{search}” ✕
+              <>“{search}” <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ) : null}
           {selectedDifficulties.map((value) => (
@@ -828,7 +831,7 @@ function CoursesContent() {
               active
               onClick={() => toggleInList(selectedDifficulties, value, "difficulty")}
             >
-              {LEVELS.find((level) => level.value === value)?.name ?? value} ✕
+              <>{LEVELS.find((level) => level.value === value)?.name ?? value} <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ))}
           {selectedCategories.map((slug) => (
@@ -838,18 +841,18 @@ function CoursesContent() {
               onClick={() => toggleInList(selectedCategories, slug, "category")}
             >
               {categories.data?.find((category) => category.slug === slug)?.name ??
-                slug}{" "}
-              ✕
+                slug}
+              <Icon name="ui/close" className="size-3" />
             </FilterChip>
           ))}
           {statusFilter ? (
             <FilterChip active onClick={() => setParams({ status: null })}>
-              {STATUS_FILTERS.find((item) => item.value === statusFilter)?.label} ✕
+              <>{STATUS_FILTERS.find((item) => item.value === statusFilter)?.label} <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ) : null}
           {instructor ? (
             <FilterChip active onClick={() => setParams({ instructor: null })}>
-              ครู {instructor} ✕
+              <>ครู {instructor} <Icon name="ui/close" className="size-3" /></>
             </FilterChip>
           ) : null}
           <button
@@ -909,7 +912,7 @@ function CoursesContent() {
       ) : rows.length === 0 ? (
         <div className="space-y-8">
           <EmptyState
-            icon="🎓"
+            icon={<Icon name="ui/graduation" className="size-8 text-fg-subtle" />}
             title={
               search
                 ? `ไม่พบคอร์สที่ตรงกับ “${search}”`
@@ -930,7 +933,7 @@ function CoursesContent() {
                       setParams({ search: null, difficulty: level.value })
                     }
                   >
-                    {level.icon} {level.name}
+                    <Icon name={`ui/${level.icon}`} className="size-3.5" /> {level.name}
                   </Button>
                 ))}
               </div>

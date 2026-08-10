@@ -60,6 +60,11 @@ urlpatterns = [
     path(f"{API_V1}gallery/", include("apps.gallery.api.urls")),
     path(f"{API_V1}qa/", include("apps.qa.api.urls")),
     path(f"{API_V1}recommendations/", include("apps.recommendation.api.urls")),
+    # Threat watching (ADR 0025). The public prefix carries only the guard
+    # policy and the signal ingest; everything an operator uses sits behind
+    # the `admin/` prefix, where every view declares IsAdminUser itself.
+    path(f"{API_V1}security/", include("apps.security.api.urls")),
+    path(f"{API_V1}admin/security/", include("apps.security.api.urls.admin")),
     # OpenAPI schema — the Next.js client generates TypeScript types from this.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

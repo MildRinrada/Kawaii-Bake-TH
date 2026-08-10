@@ -45,6 +45,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { badgeArt } from "@/lib/assets";
+import { ArtIcon, Icon, type UiIconName } from "@/components/ui/icon";
 import { MediaFrame } from "@/components/content/media-frame";
 import { PageContainer } from "@/components/ui/page-container";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -92,9 +94,14 @@ function Section({
 /* Activity timeline — merged from real records' own timestamps         */
 /* ------------------------------------------------------------------ */
 
+/** Either a monochrome UI glyph or a badge's own catalogue artwork. */
+type ActivityIcon =
+  | { kind: "ui"; name: UiIconName }
+  | { kind: "badge"; slug: string };
+
 interface ActivityEvent {
   at: string;
-  icon: string;
+  icon: ActivityIcon;
   text: string;
   href?: string;
 }
@@ -113,7 +120,7 @@ function buildActivity(
     if (course.completed_at) {
       events.push({
         at: course.completed_at,
-        icon: "✓",
+        icon: { kind: "ui", name: "check" },
         text: `เรียนจบคอร์ส ${course.title}`,
         href: `/courses/${course.slug}`,
       });
@@ -122,7 +129,7 @@ function buildActivity(
   for (const certificate of certificates) {
     events.push({
       at: certificate.issued_at,
-      icon: "🏆",
+      icon: { kind: "ui", name: "trophy" },
       text: `ได้รับใบประกาศนียบัตร ${certificate.course_title}`,
       href: "/certificates",
     });
@@ -130,7 +137,7 @@ function buildActivity(
   for (const achievement of achievements) {
     events.push({
       at: achievement.awarded_at,
-      icon: achievement.badge?.icon || "🏅",
+      icon: { kind: "badge", slug: achievement.achievement_type },
       text: `ปลดล็อก ${achievement.badge?.title_th || achievement.achievement_type}`,
       href: "/achievements",
     });
@@ -140,7 +147,7 @@ function buildActivity(
     if (recipe) {
       events.push({
         at: favorite.favorited_at,
-        icon: "♥",
+        icon: { kind: "ui", name: "heart-filled" },
         text: `บันทึกสูตร ${recipe.title}`,
         href: `/recipes/${recipe.slug}`,
       });
@@ -151,7 +158,7 @@ function buildActivity(
     if (course) {
       events.push({
         at: favorite.favorited_at,
-        icon: "♥",
+        icon: { kind: "ui", name: "heart-filled" },
         text: `บันทึกคอร์ส ${course.title}`,
         href: `/courses/${course.slug}`,
       });
@@ -160,7 +167,7 @@ function buildActivity(
   for (const post of posts) {
     events.push({
       at: post.created_at,
-      icon: "📸",
+      icon: { kind: "ui", name: "camera" },
       // No gallery route exists yet, so this event is a record, not a link.
       text: post.caption
         ? `แชร์ผลงาน “${post.caption.slice(0, 40)}”`
@@ -274,12 +281,12 @@ function ProfileContent() {
   // Only metrics with something to report — a wall of zeros is not a
   // learning identity.
   const metrics = [
-    { label: "คอร์สที่เรียนจบ", value: completedCourses.length, icon: "🎓" },
-    { label: "กำลังเรียน", value: learning.length, icon: "📖" },
-    { label: "ใบประกาศนียบัตร", value: issued.length, icon: "📜" },
-    { label: "สูตรที่บันทึกไว้", value: savedRecipes.data?.count ?? 0, icon: "♥" },
-    { label: "คอร์สที่บันทึกไว้", value: savedCourses.data?.count ?? 0, icon: "🔖" },
-    { label: "ความสำเร็จ", value: badges.length, icon: "🏅" },
+    { label: "คอร์สที่เรียนจบ", value: completedCourses.length, icon: "graduation" as UiIconName },
+    { label: "กำลังเรียน", value: learning.length, icon: "book-open" as UiIconName },
+    { label: "ใบประกาศนียบัตร", value: issued.length, icon: "scroll" as UiIconName },
+    { label: "สูตรที่บันทึกไว้", value: savedRecipes.data?.count ?? 0, icon: "heart-filled" as UiIconName },
+    { label: "คอร์สที่บันทึกไว้", value: savedCourses.data?.count ?? 0, icon: "bookmark" as UiIconName },
+    { label: "ความสำเร็จ", value: badges.length, icon: "trophy" as UiIconName },
   ].filter((metric) => metric.value > 0);
 
   return (
@@ -303,7 +310,7 @@ function ProfileContent() {
             </div>
           </div>
           <Button variant="secondary" onClick={() => setEditing(true)}>
-            ✎ แก้ไขโปรไฟล์
+            <Icon name="ui/edit" className="size-4" /> แก้ไขโปรไฟล์
           </Button>
         </CardBody>
         <CardBody className="border-t border-edge pt-4">
@@ -311,7 +318,7 @@ function ProfileContent() {
             <p className="whitespace-pre-wrap text-sm text-fg">{profile.bio}</p>
           ) : (
             <p className="text-sm text-fg-subtle">
-              ยังไม่มีคำแนะนำตัว — เล่าหน่อยว่าคุณชอบอบอะไร
+              ยังไม่มีคำแนะนำตัวเลย เล่าให้เราฟังหน่อยว่าคุณชอบอบอะไร
             </p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -319,7 +326,11 @@ function ProfileContent() {
               {EXPERIENCE_LABELS[profile.experience_level] ??
                 profile.experience_level}
             </Badge>
-            {profile.location ? <Badge>📍 {profile.location}</Badge> : null}
+            {profile.location ? (
+              <Badge>
+                <Icon name="ui/pin" className="size-3.5" /> {profile.location}
+              </Badge>
+            ) : null}
             {profile.favorite_categories.map((slug) => (
               <Badge key={slug} tone={flavorFor(slug)}>
                 {categoryNames.get(slug) ?? slug}
@@ -337,9 +348,7 @@ function ProfileContent() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {metrics.map((metric) => (
             <Card key={metric.label} className="px-4 py-3 text-center">
-              <span aria-hidden className="text-lg">
-                {metric.icon}
-              </span>
+              <Icon name={`ui/${metric.icon}`} className="mx-auto size-5 text-fg-muted" />
               <p className="font-display text-xl font-medium text-fg">
                 {metric.value}
               </p>
@@ -354,7 +363,7 @@ function ProfileContent() {
         title="กำลังเรียนอยู่"
         hint={
           completedCourses.length > 0
-            ? `เรียนต่อจากที่ค้างไว้ได้เลย — เรียนจบไปแล้ว ${completedCourses.length} คอร์ส`
+            ? `เรียนต่อจากที่ค้างไว้ได้เลย ตอนนี้คุณเรียนจบไปแล้ว ${completedCourses.length} คอร์ส`
             : "เรียนต่อจากที่ค้างไว้ได้เลย"
         }
       >
@@ -363,7 +372,7 @@ function ProfileContent() {
         ) : learning.length === 0 ? (
           <Card>
             <EmptyState
-              icon="📚"
+              icon={<Icon name="ui/book" className="size-8 text-fg-subtle" />}
               title="ยังไม่มีคอร์สที่กำลังเรียน"
               description="เริ่มคอร์สแรกเพื่อเริ่มต้นเส้นทางการอบของคุณ"
               action={
@@ -436,7 +445,7 @@ function ProfileContent() {
         ) : issued.length === 0 ? (
           <Card>
             <EmptyState
-              icon="📜"
+              icon={<Icon name="ui/scroll" className="size-8 text-fg-subtle" />}
               title="ยังไม่มีใบประกาศนียบัตร"
               description="เรียนจบคอร์สให้ครบทุกบทเพื่อรับใบประกาศใบแรกของคุณ"
               action={
@@ -504,7 +513,7 @@ function ProfileContent() {
             ) : recipeFavorites.length === 0 ? (
               <Card>
                 <EmptyState
-                  icon="♡"
+                  icon={<Icon name="ui/heart" className="size-8 text-fg-subtle" />}
                   title="ยังไม่มีสูตรที่บันทึกไว้"
                   description="กดหัวใจในสูตรที่อยากอบไว้ทีหลัง แล้วมันจะมารออยู่ตรงนี้"
                   action={
@@ -552,7 +561,7 @@ function ProfileContent() {
             ) : courseFavorites.length === 0 ? (
               <Card>
                 <EmptyState
-                  icon="🔖"
+                  icon={<Icon name="ui/bookmark" className="size-8 text-fg-subtle" />}
                   title="ยังไม่มีคอร์สที่บันทึกไว้"
                   description="เจอคอร์สที่น่าสนใจแต่ยังไม่พร้อมเรียน? กดหัวใจเก็บไว้ก่อนได้"
                   action={
@@ -624,7 +633,11 @@ function ProfileContent() {
                         aria-hidden
                         className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken"
                       >
-                        {event.icon}
+                        {event.icon.kind === "ui" ? (
+                          <Icon name={`ui/${event.icon.name}`} className="size-4 text-fg-muted" />
+                        ) : (
+                          <ArtIcon src={badgeArt(event.icon.slug, true)} className="size-5" />
+                        )}
                       </span>
                       <div className="min-w-0">
                         {event.href ? (
@@ -672,7 +685,7 @@ function ProfileContent() {
                     title={badge.badge?.description_th ?? undefined}
                     className="flex items-center gap-1.5 rounded-full bg-butter-soft px-3 py-1 text-sm text-butter-ink"
                   >
-                    <span aria-hidden>{badge.badge?.icon || "🏅"}</span>
+                    <ArtIcon src={badgeArt(badge.achievement_type, true)} className="size-5" />
                     {badge.badge?.title_th || badge.achievement_type}
                   </span>
                 ))}
@@ -724,7 +737,7 @@ function ProfileContent() {
                     ยังขาด: {completion.missing.join(", ")}
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-fg-muted">ครบแล้ว 🎉</p>
+                  <p className="mt-1 flex items-center gap-1 text-xs text-fg-muted"><Icon name="ui/party" className="size-3.5" /> ครบแล้ว</p>
                 )}
               </div>
               <div className="border-t border-edge pt-3">
@@ -751,7 +764,7 @@ function ProfileContent() {
           onClose={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);
-            toast("บันทึกโปรไฟล์แล้ว 🎀", "success");
+            toast("บันทึกโปรไฟล์แล้ว", "success");
             settings.refetch();
             void refresh();
           }}

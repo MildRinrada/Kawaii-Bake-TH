@@ -14,6 +14,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Route } from "next";
 
+import { BRAND_MARK } from "@/lib/assets";
+import { ArtIcon, Icon } from "@/components/ui/icon";
+import { LottieHover } from "@/components/ui/lottie-asset";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
@@ -103,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href="/"
             className="font-display flex items-center gap-2 text-lg font-medium text-fg focus-visible:outline-2 focus-visible:outline-focus"
           >
-            <span aria-hidden className="text-xl">🧁</span>
+            <ArtIcon src={BRAND_MARK} className="size-13" />
             <span>
               Kawaii<span className="text-accent">Bake</span>
             </span>
@@ -126,12 +129,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href="/notifications"
                   aria-label="การแจ้งเตือน"
                   className={cn(
-                    "flex size-10 items-center justify-center rounded-full text-lg",
-                    "hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus",
-                    pathname.startsWith("/notifications") && "bg-berry-soft",
+                    "flex size-10 items-center justify-center text-lg",
+                    pathname.startsWith("/notifications") && "",
                   )}
                 >
-                  <span aria-hidden>🔔</span>
+                  <LottieHover src="/lottie/Notification bell.lottie" className="size-10" />
                 </Link>
                 <Dropdown
                   align="end"
@@ -182,7 +184,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setMenuOpen((value) => !value)}
               className="flex size-10 items-center justify-center rounded-full text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus lg:hidden"
             >
-              <span aria-hidden>{menuOpen ? "✕" : "☰"}</span>
+              <Icon name={menuOpen ? "ui/close" : "ui/menu"} className="size-5" />
             </button>
           </div>
         </div>
@@ -216,11 +218,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="grid gap-8 sm:grid-cols-[2fr_1fr_1fr]">
             <div>
               <p className="font-display flex items-center gap-2 text-base font-medium text-fg">
-                <span aria-hidden>🧁</span> Kawaii
+                <ArtIcon src={BRAND_MARK} className="size-10" /> Kawaii
                 <span className="-ml-2 text-accent">Bake</span>
               </p>
               <p className="mt-2 max-w-xs text-sm text-fg-muted">
-                แพลตฟอร์มเรียนทำเบเกอรี่ภาษาไทย — อบอุ่น เป็นมิตร
+                แพลตฟอร์มเรียนทำเบเกอรี่ภาษาไทย อบอุ่น เป็นมิตร
                 และอร่อยทุกบทเรียน
               </p>
             </div>
@@ -256,7 +258,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
           <p className="mt-8 border-t border-edge pt-5 text-center text-xs text-fg-subtle">
-            © 2026 KawaiiBake — โปรเจกต์พอร์ตโฟลิโอ สร้างด้วย Django + Next.js
+            © 2026 KawaiiBake | โปรเจกต์พอร์ตโฟลิโอ สร้างด้วย Django + Next.js
           </p>
         </div>
       </footer>

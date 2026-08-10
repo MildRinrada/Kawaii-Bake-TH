@@ -3,6 +3,9 @@
 Badges are system-owned data with no CRUD API, so the initial set ships as
 a data migration (the prompt-template precedent, Phase 7). Curation happens
 in Django admin; slugs are identities and never change.
+
+``icon`` stores an asset key, not emoji — it names a file under the
+frontend's `public/achievements/` (see that folder's README and ADR 0024).
 """
 
 from __future__ import annotations
@@ -16,7 +19,7 @@ _BADGES = [
         "Course completed",
         "เรียนจบครบทุกบทเรียนของคอร์สหนึ่งคอร์ส",
         "Finished every lesson of a course.",
-        "🎓",
+        "course_completed",
     ),
     (
         "first_course",
@@ -24,7 +27,7 @@ _BADGES = [
         "First course",
         "จบคอร์สแรกของคุณบน KawaiiBake",
         "Completed your very first KawaiiBake course.",
-        "🌱",
+        "first_course",
     ),
     (
         "ten_courses",
@@ -32,7 +35,7 @@ _BADGES = [
         "Ten courses",
         "จบคอร์สครบ 10 คอร์ส",
         "Completed ten courses.",
-        "🏆",
+        "ten_courses",
     ),
     (
         "quiz_master",
@@ -40,7 +43,7 @@ _BADGES = [
         "Quiz master",
         "ผ่านควิซด้วยคะแนนยอดเยี่ยม",
         "Aced the quizzes.",
-        "🧠",
+        "quiz_master",
     ),
     (
         "recipe_author",
@@ -48,7 +51,7 @@ _BADGES = [
         "Recipe author",
         "เผยแพร่สูตรของตัวเอง",
         "Published your own recipe.",
-        "📖",
+        "recipe_author",
     ),
 ]
 

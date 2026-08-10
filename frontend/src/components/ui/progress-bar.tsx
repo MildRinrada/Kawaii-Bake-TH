@@ -18,7 +18,7 @@ export function ProgressBar({
       aria-valuemax={100}
       aria-label={label}
       className={cn(
-        "h-3 w-full overflow-hidden rounded-full bg-surface-sunken",
+        "h-3 w-full overflow-hidden ",
         className,
       )}
     >

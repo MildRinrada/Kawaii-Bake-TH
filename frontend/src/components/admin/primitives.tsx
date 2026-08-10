@@ -10,8 +10,10 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { MODAL_ART } from "@/lib/assets";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
+import { ArtIcon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /* ------------------------------------------------------------------ */
@@ -515,9 +517,17 @@ export function ConfirmDialog({
       aria-label={title}
       className="m-auto w-full max-w-sm rounded-md border border-edge bg-surface-raised p-0 shadow-overlay backdrop:bg-black/40"
     >
-      <div className="px-4 py-4">
-        <h2 className="text-sm font-semibold text-fg">{title}</h2>
-        <div className="mt-2 text-sm text-fg-muted">{body}</div>
+      <div className="flex gap-3 px-4 py-4">
+        {/* Status art from `public/icons/modal/` — a destructive confirm
+            looks different from a routine one before the label is read. */}
+        <ArtIcon
+          src={danger ? MODAL_ART.confirmDelete : MODAL_ART.warning}
+          className="mt-0.5 size-10 shrink-0"
+        />
+        <div>
+          <h2 className="text-sm font-semibold text-fg">{title}</h2>
+          <div className="mt-2 text-sm text-fg-muted">{body}</div>
+        </div>
       </div>
       <div className="flex justify-end gap-2 border-t border-edge px-4 py-3">
         <Button size="sm" variant="secondary" onClick={onCancel}>

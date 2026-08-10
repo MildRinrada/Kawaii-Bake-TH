@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+<defs>
+<radialGradient id="seal" cx="35%" cy="30%" r="75%">
+<stop offset="0" stop-color="#fffceb"/>
+<stop offset="1" stop-color="#fdf3d1"/>
+</radialGradient>
+</defs>
+<circle cx="60" cy="60" r="52" fill="url(#seal)" stroke="#96700f" stroke-width="2"/>
+<circle cx="60" cy="60" r="44" fill="none" stroke="#96700f" stroke-width="1.25" stroke-dasharray="2.5 3.5"/>
+<g fill="none" stroke="#96700f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+<path d="M60 34l4.4 9.4 10.2 1.4-7.4 7.3 1.8 10.3L60 57.4l-9 5 1.8-10.3-7.4-7.3 10.2-1.4z" fill="#d14d7e" stroke="#d14d7e"/>
+</g>
+<path d="M42 72c4 4 5 8 3 14l7-3.5 6 6 2-8 8 2-3.5-7.5L72 72" fill="none" stroke="#96700f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+<text x="60" y="82" text-anchor="middle" font-family="Georgia, serif" font-size="9" letter-spacing="1.5" fill="#96700f">VERIFIED</text>
+</svg>
