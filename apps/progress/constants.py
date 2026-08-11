@@ -9,7 +9,7 @@ class ActivityType(models.TextChoices):
     """What kind of learning activity a day-row records.
 
     ``QUIZ_COMPLETED`` and ``RECIPE_CREATED`` are declared for the schema's
-    future consumers; only ``LESSON_COMPLETED`` is recorded in Phase 6 —
+    future consumers; only ``LESSON_COMPLETED`` is recorded in Phase 6 
     wiring the others requires the producing apps to call this one, which
     the current dependency direction forbids (quizzes ← progress would
     cycle). That wiring is a future phase's problem, recorded in ADR 0012.

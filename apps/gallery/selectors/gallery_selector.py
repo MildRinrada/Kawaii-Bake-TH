@@ -27,11 +27,13 @@ def list_posts(
     course_id: int | None = None,
     category_slug: str | None = None,
     author_username: str | None = None,
+    post_status: str | None = None,
 ) -> QuerySet[GalleryPost]:
     """The gallery feed for a viewer, newest first.
 
-    Filters only narrow the visibility-restricted set — they can never
-    widen it.
+    Filters only narrow the visibility-restricted set  they can never
+    widen it: ``post_status`` intersects ``visible_q``, so a non-staff
+    viewer asking for ``unpublished`` still sees only their own posts.
 
     Args:
         viewer_id: Primary key of the viewer, or ``None`` when anonymous.
@@ -40,6 +42,7 @@ def list_posts(
         course_id: Restrict to posts of one course.
         category_slug: Restrict to posts whose recipe is in a category.
         author_username: Restrict to one author's posts.
+        post_status: Restrict to one :class:`GalleryPostStatus`.
 
     Returns:
         A lazy queryset.
@@ -47,6 +50,8 @@ def list_posts(
     queryset = _base_queryset().filter(
         visible_q(viewer_id=viewer_id, viewer_is_staff=viewer_is_staff)
     )
+    if post_status:
+        queryset = queryset.filter(status=post_status)
     if recipe_id is not None:
         queryset = queryset.filter(recipe_id=recipe_id)
     if course_id is not None:
@@ -84,7 +89,7 @@ def get_post(
 def get_editable_post(
     *, post_id: int, viewer_id: int, viewer_is_staff: bool = False
 ) -> GalleryPost | None:
-    """Fetch a post the caller may mutate — author or staff, nothing else.
+    """Fetch a post the caller may mutate  author or staff, nothing else.
 
     Args:
         post_id: Primary key of the post.

@@ -40,14 +40,14 @@ def publish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Quiz
     """Publish a quiz after checking completeness.
 
     "Every question has valid answers" is checked by the **questions** app
-    against what is actually stored — the domain that owns the answer rules
+    against what is actually stored  the domain that owns the answer rules
     judges them; this app only forwards the verdict.
 
     Idempotent; ``published_at`` is stamped only the first time.
 
     Raises:
         QuizNotVisibleError: If absent or not the caller's to change.
-        QuizNotPublishableError: If incomplete — every failure in ``details``.
+        QuizNotPublishableError: If incomplete  every failure in ``details``.
     """
     quiz = _require_transitionable(
         slug=slug, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff
@@ -75,7 +75,7 @@ def publish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Quiz
 
 
 def unpublish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Quiz:
-    """Return a quiz to draft — the hard kill switch.
+    """Return a quiz to draft  the hard kill switch.
 
     Open attempts on it may still be submitted: an attempt that exists is
     access already granted, and a student mid-quiz must not lose their work.
@@ -94,7 +94,7 @@ def archive(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Quiz
     """Archive a quiz.
 
     Archived quizzes leave every listing and accept no new attempts, but stay
-    **readable to anyone who has attempted them** — results history must not
+    **readable to anyone who has attempted them**  results history must not
     vanish because the instructor tidied up.
     """
     quiz = _require_transitionable(

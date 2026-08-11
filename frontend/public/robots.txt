@@ -1,4 +1,4 @@
-# KawaiiBake — crawler policy
+# KawaiiBake  crawler policy
 #
 # This file is a REQUEST, not a control. A crawler that ignores it is not
 # breaking anything technical; enforcement lives in the threat-watch app

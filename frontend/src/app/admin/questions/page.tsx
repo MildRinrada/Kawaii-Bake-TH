@@ -64,7 +64,7 @@ export default function AdminQuestionsPage() {
     <>
       <AdminPageHeader
         title="คลังคำถาม"
-        description="คำถามทั้งหมดที่ใช้ประกอบแบบทดสอบ — ดูได้ทุกเจ้าของด้วยสิทธิ์ staff"
+        description="คำถามทั้งหมดที่ใช้ประกอบแบบทดสอบ  ดูได้ทุกเจ้าของด้วยสิทธิ์ staff"
       />
 
       <AdminPanel>
@@ -135,7 +135,7 @@ export default function AdminQuestionsPage() {
               header: "แท็ก",
               render: (row) => (
                 <span className="text-xs text-fg-muted">
-                  {row.tags.map((tag) => tag.name).join(", ") || "—"}
+                  {row.tags.map((tag) => tag.name).join(", ") || ""}
                 </span>
               ),
             },
@@ -185,10 +185,10 @@ export default function AdminQuestionsPage() {
                 {selected.is_frozen ? " · ล็อกแล้ว (แก้ไขไม่ได้)" : ""}
               </DetailRow>
               <DetailRow label="แท็ก">
-                {selected.tags.map((tag) => tag.name).join(", ") || "—"}
+                {selected.tags.map((tag) => tag.name).join(", ") || ""}
               </DetailRow>
               <DetailRow label="คำอธิบายเฉลย">
-                {selected.explanation || "—"}
+                {selected.explanation || ""}
               </DetailRow>
             </dl>
             <p className="mt-4 text-xs font-medium uppercase tracking-wide text-fg-subtle">

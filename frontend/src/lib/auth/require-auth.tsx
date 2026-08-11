@@ -4,7 +4,7 @@
  * Client-side route guard.
  *
  * The session cookie is httpOnly on the API origin, so the Next server
- * cannot inspect it — protection is a client concern: while auth state
+ * cannot inspect it  protection is a client concern: while auth state
  * loads we show a skeleton, and an anonymous visitor is redirected to
  * login with a `next` parameter for the round trip back.
  */

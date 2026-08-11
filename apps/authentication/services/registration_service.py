@@ -6,6 +6,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.utils import timezone
 
 from apps.authentication.permissions.rate_limit_permissions import (
     enforce_registration_rate_limit,
@@ -34,7 +35,7 @@ def is_username_available(*, username: str, client_ip: str = "") -> bool:
 
     A malformed or reserved handle reports unavailable rather than raising:
     the caller is a live as-you-type check, and "you cannot have this" is the
-    only fact it needs. The definitive verdict remains ``register_user`` —
+    only fact it needs. The definitive verdict remains ``register_user`` 
     two racing sign-ups are still settled by the unique constraint.
 
     Args:
@@ -58,16 +59,28 @@ def is_username_available(*, username: str, client_ip: str = "") -> bool:
 
 
 def register_user(
-    *, email: str, username: str, password: str, client_ip: str = ""
+    *,
+    email: str,
+    username: str,
+    first_name: str,
+    last_name: str,
+    password: str,
+    client_ip: str = "",
 ) -> User:
     """Create an account and dispatch its verification email.
 
     New accounts are active but unverified: ``is_active`` is the authentication
     kill-switch, while ``is_email_verified`` gates verified-only features.
 
+    The caller has already validated explicit terms consent (the API
+    serializer rejects a payload without it), so reaching this function
+    *is* the consent event  ``terms_accepted_at`` is stamped here.
+
     Args:
         email: The requested email address.
         username: The requested public handle.
+        first_name: Legal first name, printed on certificates.
+        last_name: Legal last name, printed on certificates.
         password: The raw password.
         client_ip: Caller IP, used for throttling.
 
@@ -91,7 +104,12 @@ def register_user(
 
     try:
         user = user_service.create_account(
-            email=email, username=username, password=password
+            email=email,
+            username=username,
+            password=password,
+            first_name=first_name.strip(),
+            last_name=last_name.strip(),
+            terms_accepted_at=timezone.now(),
         )
     except IntegrityError as exc:
         # Two concurrent registrations can both pass the existence check; the

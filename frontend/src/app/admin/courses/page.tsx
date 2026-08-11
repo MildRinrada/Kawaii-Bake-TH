@@ -9,9 +9,10 @@
  * Enrolment figures are deliberately absent: no endpoint reports how
  * many learners are enrolled in a course. `is_enrolled` on the list item
  * describes *the caller*, not the course, and would be a lie in an admin
- * table — see the note under the table.
+ * table  see the note under the table.
  */
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { api } from "@/lib/api/client";
@@ -70,6 +71,7 @@ export default function AdminCoursesPage() {
   const [difficulty, setDifficulty] = useState("");
   const [category, setCategory] = useState("");
   const [scope, setScope] = useState("all");
+  const [status, setStatus] = useState("");
   const [ordering, setOrdering] = useState("newest");
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -83,6 +85,7 @@ export default function AdminCoursesPage() {
     scope,
     ordering,
     search: search || undefined,
+    status: status || undefined,
     difficulty: difficulty || undefined,
     category: category || undefined,
   });
@@ -129,6 +132,11 @@ export default function AdminCoursesPage() {
       <AdminPageHeader
         title="คอร์สเรียน"
         description="จัดการคอร์สทุกสถานะ พร้อมจำนวนบทเรียนและคะแนนรีวิวที่ระบบคำนวณไว้จริง"
+        actions={
+          <Link href="/admin/courses/new">
+            <Button size="sm">+ เพิ่มคอร์ส</Button>
+          </Link>
+        }
       />
 
       <AdminPanel>
@@ -136,7 +144,8 @@ export default function AdminCoursesPage() {
           actions={
             <span className="self-center text-xs text-fg-muted">
               ทั้งหมด{" "}
-              <span className="font-mono tabular-nums">{list.count}</span> คอร์ส
+              <span className="font-mono tabular-nums">{list.count}</span>{" "}
+              คอร์ส
             </span>
           }
         >
@@ -152,6 +161,17 @@ export default function AdminCoursesPage() {
               value={scope}
               options={SCOPES}
               onChange={setScope}
+            />
+            <FilterSelect
+              label="สถานะ"
+              value={status}
+              options={[
+                { value: "", label: "ทุกสถานะ" },
+                { value: "draft", label: "ฉบับร่าง" },
+                { value: "published", label: "เผยแพร่แล้ว" },
+                { value: "archived", label: "เก็บเข้าคลัง" },
+              ]}
+              onChange={setStatus}
             />
             <FilterSelect
               label="ระดับ"
@@ -189,6 +209,25 @@ export default function AdminCoursesPage() {
           empty={<AdminEmpty title="ไม่พบคอร์สที่ตรงกับเงื่อนไข" />}
           columns={[
             {
+              key: "thumbnail",
+              header: "ภาพ",
+              className: "w-14",
+              render: (row) =>
+                row.thumbnail_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail from the API origin
+                  <img
+                    src={row.thumbnail_url}
+                    alt=""
+                    className="h-10 w-14 rounded-md object-cover"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="block h-10 w-14 rounded-md bg-berry-soft/60"
+                  />
+                ),
+            },
+            {
               key: "title",
               header: "ชื่อคอร์ส",
               render: (row) => (
@@ -224,7 +263,7 @@ export default function AdminCoursesPage() {
               render: (row) =>
                 row.rating_average !== null && row.rating_count > 0
                   ? `${row.rating_average.toFixed(1)} (${row.rating_count})`
-                  : "—",
+                  : "",
             },
             {
               key: "status",
@@ -258,7 +297,7 @@ export default function AdminCoursesPage() {
 
       <p className="mt-2 text-xs text-fg-muted">
         ไม่มีคอลัมน์ “จำนวนผู้เรียน” เพราะระบบหลังบ้านยังไม่มี endpoint
-        นับผู้ลงทะเบียนต่อคอร์ส — ฟิลด์ <code className="font-mono">is_enrolled</code>{" "}
+        นับผู้ลงทะเบียนต่อคอร์ส  ฟิลด์ <code className="font-mono">is_enrolled</code>{" "}
         ที่ API ส่งมาเป็นสถานะของ<em>ผู้เรียกเอง</em> ไม่ใช่ของคอร์ส
       </p>
 
@@ -269,6 +308,11 @@ export default function AdminCoursesPage() {
         footer={
           detail.data ? (
             <>
+              <Link href={`/admin/courses/${encodeURIComponent(detail.data.slug)}/edit`}>
+                <Button size="sm" variant="secondary">
+                  แก้ไขคอร์ส
+                </Button>
+              </Link>
               {detail.data.status !== "published" ? (
                 <Button
                   size="sm"
@@ -309,7 +353,7 @@ export default function AdminCoursesPage() {
                 onClick={() =>
                   confirm.ask({
                     title: "ลบคอร์สนี้ถาวร?",
-                    body: `“${detail.data!.title}” และบทเรียนทั้งหมดจะถูกลบถาวร กู้คืนไม่ได้ — ถ้าต้องการแค่ซ่อน ให้ใช้ “เก็บเข้าคลัง”`,
+                    body: `“${detail.data!.title}” และบทเรียนทั้งหมดจะถูกลบถาวร กู้คืนไม่ได้  ถ้าต้องการแค่ซ่อน ให้ใช้ “เก็บเข้าคลัง”`,
                     confirmLabel: "ลบถาวร",
                     danger: true,
                     action: () => destroy(detail.data!.slug, detail.data!.title),
@@ -346,13 +390,13 @@ export default function AdminCoursesPage() {
               {detail.data.lesson_count}
             </DetailRow>
             <DetailRow label="หมวดหมู่">
-              {detail.data.categories.map((item) => item.name).join(", ") || "—"}
+              {detail.data.categories.map((item) => item.name).join(", ") || ""}
             </DetailRow>
             <DetailRow label="สร้างเมื่อ">
               {relativeThai(detail.data.created_at)}
             </DetailRow>
             <DetailRow label="สรุป">
-              <span className="text-fg-muted">{detail.data.summary || "—"}</span>
+              <span className="text-fg-muted">{detail.data.summary || ""}</span>
             </DetailRow>
           </dl>
         ) : null}

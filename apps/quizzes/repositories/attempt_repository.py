@@ -23,7 +23,7 @@ def create_attempt_with_snapshot(
     """Create an attempt and its composition snapshot atomically.
 
     One empty :class:`QuizAttemptAnswer` row per composition entry, with
-    ``position`` and ``points_possible`` copied now — after this moment,
+    ``position`` and ``points_possible`` copied now  after this moment,
     grading never reads the live composition again. ``max_score`` is stamped
     here for the same reason.
 
@@ -34,7 +34,7 @@ def create_attempt_with_snapshot(
 
     Returns:
         The created attempt, or ``None`` when the partial unique constraint
-        reports a concurrent open attempt — the caller re-fetches.
+        reports a concurrent open attempt  the caller re-fetches.
     """
     try:
         with transaction.atomic():
@@ -74,7 +74,7 @@ def submit_attempt(
     The conditional UPDATE on ``status = in_progress`` is the arbiter: of two
     racing submits, exactly one affects a row; the loser gets ``False`` and
     the service raises 409. Selections are inserted through the M2M through
-    table in one bulk write — answer rows start empty, so there is nothing to
+    table in one bulk write  answer rows start empty, so there is nothing to
     clear first.
 
     Args:
@@ -128,7 +128,7 @@ def abandon_open_attempt(*, user_id: int, attempt_id: int) -> int:
 
     Conditional on ownership **and** status in one statement, so a concurrent
     submit cannot lose history: once submitted, the row no longer matches.
-    Snapshot answer rows cascade. Any freeze the start performed remains —
+    Snapshot answer rows cascade. Any freeze the start performed remains 
     freezing is monotonic and over-freezing is the safe direction.
 
     Args:

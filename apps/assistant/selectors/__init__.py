@@ -1,1 +1,1 @@
-"""Assistant selectors — read-side queries."""
+"""Assistant selectors - read-side queries."""

@@ -111,8 +111,8 @@ def update_profile(*, user_id: int, changes: Mapping[str, Any]) -> Profile:
     accepted = {k: v for k, v in changes.items() if k in PROFILE_EDITABLE_FIELDS}
 
     # An explicit null on an image field means "remove it". The column is
-    # NOT NULL (``blank=True``, not ``null=True``), so the empty string — not
-    # ``None`` — is what an unset FileField holds; writing ``None`` would fail
+    # NOT NULL (``blank=True``, not ``null=True``), so the empty string  not
+    # ``None``  is what an unset FileField holds; writing ``None`` would fail
     # at save time instead of clearing the picture.
     for field, validate in (("avatar", validate_avatar), ("cover", validate_cover)):
         if field not in accepted:
@@ -130,7 +130,7 @@ def update_profile(*, user_id: int, changes: Mapping[str, Any]) -> Profile:
         slugs = validate_favorite_categories(accepted.pop("favorite_categories"))
         # Membership is decided by the live taxonomy, not an enum (Phase 14):
         # `resolve_slugs` returns only active categories, and the diff is
-        # this app's own error (ADR 0008 — a callee never raises for us).
+        # this app's own error (ADR 0008  a callee never raises for us).
         resolved = category_selector.resolve_slugs(slugs=slugs)
         unknown = [slug for slug in slugs if slug not in resolved]
         if unknown:

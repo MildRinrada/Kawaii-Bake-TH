@@ -10,7 +10,7 @@ from apps.quizzes.api.serializers.quiz_serializers import TakerQuestionSerialize
 
 
 class AttemptSummarySerializer(serializers.Serializer):
-    """One attempt's headline numbers — all denormalized at grading time."""
+    """One attempt's headline numbers  all denormalized at grading time."""
 
     id = serializers.IntegerField(read_only=True)
     status = serializers.CharField(read_only=True)
@@ -29,7 +29,7 @@ class AttemptSummarySerializer(serializers.Serializer):
 class AttemptAnswerSerializer(serializers.Serializer):
     """One snapshot row: the question (taker shape), selection and outcome.
 
-    ``explanation`` is present only on submitted attempts — the view passes
+    ``explanation`` is present only on submitted attempts  the view passes
     an empty mapping otherwise. ``was_correct`` reveals the outcome, never
     the key: a wrong answer does not say which choice was right.
     """

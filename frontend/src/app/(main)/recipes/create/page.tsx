@@ -3,7 +3,7 @@
 /**
  * Publish your own recipe.
  *
- * This is KawaiiBake's recipe *authoring tool*, not a social composer —
+ * This is KawaiiBake's recipe *authoring tool*, not a social composer 
  * a structured form over `POST /recipes/`, which creates a draft owned by
  * the author. It reuses the same `RecipeForm` the admin area uses (one
  * implementation of a fiddly write contract, ADR-style: nested ingredient
@@ -25,11 +25,13 @@ function SoftPanel({
   title,
   description,
   actions,
+  required,
   children,
 }: {
   title?: string;
   description?: string;
   actions?: ReactNode;
+  required?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -39,6 +41,12 @@ function SoftPanel({
           title={
             <span>
               {title}
+              {required ? (
+                <span aria-hidden className="font-semibold text-danger">
+                  {" "}
+                  *
+                </span>
+              ) : null}
               {description ? (
                 <span className="block text-xs font-normal text-fg-muted">
                   {description}
@@ -64,7 +72,7 @@ export default function CreateRecipePage() {
               เพิ่มสูตรอาหาร
             </h1>
             <p className="mt-1 text-sm text-fg-muted">
-              เขียนสูตรของคุณให้ครบทั้งวัตถุดิบและขั้นตอน —
+              เขียนสูตรของคุณให้ครบทั้งวัตถุดิบและขั้นตอน
               ระบบจะบันทึกเป็นฉบับร่างไว้ก่อน คุณค่อยกดเผยแพร่เมื่อพร้อม
             </p>
           </div>
@@ -80,7 +88,7 @@ export default function CreateRecipePage() {
           <CardBody className="text-sm text-fg">
             <p>
               <strong>อยากเล่าเรื่องขนมที่เพิ่งอบเฉย ๆ?</strong>{" "}
-              นั่นคือโพสต์ในชุมชน ไม่ใช่สูตร —{" "}
+              นั่นคือโพสต์ในชุมชน ไม่ใช่สูตร {" "}
               <Link href="/community/create" className="text-accent underline">
                 ไปสร้างโพสต์แทน
               </Link>

@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class CourseNotVisibleError(DomainError):
     """Raised when a course is absent, or present but hidden from the viewer.
 
-    404 in both cases — a 403 would confirm the slug exists.
+    404 in both cases  a 403 would confirm the slug exists.
     """
 
     code = "not_found"

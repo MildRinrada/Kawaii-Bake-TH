@@ -1,4 +1,4 @@
-# 0003 — Isolate AI Behind a Provider Factory
+# 0003  Isolate AI Behind a Provider Factory
 
 - **Status:** Accepted
 - **Date:** 2026-08-06

@@ -11,3 +11,11 @@ class CategoryNotFoundError(DomainError):
     code = "category_not_found"
     status_code = 404
     message = "Category not found."
+
+
+class DuplicateCategorySlugError(DomainError):
+    """Raised when a create or rename collides with an existing slug."""
+
+    code = "duplicate_category_slug"
+    status_code = 409
+    message = "A category with this slug already exists."

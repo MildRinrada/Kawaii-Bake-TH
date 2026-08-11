@@ -1,4 +1,4 @@
-# 0001 — Use Feature-Based Architecture
+# 0001  Use Feature-Based Architecture
 
 - **Status:** Accepted
 - **Date:** 2026-08-06

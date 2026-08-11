@@ -1,4 +1,4 @@
-"""Email infrastructure — public API."""
+"""Email infrastructure - public API."""
 
 from __future__ import annotations
 

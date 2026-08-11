@@ -131,5 +131,5 @@ def set_status(*, review: Review, status: str) -> Review:
 
 
 def soft_delete(*, review: Review) -> Review:
-    """Mark a review deleted. The row survives — history is never erased."""
+    """Mark a review deleted. The row survives  history is never erased."""
     return set_status(review=review, status=ReviewStatus.DELETED)

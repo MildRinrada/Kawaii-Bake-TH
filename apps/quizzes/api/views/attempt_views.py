@@ -48,7 +48,7 @@ class QuizStartView(ServiceAPIView):
     def post(self, request: Request, slug: str) -> Response:
         """Start an attempt. Idempotent: 201 on creation, 200 when resuming.
 
-        The response carries the questions in the taker-safe shape — this,
+        The response carries the questions in the taker-safe shape  this,
         not the quiz detail, is the moment a taker receives the questions.
         """
         attempt, created = attempt_service.start_attempt(
@@ -73,7 +73,7 @@ class QuizSubmitView(ServiceAPIView):
         """Grade and close the caller's open attempt.
 
         Omitted questions are graded as skipped (incorrect). A second submit
-        is 409 ``attempt_already_submitted`` — an attempt is graded once.
+        is 409 ``attempt_already_submitted``  an attempt is graded once.
         """
         serializer = QuizSubmitSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

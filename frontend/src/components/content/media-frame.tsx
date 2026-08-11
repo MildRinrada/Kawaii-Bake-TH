@@ -24,7 +24,7 @@ const TINTS = [
  * Cover-image frame with an honest fallback.
  *
  * Content with no photo gets a soft flavor tint and the matching
- * placeholder illustration from `public/placeholders/` — friendly, but
+ * placeholder illustration from `public/placeholders/`  friendly, but
  * unmistakably a placeholder. The caption is real HTML rather than text
  * baked into the SVG, so it stays legible at thumbnail size and is not
  * announced twice by a screen reader.

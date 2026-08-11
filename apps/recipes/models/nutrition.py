@@ -1,4 +1,4 @@
-"""Estimated nutrition — structure only."""
+"""Estimated nutrition  structure only."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ class Nutrition(TimeStampedModel):
     extra index, and ``get_or_create(pk=recipe_id)`` is race-safe. No row is
     created automatically, so recipes without nutrition cost nothing.
 
-    Every figure is nullable, and null means *unknown* rather than zero — a
+    Every figure is nullable, and null means *unknown* rather than zero  a
     distinction a JSON blob could express but could not enforce.
 
     ``basis`` and ``source`` ship now, before anything can produce an estimate,

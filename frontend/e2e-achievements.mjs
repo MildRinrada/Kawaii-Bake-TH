@@ -17,7 +17,7 @@ const LEARNER = { email: "p16-learner@example.com", password: "Rhubarb!Tart2024"
 let passed = 0;
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 async function expect(page, selector, label, timeout = 15_000) {
   await page.waitForSelector(selector, { timeout });

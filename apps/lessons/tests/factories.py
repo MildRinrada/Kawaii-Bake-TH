@@ -23,7 +23,7 @@ def create_lesson(
     """Create a lesson.
 
     Goes through the repository by default so the course's published-lesson
-    counter stays true — exactly as production writes do. Pass
+    counter stays true  exactly as production writes do. Pass
     ``via_repository=False`` only when a test deliberately wants drift.
     """
     index = next(_sequence)

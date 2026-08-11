@@ -1,7 +1,7 @@
 """Assistant endpoints.
 
-Every endpoint requires authentication — anonymous conversations are not
-supported in this phase — and every conversation lookup is owner-scoped by
+Every endpoint requires authentication - anonymous conversations are not
+supported in this phase - and every conversation lookup is owner-scoped by
 the service, so "someone else's conversation" is indistinguishable from
 "no such conversation" (404).
 """

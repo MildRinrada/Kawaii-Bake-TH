@@ -14,7 +14,7 @@ class FavoriteItemSerializer(serializers.Serializer):
     """One favorite with its target card embedded.
 
     The cards come from the content apps' own list serializers, batch-fetched
-    by the view — this serializer only stitches. The queryset already
+    by the view  this serializer only stitches. The queryset already
     filtered targets by visibility, so a card is always present.
     """
 

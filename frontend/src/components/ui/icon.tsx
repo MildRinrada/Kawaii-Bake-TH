@@ -5,7 +5,7 @@
  * The two ways KawaiiBake draws an icon.
  *
  * `Icon` takes a name from the library under `public/icons/` and draws
- * the file **as authored** — the artwork is full-colour, so painting it
+ * the file **as authored**  the artwork is full-colour, so painting it
  * a single flat colour would throw away the thing that makes it good.
  * `ArtIcon` does the same for art addressed by path rather than by name
  * (badges, modal status art). See `public/README.md`.
@@ -15,7 +15,7 @@
  * A tinted icon is drawn as a CSS mask over `currentColor`, so the glyph
  * inherits text colour the way it would in an icon font. That throws the
  * artwork's own colours away, which is only ever right for the glyphs
- * that *have* no meaningful colour — a plain star, a slider, a
+ * that *have* no meaningful colour  a plain star, a slider, a
  * paperclip. Those are listed in `MASKABLE` and tint automatically, so
  * no call site has to remember.
  *
@@ -43,6 +43,7 @@ export type UiIconName =
   | "check"
   | "check-circle"
   | "chef-hat"
+  | "chef-hat-2"
   | "chevron-down"
   | "chevron-right"
   | "clock"
@@ -104,6 +105,7 @@ export type AdminIconName =
   | "courses"
   | "lessons"
   | "reviews"
+  | "posts"
   | "questions"
   | "quizzes"
   | "progress"
@@ -114,6 +116,7 @@ export type AdminIconName =
   | "assistant"
   | "recommendations"
   | "security"
+  | "legal"
   | "logout";
 
 export type IconName = `ui/${UiIconName}` | `admin/${AdminIconName}`;
@@ -131,6 +134,8 @@ const MASKABLE = new Set<IconName>([
   "ui/paperclip",
   "ui/camera",
   "ui/chat",
+  "ui/book",
+  "ui/timer",
 ]);
 
 /**
@@ -140,7 +145,7 @@ const MASKABLE = new Set<IconName>([
  * carrier of the meaning (an icon-only button); if there is adjacent
  * text saying the same thing, leaving it hidden is the correct choice.
  *
- * Pass `tint` to flatten it to `currentColor` instead — see the file
+ * Pass `tint` to flatten it to `currentColor` instead  see the file
  * docstring for when that is the right call.
  */
 export function Icon({
@@ -156,7 +161,7 @@ export function Icon({
   style?: CSSProperties;
   /**
    * Force the mask on (`true`) or off (`false`). Omit to let `MASKABLE`
-   * decide — see the file docstring.
+   * decide  see the file docstring.
    */
   tint?: boolean;
 }) {

@@ -33,7 +33,7 @@ class ChoiceInputSerializer(StrictSerializer):
 class QuestionCreateSerializer(StrictSerializer):
     """Validates a question creation payload.
 
-    Message shape only — the per-type choice rules (correct-answer counts,
+    Message shape only  the per-type choice rules (correct-answer counts,
     duplicates, true/false arity) are domain rules and live in
     ``validators/question_validator.py``.
     """

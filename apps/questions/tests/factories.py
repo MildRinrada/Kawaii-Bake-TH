@@ -1,6 +1,6 @@
 """Test data builders for the question bank.
 
-Thai fixtures from the first commit, as in every phase — text handling must
+Thai fixtures from the first commit, as in every phase  text handling must
 prove itself on Thai, not just ASCII.
 """
 

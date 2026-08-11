@@ -1,4 +1,4 @@
-"""Assistant models — public API."""
+"""Assistant models - public API."""
 
 from __future__ import annotations
 

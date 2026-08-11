@@ -1,16 +1,49 @@
 """Read-side queries for notifications and preferences.
 
-Every notification read filters by recipient — there is structurally no
+Every owner-facing read filters by recipient  there is structurally no
 way to address another user's notification, so "not yours" and "does not
-exist" are the same 404 at the API.
+exist" are the same 404 at the API. The one exception is
+:func:`list_all`, which serves only the ``IsAdminUser``-gated views.
 """
 
 from __future__ import annotations
 
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 
 from apps.notifications.constants import NotificationEventType
 from apps.notifications.models import Notification, NotificationPreference
+
+
+def list_all(
+    *, search: str = "", event_type: str = "", unread: bool | None = None
+) -> QuerySet[Notification]:
+    """Every notification across recipients, for the staff surface only.
+
+    Args:
+        search: Matches the title, body or the recipient's handle.
+        event_type: Restrict to one :class:`NotificationEventType`.
+        unread: ``True`` for unread rows, ``False`` for read, ``None`` both.
+
+    Returns:
+        A lazy queryset with the recipient preloaded, newest first.
+    """
+    queryset = Notification.objects.select_related("recipient__profile")
+
+    if event_type:
+        queryset = queryset.filter(event_type=event_type)
+    if unread is True:
+        queryset = queryset.filter(read_at__isnull=True)
+    elif unread is False:
+        queryset = queryset.filter(read_at__isnull=False)
+
+    cleaned = search.strip()
+    if cleaned:
+        queryset = queryset.filter(
+            Q(title__icontains=cleaned)
+            | Q(body__icontains=cleaned)
+            | Q(recipient__username__icontains=cleaned)
+        )
+    return queryset.order_by("-created_at", "-id")
 
 
 def list_for_user(
@@ -34,7 +67,7 @@ def list_for_user(
 def unread_count(*, user_id: int) -> int:
     """How many of the user's notifications are unread.
 
-    Computed live — there is deliberately no counter column to drift.
+    Computed live  there is deliberately no counter column to drift.
 
     Args:
         user_id: Primary key of the recipient.
@@ -67,7 +100,7 @@ def get_owned(
 def is_event_enabled(*, user_id: int, event_type: str) -> bool:
     """Whether the recipient accepts this event type.
 
-    Absent row means enabled — the default costs no storage.
+    Absent row means enabled  the default costs no storage.
 
     Args:
         user_id: Primary key of the recipient.

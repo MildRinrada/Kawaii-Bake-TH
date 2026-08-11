@@ -1,17 +1,17 @@
-# ADR 0013 — AI Assistant Foundation
+# ADR 0013  AI Assistant Foundation
 
 **Status:** Accepted (Phase 7)
 **Context:** Phase 7 adds the Thai-first AI assistant: conversations,
 messages, versioned prompts, usage tracking, and pluggable providers. This
-is foundation only — no autonomous agents, no recommendation engine, no
+is foundation only  no autonomous agents, no recommendation engine, no
 RAG/vector store, no fine-tuning, no XP rewards.
 
 ---
 
 ## 1. Why the assistant owns conversation state
 
-`apps/assistant` owns four tables — conversations, messages, prompt
-templates, usage logs — and the content apps own none of them. The
+`apps/assistant` owns four tables  conversations, messages, prompt
+templates, usage logs  and the content apps own none of them. The
 dependency arrow points one way:
 
 ```
@@ -20,7 +20,7 @@ assistant ──▶ recipes    (public selectors)
           ──▶ courses    (public selectors)
 ```
 
-Recipes, lessons and courses compile without the assistant existing — the
+Recipes, lessons and courses compile without the assistant existing  the
 same shape as `progress` (ADR 0012). A recipe knows nothing about being
 discussed; a conversation knows *which* recipe it discusses. That keeps AI
 churn (prompt changes, provider swaps, future RAG) confined to one app, and
@@ -28,11 +28,11 @@ lets the content apps stay shippable leaves.
 
 Lesson context is the one place the assistant calls another app's
 **service**, not just selectors: lesson bodies are enrollment-gated, and
-that two-layer 404/403 gate has exactly one implementation —
+that two-layer 404/403 gate has exactly one implementation 
 `lesson_service.get_lesson_content`. Re-deriving it from selectors would
 duplicate visibility logic, the thing this codebase most consistently
 refuses to do. The assistant catches lessons' domain errors at its boundary
-and raises its own (`ContextNotFoundError`, `ContextAccessDeniedError`) —
+and raises its own (`ContextNotFoundError`, `ContextAccessDeniedError`) 
 ADR 0008's "every app raises its own errors" holds in both directions.
 
 Context strictness is asymmetric on purpose:
@@ -59,7 +59,7 @@ indexed join.
 
 One difference from reviews: targets here are `SET_NULL`, not `CASCADE`,
 and the check constraint therefore allows a typed conversation with a NULL
-target. Deleting a recipe must not delete a user's chat history — the
+target. Deleting a recipe must not delete a user's chat history  the
 conversation degrades (see §1) instead of disappearing.
 
 ## 3. Why the provider abstraction exists
@@ -68,8 +68,8 @@ The `ai/` package is framework-free: no Django import anywhere in it. The
 assistant reads `AI_PROVIDER` from settings and calls
 `ai.factory.build_provider(name=…, config=…)` with plain values; providers
 speak in frozen dataclasses (`AIMessage` in, `AICompletion` out), never
-models or serializers. Swapping OpenAI for a local model — or for the
-deterministic mock — is a settings change touching zero assistant code.
+models or serializers. Swapping OpenAI for a local model  or for the
+deterministic mock  is a settings change touching zero assistant code.
 
 The **mock is the default** (`AI_PROVIDER=mock`). Local development and CI
 need no API key, cost nothing, and stay deterministic: the mock echoes the
@@ -79,13 +79,13 @@ API). The OpenAI adapter uses the standard library and takes a `base_url`,
 so OpenAI-compatible local runtimes (Ollama, vLLM) come free.
 
 Provider failures follow the exception-translation rule: the `ai` package
-raises its own `AIProviderError` (plain `Exception` — the package doesn't
+raises its own `AIProviderError` (plain `Exception`  the package doesn't
 know HTTP); the assistant translates to `AssistantUnavailableError` (503,
 `assistant_unavailable`).
 
 **The send is deliberately two transactions, not one.** The user's message
 commits before the provider is called; the reply and usage log commit
-after. A database transaction must never span an external network call — a
+after. A database transaction must never span an external network call  a
 30-second provider timeout would hold row locks for its whole duration.
 The observable contract: on provider failure the user's message is kept,
 no reply appears, 503 is returned, and retrying is safe.
@@ -94,7 +94,7 @@ no reply appears, 503 is returned, and retrying is safe.
 
 Prompt text is data, not code (`PromptTemplate`: name × language ×
 version, `is_active`). Changing the assistant's behaviour must not require
-a deploy — and must not silently change **old** conversations, whose
+a deploy  and must not silently change **old** conversations, whose
 transcripts were shaped by the prompt they started under. Every
 conversation stamps `prompt_version` at creation (the `published_at`
 stamp-once pattern) and resolves that exact version on every send; new
@@ -107,12 +107,12 @@ deployment answers immediately.
 
 There is no edit or delete API, no `updated_at`, and the repository
 exposes only `add`. The transcript is the record of what was actually said
-— to the user *and* to the model. Rewriting it would falsify the very
+ to the user *and* to the model. Rewriting it would falsify the very
 context that produced later replies, and would break usage accounting
 (tokens were spent on the words as sent). The LearningActivity ledger
 (ADR 0012) set the precedent: facts about the past are immutable.
 `AIUsageLog` is a separate append-only table rather than message columns
-because it answers to a different master — billing/quota survives
+because it answers to a different master  billing/quota survives
 conversation deletion (messages CASCADE with their conversation; the
 ledger does not).
 
@@ -120,7 +120,7 @@ ledger does not).
 
 The platform's users bake in Thai. `language` is a conversation field
 (`th` default, `en` second), prompt templates exist per language with the
-Thai versions written natively — not translated placeholders — and the
+Thai versions written natively  not translated placeholders  and the
 system prompt instructs the model to answer in the conversation's
 language. UTF-8 is asserted end to end: model tests round-trip Thai +
 emoji + multiline through the database, API tests through HTTP, and the
@@ -132,7 +132,7 @@ Thai content is the norm, not an edge case.
 ## 7. Why RAG / vector search is postponed
 
 RAG earns its complexity when the corpus outgrows the prompt window. A
-single recipe or lesson — the only context this phase anchors to — fits in
+single recipe or lesson  the only context this phase anchors to  fits in
 one system prompt, so retrieval infrastructure (embeddings, a vector
 store, chunking, re-ranking, index invalidation on every content edit)
 would today be a second copy of content that `context_service` already
@@ -155,7 +155,7 @@ retrieval slots in behind `context_service` without touching the API.
   in-band.
 - **Rate limiting**: sends are throttled per user via the
   `infrastructure.cache` counters (the auth pattern) *before* the provider
-  is reached — every send costs real money. Quota/billing later enforces
+  is reached  every send costs real money. Quota/billing later enforces
   against `AIUsageLog` aggregates at the same hook.
 - **Bounded input**: user messages are capped (4000 chars) at both the
   serializer and the service; context text fields are truncated before
@@ -163,7 +163,7 @@ retrieval slots in behind `context_service` without touching the API.
 
 ## Consequences
 
-- Anonymous users cannot converse (every endpoint requires auth) — revisit
+- Anonymous users cannot converse (every endpoint requires auth)  revisit
   if a public "ask about this recipe" teaser is ever wanted.
 - A retried send after a 503 duplicates the user's message in the
   transcript (the reply was never generated). Accepted for the foundation;

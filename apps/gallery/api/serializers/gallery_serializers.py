@@ -1,7 +1,7 @@
 """Serializers for gallery payloads.
 
 One public shape per endpoint (no per-viewer conditional fields). The
-author is public profile info — handle, display name, avatar — the same
+author is public profile info  handle, display name, avatar  the same
 three fields every other content app already shows for an author or
 instructor (see ``apps.recipes.api.serializers.recipe_serializers.
 AuthorRefSerializer``, the precedent this mirrors). None of it is the
@@ -31,7 +31,7 @@ class GalleryImageSerializer(serializers.Serializer):
     position = serializers.IntegerField(read_only=True)
 
     def get_url(self, obj: GalleryImage) -> str:
-        """Absolute media URL — the frontend runs on another origin."""
+        """Absolute media URL  the frontend runs on another origin."""
         url = obj.image.url
         request = self.context.get("request")
         return request.build_absolute_uri(url) if request else url
@@ -54,7 +54,7 @@ class _CourseRefSerializer(serializers.Serializer):
 
 
 class GalleryPostSerializer(serializers.Serializer):
-    """A gallery post — the one shape for list and detail."""
+    """A gallery post  the one shape for list and detail."""
 
     id = serializers.IntegerField(read_only=True)
     author_handle = serializers.CharField(read_only=True, source="author.username")
@@ -99,7 +99,7 @@ class GalleryPostCreateSerializer(StrictSerializer):
 class GalleryPostUpdateSerializer(StrictSerializer):
     """Payload for editing a post; absent keys are unchanged.
 
-    ``image_ids`` reorders the gallery — it must be exactly the post's
+    ``image_ids`` reorders the gallery  it must be exactly the post's
     image-id set (the lessons reorder invariant), validated in the
     service. References may be cleared with ``null``.
     """

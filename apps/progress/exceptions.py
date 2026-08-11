@@ -1,6 +1,6 @@
 """Domain exceptions for the progress app.
 
-Its own copies of the boundary errors — a caller never raises a callee's
+Its own copies of the boundary errors  a caller never raises a callee's
 exception (ADR 0008), and the stable codes match the lessons app's so the
 frontend branches identically.
 """

@@ -1,8 +1,8 @@
 """The single write path of the reward economy.
 
 A repository is justified here for the same reason as certificates
-(ADR 0014): the write is genuinely intricate — one atomic unit that must
-survive concurrent duplicates and concurrent spends — and it must exist
+(ADR 0014): the write is genuinely intricate  one atomic unit that must
+survive concurrent duplicates and concurrent spends  and it must exist
 in exactly one place.
 
 Concurrency is enforced by the database, never by Python:
@@ -11,9 +11,9 @@ Concurrency is enforced by the database, never by Python:
   insert the same ``(account, event_key)`` row; the unique constraint
   admits one, the loser's savepoint rolls back (its balance update
   included) and the existing row is returned. `if exists` alone would
-  pass both racers — the constraint cannot.
+  pass both racers  the constraint cannot.
 - **Concurrent spends**: the balance change is a conditional UPDATE
-  (``WHERE balance >= amount``) — check and debit are one statement, and
+  (``WHERE balance >= amount``)  check and debit are one statement, and
   the row lock it takes holds until commit, serialising rivals. Zero
   rows updated means insufficient funds, atomically.
 - A failure anywhere inside rolls back everything: no ledger row without
@@ -64,12 +64,12 @@ def apply_transaction(
             adjustments only.
 
     Returns:
-        ``(transaction, created)`` — ``created`` is ``False`` when the
+        ``(transaction, created)``  ``created`` is ``False`` when the
         event key had already been processed, in which case the existing
         row is returned unchanged and no balance moved.
 
     Raises:
-        InsufficientBalanceError: If a debit exceeds the balance — the
+        InsufficientBalanceError: If a debit exceeds the balance  the
             conditional UPDATE updated zero rows.
     """
     from apps.rewards.exceptions import InsufficientBalanceError

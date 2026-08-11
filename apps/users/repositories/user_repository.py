@@ -21,18 +21,24 @@ def ensure_related_records(*, user: User) -> None:
     UserPreference.objects.get_or_create(pk=user.pk, defaults={"user": user})
 
 
-def create_user(*, email: str, username: str, password: str) -> User:
+def create_user(
+    *, email: str, username: str, password: str, **extra_fields: object
+) -> User:
     """Persist a new user together with its profile and preference rows.
 
     Args:
         email: The account email address.
         username: The public handle.
         password: The raw password; hashed by the manager.
+        **extra_fields: Additional ``User`` column values (legal name,
+            consent timestamp), forwarded to the manager verbatim.
 
     Returns:
         The created user.
     """
-    return User.objects.create_user(email=email, username=username, password=password)
+    return User.objects.create_user(
+        email=email, username=username, password=password, **extra_fields
+    )
 
 
 def set_password(*, user: User, raw_password: str) -> None:
@@ -83,6 +89,24 @@ def activate(*, user: User) -> None:
     user.is_active = True
     user.deactivated_at = None
     user.save(update_fields=["is_active", "deactivated_at", "updated_at"])
+
+
+def update_account_fields(*, user: User, changes: dict[str, object]) -> User:
+    """Apply already-validated column values in a single UPDATE.
+
+    Args:
+        user: The user to update.
+        changes: Field name to new value.
+
+    Returns:
+        The updated user.
+    """
+    if not changes:
+        return user
+    for field, value in changes.items():
+        setattr(user, field, value)
+    user.save(update_fields=[*changes.keys(), "updated_at"])
+    return user
 
 
 def record_last_login(*, user: User) -> None:

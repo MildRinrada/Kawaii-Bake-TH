@@ -10,13 +10,13 @@
  * The whole surface is one control: hovering (or focusing) it reveals a
  * camera affordance, choosing a file opens the crop dialog, and only the
  * cropped result is uploaded. The backend stores exactly what was
- * framed — there is no original to re-crop from and no server-side image
+ * framed  there is no original to re-crop from and no server-side image
  * pipeline, which is why the crop happens before the request rather than
  * after it.
  *
  * `COVER_ASPECT` is the single source of truth for the shape: the crop
  * dialog and the banner below both read it, so the picture the owner
- * framed is the picture that renders. It is deliberately wide — this is
+ * framed is the picture that renders. It is deliberately wide  this is
  * a letterbox strip behind an avatar, not a photo.
  */
 
@@ -96,7 +96,7 @@ export function CoverEditor({
       <div className="group relative">
         {/* `min-h` is the mobile floor: at a phone's width a true 6:1 strip
             would be ~55px, so the box stops shrinking and `object-cover`
-            trims the sides instead — the normal way a banner degrades.
+            trims the sides instead  the normal way a banner degrades.
             `max-h` is the other end: on a wide screen a true 6:1 strip grows
             past 200px and starts crowding the avatar that sits over it. */}
         {coverUrl ? (

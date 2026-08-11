@@ -3,7 +3,7 @@
 /**
  * Session-based auth state for the whole app.
  *
- * The Django session cookie is the single source of truth (ADR 0007) —
+ * The Django session cookie is the single source of truth (ADR 0007) 
  * this context only mirrors it: on mount it asks `/users/profile/` who
  * the caller is (401/403 = anonymous), and login/register/logout call
  * the existing auth endpoints then refresh that mirror. No tokens are
@@ -33,7 +33,10 @@ interface AuthContextValue {
   register: (input: {
     email: string;
     username: string;
+    first_name: string;
+    last_name: string;
     password: string;
+    accept_terms: boolean;
   }) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -92,20 +95,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    async (input: { email: string; username: string; password: string }) => {
+    async (input: {
+      email: string;
+      username: string;
+      first_name: string;
+      last_name: string;
+      password: string;
+      accept_terms: boolean;
+    }) => {
       // The API contract wants the password twice; the form asks once and a
       // show/hide toggle replaces the confirm field.
       await api.post("/auth/register/", {
         body: { ...input, password_confirm: input.password },
       });
-      // Registration deliberately does not start a session server-side —
-      // sign the new account in so the user lands authenticated.
-      await api.post("/auth/login/", {
-        body: { email: input.email, password: input.password },
-      });
-      await refresh();
+      // Deliberately no sign-in here: the account must confirm its email
+      // first, and signing in belongs to the user after that - the
+      // register page routes to the check-your-inbox screen instead.
     },
-    [refresh],
+    [],
   );
 
   const logout = useCallback(async () => {

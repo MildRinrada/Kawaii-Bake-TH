@@ -1,6 +1,6 @@
 """Read-side queries for quizzes.
 
-Also home of :class:`QuizRef` — the frozen reference the ``lessons`` app uses
+Also home of :class:`QuizRef`  the frozen reference the ``lessons`` app uses
 for its optional per-lesson quiz link. Part of the public cross-app API.
 """
 
@@ -32,7 +32,7 @@ class QuizRef:
 
 @dataclass(frozen=True)
 class CompositionRow:
-    """One placement in a quiz's composition — what a snapshot copies."""
+    """One placement in a quiz's composition  what a snapshot copies."""
 
     question_id: int
     position: int
@@ -85,7 +85,7 @@ def get_quiz_detail(
         viewer_is_staff: Whether the viewer is a staff member.
 
     Returns:
-        The quiz, or ``None`` when absent or hidden — callers must not
+        The quiz, or ``None`` when absent or hidden  callers must not
         distinguish the two to the client.
     """
     return (
@@ -161,7 +161,7 @@ def list_refs_by_ids(
 ) -> dict[int, QuizRef]:
     """Fetch visible quiz references by id.
 
-    Part of the public cross-app API — the lessons app validates and embeds
+    Part of the public cross-app API  the lessons app validates and embeds
     its quiz links through this, so a quiz that later goes private degrades to
     absent rather than leaking.
 

@@ -29,8 +29,11 @@ class RegistrationApiTests(TestCase):
         payload: dict[str, object] = {
             "email": "new@example.com",
             "username": "newbaker",
+            "first_name": "มินตรา",
+            "last_name": "อบอุ่น",
             "password": VALID_PASSWORD,
             "password_confirm": VALID_PASSWORD,
+            "accept_terms": True,
         }
         payload.update(overrides)
         return payload
@@ -42,6 +45,39 @@ class RegistrationApiTests(TestCase):
         self.assertEqual(response.json()["username"], "newbaker")
         self.assertFalse(response.json()["is_email_verified"])
         self.assertTrue(User.objects.filter(email="new@example.com").exists())
+
+    def test_registration_stores_the_legal_name_and_consent(self) -> None:
+        response = self.client.post(self.url, self._payload(), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(email="new@example.com")
+        self.assertEqual(user.first_name, "มินตรา")
+        self.assertEqual(user.last_name, "อบอุ่น")
+        # PDPA evidence: consenting is what registration *is* now.
+        self.assertIsNotNone(user.terms_accepted_at)
+
+    def test_registration_without_a_legal_name_is_rejected(self) -> None:
+        for missing in ("first_name", "last_name"):
+            payload = self._payload()
+            del payload[missing]
+
+            response = self.client.post(self.url, payload, format="json")
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn(missing, response.json()["error"]["details"])
+        self.assertFalse(User.objects.filter(email="new@example.com").exists())
+
+    def test_registration_without_consent_is_rejected(self) -> None:
+        for consent in (False, None):
+            payload = self._payload(accept_terms=consent)
+            if consent is None:
+                del payload["accept_terms"]
+
+            response = self.client.post(self.url, payload, format="json")
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn("accept_terms", response.json()["error"]["details"])
+        self.assertFalse(User.objects.filter(email="new@example.com").exists())
 
     def test_registration_does_not_return_password(self) -> None:
         response = self.client.post(self.url, self._payload(), format="json")

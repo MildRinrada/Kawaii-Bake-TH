@@ -1,4 +1,4 @@
-"""The answer key — the one read path that exposes correctness.
+"""The answer key  the one read path that exposes correctness.
 
 **The only legitimate caller of this module is quiz scoring**
 (``apps.quizzes.services.scoring_service`` via ``attempt_service``). It must

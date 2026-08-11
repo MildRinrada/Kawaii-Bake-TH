@@ -1,4 +1,4 @@
-"""The certificate entity — an immutable issued record."""
+"""The certificate entity  an immutable issued record."""
 
 from __future__ import annotations
 
@@ -19,14 +19,14 @@ class Certificate(TimeStampedModel):
     """One issued course certificate.
 
     **Immutable once issued**: ``certificate_number``, ``issued_at`` and the
-    printable snapshot never change — a certificate is a record of a fact,
+    printable snapshot never change  a certificate is a record of a fact,
     and the repository exposes no update path for them. The only mutation
     ever allowed is the stamp-once ``revoked_at``; revoked certificates
     remain forever (the partial unique frees the (user, course) slot for a
     re-issue while history survives).
 
     The printable fields (``student_name``, ``course_title``,
-    ``completed_at``) are **snapshots at issuance** — the ADR 0010 snapshot-
+    ``completed_at``) are **snapshots at issuance**  the ADR 0010 snapshot-
     completeness rule: what the paper says must not change when the course
     is renamed or the user changes handle, and the future PDF phase must
     read nothing mutable. The snapshot is also why ``course`` can be
@@ -34,7 +34,7 @@ class Certificate(TimeStampedModel):
     certificate, and course deletion (an existing API) keeps working.
 
     ``verification_token`` is the only public lookup key. The human-facing
-    ``certificate_number`` is sequential and therefore enumerable — it is
+    ``certificate_number`` is sequential and therefore enumerable  it is
     printed on paper, never routed.
     """
 
@@ -56,8 +56,19 @@ class Certificate(TimeStampedModel):
     )
     issued_at = models.DateTimeField()
     revoked_at = models.DateTimeField(null=True, blank=True)
+    # Revocation changes the evidentiary value of someone's credential,
+    # so it must be attributable: who did it and why, frozen with the
+    # stamp. SET_NULL - the record outlives the operator's account.
+    revoked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="revoked_certificates",
+        null=True,
+        blank=True,
+    )
+    revoked_reason = models.CharField(max_length=200, blank=True)
 
-    # Printable snapshot — what the certificate says, frozen at issuance.
+    # Printable snapshot  what the certificate says, frozen at issuance.
     student_name = models.CharField(max_length=STUDENT_NAME_MAX_LENGTH)
     course_title = models.CharField(max_length=COURSE_TITLE_MAX_LENGTH)
     completed_at = models.DateTimeField()

@@ -121,7 +121,7 @@ class GalleryApiTests(TestCase):
                 viewer_id=self.author.id,
                 image=make_image_file(name=f"b{index}.png"),
             )
-        # count + page + images prefetch — flat regardless of rows.
+        # count + page + images prefetch  flat regardless of rows.
         with self.assertNumQueries(3):
             response = self.client.get("/api/v1/gallery/")
         self.assertEqual(response.json()["count"], 6)

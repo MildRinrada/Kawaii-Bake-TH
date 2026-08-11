@@ -1,4 +1,4 @@
-"""Question bank endpoints — a private, authenticated authoring surface."""
+"""Question bank endpoints  a private, authenticated authoring surface."""
 
 from __future__ import annotations
 

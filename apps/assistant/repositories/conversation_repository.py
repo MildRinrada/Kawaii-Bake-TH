@@ -1,6 +1,6 @@
 """Write operations for conversations, messages and usage logs.
 
-Messages and usage logs get an ``add``/``log`` only — append-only tables
+Messages and usage logs get an ``add``/``log`` only - append-only tables
 have no update or delete path, so none exists here to misuse.
 """
 
@@ -97,8 +97,8 @@ def add_message(
 def set_title_if_empty(*, conversation: AssistantConversation, title: str) -> None:
     """Stamp an auto-title from the first user message, once.
 
-    A conditional UPDATE (``title=""`` in the WHERE) — the stamp-once shape
-    used for ``published_at`` and ``completed_at`` — so a concurrent send
+    A conditional UPDATE (``title=""`` in the WHERE) - the stamp-once shape
+    used for ``published_at`` and ``completed_at`` - so a concurrent send
     cannot overwrite a title that already exists.
 
     Args:

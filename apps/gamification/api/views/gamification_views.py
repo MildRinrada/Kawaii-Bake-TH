@@ -1,7 +1,7 @@
 """Gamification endpoints.
 
 The leaderboard is the one public read; everything else is the caller's
-own standing. No business logic here — views assemble what the services
+own standing. No business logic here  views assemble what the services
 derive.
 """
 
@@ -99,7 +99,7 @@ class MyStreakView(ServiceAPIView):
 
 
 class LeaderboardView(PaginatedServiceAPIView):
-    """The public leaderboard — handle, level, XP."""
+    """The public leaderboard  handle, level, XP."""
 
     permission_classes = (AllowAny,)
 

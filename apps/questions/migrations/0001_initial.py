@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('question_type', models.CharField(choices=[('single_choice', 'Single choice'), ('multiple_choice', 'Multiple choice'), ('true_false', 'True / False')], db_index=True, max_length=20)),
                 ('text', models.TextField(max_length=1000)),
-                ('explanation', models.TextField(blank=True, help_text='Shown to the learner after submitting. A learning aid, not part of what is asked or graded — editable even when frozen.', max_length=2000)),
+                ('explanation', models.TextField(blank=True, help_text='Shown to the learner after submitting. A learning aid, not part of what is asked or graded  editable even when frozen.', max_length=2000)),
                 ('difficulty', models.CharField(choices=[('easy', 'Easy'), ('medium', 'Medium'), ('hard', 'Hard')], db_index=True, default='medium', max_length=20)),
                 ('version', models.PositiveIntegerField(default=1)),
                 ('frozen_at', models.DateTimeField(blank=True, help_text='Stamped once when the question is first answered in an attempt; never cleared. Content is immutable from then on.', null=True)),

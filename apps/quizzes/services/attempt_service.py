@@ -1,13 +1,13 @@
 """Business logic for quiz attempts: start, submit, abandon.
 
 The transaction in :func:`start_attempt` is the heart of Phase 4's integrity
-story — freeze and snapshot commit or roll back **together**:
+story  freeze and snapshot commit or roll back **together**:
 
 1. resolve the quiz through visibility (hidden ⇒ 404, fail-closed)
 2. require ``published`` (400 otherwise)
 3. return any existing open attempt (idempotent, like enroll)
 4. read the composition
-5. ``question_service.freeze_questions()`` — the allowed-direction push;
+5. ``question_service.freeze_questions()``  the allowed-direction push;
    this app knows *why* (answers are about to reference these questions),
    the questions app records *that*
 6. create the attempt (``max_score`` stamped now)
@@ -102,7 +102,7 @@ def submit_attempt(
     """Grade and close the caller's open attempt on a quiz.
 
     Grading reads only the attempt's snapshot rows and the frozen questions'
-    answer keys — never the live composition, which may have changed since
+    answer keys  never the live composition, which may have changed since
     start. Questions omitted from the payload are graded as skipped
     (incorrect). Deliberately **not** idempotent: a second submit may carry
     different answers, so it is 409, unlike enroll.
@@ -119,7 +119,7 @@ def submit_attempt(
         QuizNotVisibleError: If the quiz is absent or hidden (404).
         NoOpenAttemptError: If the caller has nothing in progress.
         AttemptAlreadySubmittedError: If a concurrent submit won the race.
-        InvalidSubmissionError: If the payload does not match the snapshot —
+        InvalidSubmissionError: If the payload does not match the snapshot 
             the exact diff is in ``details``.
     """
     quiz = _require_quiz_ref(slug=slug, viewer_id=user_id)
@@ -180,7 +180,7 @@ def abandon_attempt(*, user_id: int, slug: str, attempt_id: int) -> None:
     """Delete the caller's own in-progress attempt.
 
     Submitted attempts are history and cannot be deleted. Any freezing the
-    start performed remains — freezing is monotonic, and over-freezing is the
+    start performed remains  freezing is monotonic, and over-freezing is the
     safe direction.
 
     Args:
@@ -254,7 +254,7 @@ def review_context(
 ) -> tuple[dict[int, question_selector.TakerQuestionDTO], dict[int, str]]:
     """Fetch what a result review needs: taker-shaped questions, explanations.
 
-    Explanations are returned only for **submitted** attempts — they often
+    Explanations are returned only for **submitted** attempts  they often
     paraphrase the answer.
 
     Args:

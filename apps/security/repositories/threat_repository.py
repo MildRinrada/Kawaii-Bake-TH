@@ -116,7 +116,7 @@ def apply_score(
 ) -> ThreatProfile:
     """Write a recomputed score and its band back to the profile.
 
-    ``score`` and ``level`` are always written together — the whole point
+    ``score`` and ``level`` are always written together  the whole point
     of storing both is that they agree.
 
     Args:

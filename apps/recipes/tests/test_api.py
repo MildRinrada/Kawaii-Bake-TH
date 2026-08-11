@@ -149,6 +149,7 @@ class RecipeDetailApiTests(TestCase):
                 "visibility",
                 "published_at",
                 "created_at",
+                "updated_at",
                 "cover_image_url",
                 "author",
                 "categories",
@@ -309,3 +310,67 @@ class CategoryApiTests(TestCase):
 
         slugs = {item["slug"] for item in response.json()}
         self.assertNotIn("secret-category", slugs)
+
+
+class RecipeStatusFilterTests(TestCase):
+    """The narrow-only status filter behind the staff list."""
+
+    def setUp(self) -> None:
+        from rest_framework.test import APIClient
+
+        from apps.users.tests.factories import create_user
+
+        self.client = APIClient()
+        self.staff = create_user(is_staff=True)
+        author = create_user()
+        create_recipe(author=author, status=RecipeStatus.PUBLISHED)
+        self.draft = create_recipe(author=author, status=RecipeStatus.DRAFT)
+
+    def test_staff_can_isolate_drafts(self) -> None:
+        self.client.force_login(self.staff)
+
+        rows = self.client.get(
+            "/api/v1/recipes/", {"scope": "all", "status": "draft"}
+        ).json()["results"]
+
+        self.assertEqual([row["slug"] for row in rows], [self.draft.slug])
+
+    def test_the_filter_never_widens_for_the_public(self) -> None:
+        rows = self.client.get(
+            "/api/v1/recipes/", {"status": "draft"}
+        ).json()["results"]
+
+        self.assertEqual(rows, [])
+
+
+class RecipeVisibilityFilterTests(TestCase):
+    """The narrow-only visibility filter behind the staff summary cards."""
+
+    def setUp(self) -> None:
+        from rest_framework.test import APIClient
+
+        from apps.users.tests.factories import create_user
+
+        self.client = APIClient()
+        self.staff = create_user(is_staff=True)
+        author = create_user()
+        create_recipe(
+            author=author,
+            status=RecipeStatus.PUBLISHED,
+            visibility=RecipeVisibility.PUBLIC,
+        )
+        self.unlisted = create_recipe(
+            author=author,
+            status=RecipeStatus.PUBLISHED,
+            visibility=RecipeVisibility.UNLISTED,
+        )
+
+    def test_staff_can_isolate_unlisted_rows(self) -> None:
+        self.client.force_login(self.staff)
+
+        rows = self.client.get(
+            "/api/v1/recipes/", {"scope": "all", "visibility": "unlisted"}
+        ).json()["results"]
+
+        self.assertEqual([row["slug"] for row in rows], [self.unlisted.slug])
+        self.assertIn("updated_at", rows[0])

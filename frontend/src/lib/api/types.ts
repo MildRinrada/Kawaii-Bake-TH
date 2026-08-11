@@ -21,6 +21,338 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/achievements/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return every badge, inactive included, with awarded counts.
+         *
+         *     Unpaginated: the catalogue is a small, curated set.
+         */
+        get: operations["admin_achievements_list"];
+        put?: never;
+        /**
+         * @description Create a badge definition.
+         *
+         *     Creating a badge never awards it: awarding stays with the
+         *     recalculation rules, so a new badge is presentation until a rule
+         *     exists for it.
+         */
+        post: operations["admin_achievements_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/achievements/{slug}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete an unawarded badge; awarded ones must be deactivated. */
+        delete: operations["admin_achievements_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Apply a partial edit to a badge definition. */
+        patch: operations["admin_achievements_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/admin/achievements/awards/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of awards, newest first. */
+        get: operations["admin_achievements_awards_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/certificates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of certificates, newest issuance first. */
+        get: operations["admin_certificates_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/certificates/{certificate_id}/revoke/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Revoke the certificate, recording the actor and the reason.
+         *
+         *     Raises:
+         *         CertificateNotFoundError: If the certificate does not exist.
+         *         CertificateAlreadyRevokedError: If it was already revoked -
+         *             a conflict, so the first operator's reason stays.
+         */
+        post: operations["admin_certificates_revoke_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/favorites/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of favorites. */
+        get: operations["admin_favorites_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/favorites/top/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return the top-ten rankings for both target kinds. */
+        get: operations["admin_favorites_top_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of notifications with their read state. */
+        get: operations["admin_notifications_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/broadcast/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Broadcast an announcement, honouring per-user opt-outs. */
+        post: operations["admin_notifications_broadcast_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/progress/courses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of courses with their enrollment counts. */
+        get: operations["admin_progress_courses_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/progress/courses/{slug}/enrollments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return a page of learners, newest enrollment first.
+         *
+         *     Progress figures are merged in for the page only: two batch
+         *     queries per page, never per row.
+         *
+         *     Raises:
+         *         ProgressCourseNotFoundError: If no course has that slug.
+         */
+        get: operations["admin_progress_courses_enrollments_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/progress/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return platform-wide enrollment and completion counters. */
+        get: operations["admin_progress_summary_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/recipe-categories/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return every category, inactive included.
+         *
+         *     Unpaginated for the same reason as the public list: the taxonomy is
+         *     a small, curated set the admin screen loads once.
+         */
+        get: operations["admin_recipe_categories_list"];
+        put?: never;
+        /** @description Create a category; the slug derives from the name when omitted. */
+        post: operations["admin_recipe_categories_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/recipe-categories/{category_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete the category; recipe/course assignments simply unlink. */
+        delete: operations["admin_recipe_categories_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Apply a partial edit; ``image: null`` removes the tile photo. */
+        patch: operations["admin_recipe_categories_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/admin/recommendations/config/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return the scoring constants as they are deployed. */
+        get: operations["admin_recommendations_config_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/recommendations/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Run the live pipeline as the given user and keep the scores.
+         *
+         *     Cards are resolved with the *target user* as the viewer, so the
+         *     preview shows exactly what that user's feed would show - a staff
+         *     identity here would quietly widen visibility.
+         *
+         *     Raises:
+         *         UserNotFoundError: If no account has that username.
+         */
+        get: operations["admin_recommendations_preview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reviews/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of reviews; deleted rows only when asked for. */
+        get: operations["admin_reviews_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/security/events/": {
         parameters: {
             query?: never;
@@ -149,6 +481,54 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of accounts, newest first by default. */
+        get: operations["admin_users_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return one account.
+         *
+         *     Raises:
+         *         UserNotFoundError: If the account does not exist.
+         */
+        get: operations["admin_users_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description Apply a staff edit - legal name, suspension, staff flag, or the
+         *     emergency email-verification override.
+         *
+         *     Raises:
+         *         UserNotFoundError: If the account does not exist.
+         *         ProtectedAccountError: If the edit touches the caller's own
+         *             access flags or any flag of a superuser.
+         */
+        patch: operations["admin_users_partial_update"];
         trace?: never;
     };
     "/api/v1/assistant/conversations/": {
@@ -380,7 +760,7 @@ export interface paths {
         /**
          * @description Report whether ``?username=`` could be registered right now.
          *
-         *     Advisory only — the racing-sign-up case is still settled by the
+         *     Advisory only  the racing-sign-up case is still settled by the
          *     unique constraint inside registration.
          */
         get: operations["auth_username_available_retrieve"];
@@ -562,11 +942,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description Return the syllabus — lesson metadata only.
+         * @description Return the syllabus  lesson metadata only.
          *
          *     Content and video URLs are behind the lesson detail endpoint's
          *     enrollment gate, and the viewer's completion state lives at the
-         *     progress app's ``{slug}/progress/`` endpoint — this app knows nothing
+         *     progress app's ``{slug}/progress/`` endpoint  this app knows nothing
          *     about learner state (ADR 0012). Unpaginated: a course caps at 100
          *     lessons and the syllabus is rendered as one list.
          */
@@ -722,7 +1102,10 @@ export interface paths {
          * @description Return a page of visible posts, newest first.
          *
          *     Filters: ``recipe_id``, ``course_id``, ``category`` (slug),
-         *     ``author`` (username).
+         *     ``author`` (username), ``status``. The status filter intersects
+         *     the visibility rule, so it can never widen what a viewer sees -
+         *     it exists for the staff moderation queue and the owner's own
+         *     hidden-posts view.
          */
         get: operations["gallery_list"];
         put?: never;
@@ -804,6 +1187,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/legal/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return all documents' metadata. */
+        get: operations["legal_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/legal/{kind}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return one document with its full text. */
+        get: operations["legal_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Edit the document; every content change bumps its version. */
+        patch: operations["legal_partial_update"];
+        trace?: never;
+    };
     "/api/v1/lessons/{lesson_id}/": {
         parameters: {
             query?: never;
@@ -843,7 +1261,7 @@ export interface paths {
          * @description Complete the lesson. Idempotent; may complete the course.
          *
          *     404 when the lesson does not exist for this viewer; 403
-         *     ``enrollment_required`` without an access-granting enrollment —
+         *     ``enrollment_required`` without an access-granting enrollment
          *     including on preview lessons: reading is free, progress is not.
          */
         post: operations["lessons_complete_create"];
@@ -1389,7 +1807,7 @@ export interface paths {
         /**
          * @description Start an attempt. Idempotent: 201 on creation, 200 when resuming.
          *
-         *     The response carries the questions in the taker-safe shape — this,
+         *     The response carries the questions in the taker-safe shape  this,
          *     not the quiz detail, is the moment a taker receives the questions.
          */
         post: operations["quizzes_start_create"];
@@ -1412,7 +1830,7 @@ export interface paths {
          * @description Grade and close the caller's open attempt.
          *
          *     Omitted questions are graded as skipped (incorrect). A second submit
-         *     is 409 ``attempt_already_submitted`` — an attempt is graded once.
+         *     is 409 ``attempt_already_submitted``  an attempt is graded once.
          */
         post: operations["quizzes_submit_create"];
         delete?: never;
@@ -1880,7 +2298,7 @@ export interface paths {
          *
          *     Pagination runs on the favorites queryset (already visibility-filtered
          *     via the content apps' prefix Q builders); the page's target cards are
-         *     then batch-fetched through each app's own card selector — the same
+         *     then batch-fetched through each app's own card selector  the same
          *     two-step embed the lesson detail uses, so cards carry their full
          *     prefetches without joining them through the favorites table.
          */
@@ -1974,6 +2392,161 @@ export interface components {
             reason: string;
             idempotency_key?: string;
         };
+        /** @description One row of the cross-user award ledger. */
+        AdminAward: {
+            readonly id: number;
+            readonly username: string;
+            /** @description Return the earner's display name, falling back to the handle. */
+            readonly display_name: string;
+            readonly achievement_type: string;
+            readonly badge: components["schemas"]["Badge"] | null;
+            /** Format: date-time */
+            readonly awarded_at: string;
+        };
+        /** @description A badge on the staff surface - adds curation state and usage. */
+        AdminBadge: {
+            readonly slug: string;
+            readonly title_th: string;
+            readonly title_en: string;
+            readonly description_th: string;
+            readonly description_en: string;
+            readonly icon: string;
+            readonly is_active: boolean;
+            readonly awarded_count: number;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /** @description A category on the staff surface - adds curation state. */
+        AdminCategory: {
+            /** @description Return the absolute tile-photo URL, or ``None`` when unset. */
+            readonly image_url: string | null;
+            readonly id: number;
+            readonly name: string;
+            readonly slug: string;
+            readonly description: string;
+            readonly icon: string;
+            readonly display_order: number;
+            readonly recipe_count: number;
+            readonly is_active: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description One row of the platform-wide certificate registry.
+         *
+         *     Carries the holder's handle and the revocation attribution - data
+         *     only the ``IsAdminUser``-gated registry may show. The public
+         *     verification shape stays as narrow as ever.
+         */
+        AdminCertificate: {
+            readonly id: number;
+            readonly certificate_number: string;
+            /** Format: uuid */
+            readonly verification_token: string;
+            readonly username: string;
+            /** @description Return the holder's display name, falling back to the handle. */
+            readonly display_name: string;
+            readonly student_name: string;
+            readonly course_title: string;
+            /** Format: date-time */
+            readonly completed_at: string;
+            /** Format: date-time */
+            readonly issued_at: string;
+            /** @description Return ``valid`` or ``revoked``. */
+            readonly status: string;
+            /** Format: date-time */
+            readonly revoked_at: string | null;
+            /** @description Return the revoking operator's handle, when recorded. */
+            readonly revoked_by: string | null;
+            readonly revoked_reason: string;
+        };
+        /** @description One favorite row across users - owner and target, no cards. */
+        AdminFavorite: {
+            readonly id: number;
+            readonly username: string;
+            /** @description Return the owner's display name, falling back to the handle. */
+            readonly display_name: string;
+            readonly type: string;
+            /** @description Return the favorited item's title. */
+            readonly target_title: string | null;
+            /** @description Return the favorited item's slug. */
+            readonly target_slug: string | null;
+            /** Format: date-time */
+            readonly favorited_at: string;
+        };
+        /** @description One delivered notification, recipient included. */
+        AdminNotification: {
+            readonly id: number;
+            readonly recipient: string;
+            /** @description Return the recipient's display name, falling back to the handle. */
+            readonly recipient_display_name: string;
+            readonly event_type: string;
+            readonly title: string;
+            readonly body: string;
+            readonly actor_handle: string;
+            readonly link: string;
+            /** Format: date-time */
+            readonly read_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description A review on the staff surface - adds the target's title.
+         *
+         *     The flat list spans every recipe and course, so each row must say
+         *     what it reviews without another request.
+         */
+        AdminReview: {
+            readonly id: number;
+            readonly rating: number;
+            readonly comment: string;
+            readonly status: string;
+            readonly target: string;
+            /** @description Return the recipe slug for recipe reviews. */
+            readonly recipe_slug: string | null;
+            /** @description Return the course slug for course reviews. */
+            readonly course_slug: string | null;
+            readonly user: components["schemas"]["AuthorRef"];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** @description Return the recipe title for recipe reviews. */
+            readonly recipe_title: string | null;
+            /** @description Return the course title for course reviews. */
+            readonly course_title: string | null;
+        };
+        /** @description One account row on the staff roster. */
+        AdminUser: {
+            readonly id: number;
+            readonly username: string;
+            /** Format: email */
+            readonly email: string;
+            readonly first_name: string;
+            readonly last_name: string;
+            /** @description Return the profile display name, falling back to the handle. */
+            readonly display_name: string;
+            /** @description Return the absolute avatar URL, or ``None`` when unset. */
+            readonly avatar_url: string | null;
+            /** @description Return the self-declared skill level from the profile. */
+            readonly experience_level: string;
+            readonly is_active: boolean;
+            readonly is_staff: boolean;
+            readonly is_superuser: boolean;
+            readonly is_email_verified: boolean;
+            /** Format: date-time */
+            readonly email_verified_at: string | null;
+            /** Format: date-time */
+            readonly terms_accepted_at: string | null;
+            /** Format: date-time */
+            readonly deactivated_at: string | null;
+            /** Format: date-time */
+            readonly last_login: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         /** @description One answer. */
         Answer: {
             readonly id: number;
@@ -1993,7 +2566,7 @@ export interface components {
             question_id: number;
             choice_ids: number[];
         };
-        /** @description One attempt's headline numbers — all denormalized at grading time. */
+        /** @description One attempt's headline numbers  all denormalized at grading time. */
         AttemptSummary: {
             readonly id: number;
             readonly status: string;
@@ -2029,7 +2602,7 @@ export interface components {
          *
          *     The same shape whether it is embedded in an earned achievement or
          *     listed in the catalogue: presentation only, no user data, nothing
-         *     about whether *this* caller earned it — that fact lives on the
+         *     about whether *this* caller earned it  that fact lives on the
          *     achievement row (ADR 0024).
          */
         Badge: {
@@ -2039,6 +2612,16 @@ export interface components {
             readonly description_th: string;
             readonly description_en: string;
             readonly icon: string;
+        };
+        /** @description Payload for creating a badge definition. */
+        BadgeCreateRequest: {
+            slug: string;
+            title_th: string;
+            title_en: string;
+            description_th?: string;
+            description_en?: string;
+            icon?: string;
+            is_active?: boolean;
         };
         /**
          * @description * `beginner` - Beginner
@@ -2060,8 +2643,20 @@ export interface components {
         BlockRequestRequest: {
             minutes: number;
         };
+        /** @description Payload for a platform announcement. */
+        BroadcastRequest: {
+            title: string;
+            body?: string;
+            link?: string;
+        };
+        /** @description How far a broadcast reached. */
+        BroadcastResult: {
+            readonly recipients: number;
+        };
         /** @description A category in the category listing. */
         Category: {
+            /** @description Return the absolute tile-photo URL, or ``None`` when unset. */
+            readonly image_url: string | null;
             readonly id: number;
             readonly name: string;
             readonly slug: string;
@@ -2069,6 +2664,17 @@ export interface components {
             readonly icon: string;
             readonly display_order: number;
             readonly recipe_count: number;
+        };
+        /** @description Multipart payload for creating a category. */
+        CategoryCreateRequest: {
+            name: string;
+            slug?: string;
+            description?: string;
+            icon?: string;
+            display_order?: number;
+            is_active?: boolean;
+            /** Format: binary */
+            image?: string;
         };
         /**
          * @description A category reference embedded in another payload.
@@ -2082,7 +2688,7 @@ export interface components {
             readonly slug: string;
             readonly icon: string;
         };
-        /** @description The owner's view of a certificate — the printable metadata. */
+        /** @description The owner's view of a certificate  the printable metadata. */
         Certificate: {
             readonly id: number;
             readonly certificate_number: string;
@@ -2098,8 +2704,12 @@ export interface components {
             /** @description Return ``valid`` or ``revoked``. */
             readonly status: string;
         };
+        /** @description Payload for a staff revocation - the reason is not optional. */
+        CertificateRevokeRequest: {
+            reason: string;
+        };
         /**
-         * @description The public (employer-facing) view — deliberately narrow.
+         * @description The public (employer-facing) view  deliberately narrow.
          *
          *     The student's public handle as printed, the course, the dates, the
          *     verdict. Never an email, never a user id, never the internal pk.
@@ -2128,7 +2738,7 @@ export interface components {
         /**
          * @description What the browser guard is allowed to do, as configured by env.
          *
-         *     Served to anyone, including anonymous visitors — it contains no user
+         *     Served to anyone, including anonymous visitors  it contains no user
          *     data and describes only this deployment's own posture. Publishing it
          *     is not a leak: the guard's behaviour is visible in the shipped
          *     JavaScript regardless, and a client that cannot read the policy would
@@ -2186,7 +2796,7 @@ export interface components {
          * @enum {string}
          */
         ContextTypeEnum: "recipe" | "lesson" | "course" | "general";
-        /** @description A conversation row — list and creation payloads. */
+        /** @description A conversation row - list and creation payloads. */
         Conversation: {
             readonly id: number;
             readonly title: string;
@@ -2219,8 +2829,8 @@ export interface components {
         /**
          * @description Schema shape of the history endpoint (docs only).
          *
-         *     The view assembles this response by hand — the conversation from the
-         *     service, the message page from the paginator — so this serializer exists
+         *     The view assembles this response by hand - the conversation from the
+         *     service, the message page from the paginator - so this serializer exists
          *     for drf-spectacular, not for serialisation.
          */
         ConversationDetail: {
@@ -2318,6 +2928,20 @@ export interface components {
             readonly percent: number;
             readonly lessons: components["schemas"]["LessonProgressItem"][];
         };
+        /** @description One course's enrollment funnel. */
+        CourseStatRow: {
+            readonly id: number;
+            readonly slug: string;
+            readonly title: string;
+            readonly status: string;
+            readonly published_lesson_count: number;
+            readonly enrolled_count: number;
+            readonly active_count: number;
+            readonly completed_count: number;
+            readonly dropped_count: number;
+            /** @description Completed enrollments as a percentage of all enrollments. */
+            readonly completion_rate: number;
+        };
         /**
          * @description * `none` - No restrictions
          *     * `vegan` - Vegan
@@ -2345,7 +2969,7 @@ export interface components {
          * @description One signal forwarded by the trusted frontend edge.
          *
          *     Unlike :class:`ClientSignalSerializer` this one **does** carry an
-         *     ``ip`` — the visitor's, as the edge saw it. That is only safe because
+         *     ``ip``  the visitor's, as the edge saw it. That is only safe because
          *     the caller proves itself with the shared secret first; the field is
          *     the whole reason the secret exists.
          */
@@ -2364,10 +2988,46 @@ export interface components {
             token: string;
         };
         /**
+         * @description The engine's tunable weights, straight from constants.
+         *
+         *     Read-only: weights are code, not configuration - changing one is a
+         *     deploy with tests, and this endpoint only makes the current values
+         *     visible so the preview's numbers can be interpreted.
+         */
+        EngineConfig: {
+            readonly candidate_pool_size: number;
+            readonly positive_review_min_rating: number;
+            /** Format: double */
+            readonly w_category_match: number;
+            /** Format: double */
+            readonly category_score_cap: number;
+            /** Format: double */
+            readonly w_author_affinity: number;
+            /** Format: double */
+            readonly w_rating_average: number;
+            /** Format: double */
+            readonly w_rating_count: number;
+            readonly rating_count_cap: number;
+            /** Format: double */
+            readonly w_favorite_count: number;
+            readonly favorite_count_cap: number;
+            /** Format: double */
+            readonly w_recency: number;
+            readonly recency_window_days: number;
+            /** Format: double */
+            readonly w_difficulty_fit: number;
+            /** Format: double */
+            readonly diversity_penalty: number;
+            /** Format: double */
+            readonly highly_rated_min_average: number;
+            readonly highly_rated_min_count: number;
+            readonly popular_min_favorites: number;
+        };
+        /**
          * @description One favorite with its target card embedded.
          *
          *     The cards come from the content apps' own list serializers, batch-fetched
-         *     by the view — this serializer only stitches. The queryset already
+         *     by the view  this serializer only stitches. The queryset already
          *     filtered targets by visibility, so a card is always present.
          */
         FavoriteItem: {
@@ -2383,10 +3043,22 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** @description The most-favorited rankings, one list per target kind. */
+        FavoriteTop: {
+            readonly recipes: components["schemas"]["FavoriteTopEntry"][];
+            readonly courses: components["schemas"]["FavoriteTopEntry"][];
+        };
+        /** @description One row of a most-favorited ranking. */
+        FavoriteTopEntry: {
+            readonly id: number;
+            readonly slug: string;
+            readonly title: string;
+            readonly count: number;
+        };
         /** @description One image of a post. */
         GalleryImage: {
             readonly id: number;
-            /** @description Absolute media URL — the frontend runs on another origin. */
+            /** @description Absolute media URL  the frontend runs on another origin. */
             readonly url: string;
             readonly position: number;
         };
@@ -2395,7 +3067,7 @@ export interface components {
             /** Format: binary */
             image: string;
         };
-        /** @description A gallery post — the one shape for list and detail. */
+        /** @description A gallery post  the one shape for list and detail. */
         GalleryPost: {
             readonly id: number;
             readonly author_handle: string;
@@ -2463,7 +3135,7 @@ export interface components {
             is_optional: boolean;
         };
         /**
-         * @description One public leaderboard row — handle, level, XP. Nothing else.
+         * @description One public leaderboard row  handle, level, XP. Nothing else.
          *
          *     The public handle is the identity users chose to be public; email and
          *     ids never appear here.
@@ -2473,6 +3145,44 @@ export interface components {
             readonly public_handle: string;
             readonly level: number;
             readonly total_xp: number;
+        };
+        /**
+         * @description One learner on a course roster.
+         *
+         *     Built from a dict the view assembles (enrollment + batch progress
+         *     lookups), not from a model row.
+         */
+        LearnerRow: {
+            readonly username: string;
+            readonly display_name: string;
+            readonly avatar_url: string | null;
+            readonly status: string;
+            /** Format: date-time */
+            readonly enrolled_at: string;
+            /** Format: date-time */
+            readonly completed_at: string | null;
+            readonly completed_lessons: number;
+            readonly total_lessons: number;
+            readonly percent: number;
+            /** Format: date-time */
+            readonly last_activity_at: string | null;
+        };
+        /** @description Detail: the summary plus the full text. */
+        LegalDocument: {
+            readonly kind: string;
+            readonly title: string;
+            readonly version: number;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly body: string;
+        };
+        /** @description List row: everything but the body, which can be long. */
+        LegalDocumentSummary: {
+            readonly kind: string;
+            readonly title: string;
+            readonly version: number;
+            /** Format: date-time */
+            readonly updated_at: string;
         };
         /** @description Response of completing a lesson. */
         LessonCompletion: {
@@ -2516,7 +3226,7 @@ export interface components {
              * @description Return the linked recipe reference, redacted for this viewer.
              *
              *     Provided by the view via context after a viewer-aware lookup; a recipe
-             *     that has gone private since linking degrades to ``None`` — never a leak.
+             *     that has gone private since linking degrades to ``None``  never a leak.
              */
             readonly recipe: {
                 [key: string]: unknown;
@@ -2548,7 +3258,7 @@ export interface components {
         LessonReorderRequest: {
             lesson_ids: number[];
         };
-        /** @description One lesson on the public syllabus — metadata only, never content. */
+        /** @description One lesson on the public syllabus  metadata only, never content. */
         LessonSyllabusItem: {
             readonly id: number;
             readonly title: string;
@@ -2621,7 +3331,7 @@ export interface components {
          * @description Everything the settings screen needs, in one read.
          *
          *     A pure composition (ADR 0020 §7): each block is serialized by (or
-         *     read through) its owning domain — profile and preferences by users,
+         *     read through) its owning domain  profile and preferences by users,
          *     the notification block from the notifications app's own effective-
          *     preferences selector. This endpoint owns nothing and writes nothing;
          *     every write still goes to the owner's endpoint.
@@ -2634,7 +3344,7 @@ export interface components {
             };
             readonly profile_completion: components["schemas"]["ProfileCompletion"];
         };
-        /** @description One notification row — the snapshot, verbatim. */
+        /** @description One notification row  the snapshot, verbatim. */
         Notification: {
             readonly id: number;
             readonly event_type: string;
@@ -2661,11 +3371,11 @@ export interface components {
             readonly results: components["schemas"]["Notification"][];
         };
         /**
-         * @description The per-event preference map — GET response and PATCH request.
+         * @description The per-event preference map  GET response and PATCH request.
          *
          *     One declared boolean per supported event type; ``StrictSerializer``
          *     rejects unknown event types (and any other stray key) loudly. All
-         *     fields optional on PATCH — absent means unchanged.
+         *     fields optional on PATCH  absent means unchanged.
          */
         NotificationPreferences: {
             review_received?: boolean;
@@ -2673,6 +3383,7 @@ export interface components {
             achievement_earned?: boolean;
             qa_answer_received?: boolean;
             qa_answer_accepted?: boolean;
+            announcement?: boolean;
         };
         /**
          * @description Submitted nutrition figures.
@@ -2710,7 +3421,7 @@ export interface components {
          *     ``/users/preferences/`` so that this payload can never leak them.
          *
          *     ``cover_url`` is on this shape only. The public profile has no consumer
-         *     for it yet, and an unread field is surface with no test behind it — the
+         *     for it yet, and an unread field is surface with no test behind it  the
          *     ``PublicProfileDTO`` gains one the day a public profile page renders it.
          */
         OwnProfile: {
@@ -2721,7 +3432,10 @@ export interface components {
             readonly username: string;
             /** Format: email */
             readonly email: string;
+            readonly first_name: string;
+            readonly last_name: string;
             readonly is_email_verified: boolean;
+            readonly is_staff: boolean;
             /** Format: date-time */
             readonly joined_at: string;
             readonly display_name: string;
@@ -2778,6 +3492,96 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Achievement"][];
+        };
+        PaginatedAdminAwardList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminAward"][];
+        };
+        PaginatedAdminCertificateList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminCertificate"][];
+        };
+        PaginatedAdminFavoriteList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminFavorite"][];
+        };
+        PaginatedAdminNotificationList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminNotification"][];
+        };
+        PaginatedAdminReviewList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminReview"][];
+        };
+        PaginatedAdminUserList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminUser"][];
         };
         PaginatedAnswerList: {
             /** @example 123 */
@@ -2854,6 +3658,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["CourseListItem"][];
         };
+        PaginatedCourseStatRowList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["CourseStatRow"][];
+        };
         PaginatedFavoriteItemList: {
             /** @example 123 */
             count: number;
@@ -2898,6 +3717,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["LeaderboardEntry"][];
+        };
+        PaginatedLearnerRowList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["LearnerRow"][];
         };
         PaginatedOwnerQuestionList: {
             /** @example 123 */
@@ -3065,9 +3899,42 @@ export interface components {
             /** Format: email */
             email: string;
         };
+        /** @description Staff edit payload; absent keys are unchanged. */
+        PatchedAdminUserUpdateRequest: {
+            first_name?: string;
+            last_name?: string;
+            is_active?: boolean;
+            is_staff?: boolean;
+            is_email_verified?: boolean;
+        };
         /** @description Payload for answering (and for editing an answer). */
         PatchedAnswerCreateRequest: {
             body?: string;
+        };
+        /** @description Payload for editing a badge; absent keys are unchanged. */
+        PatchedBadgeUpdateRequest: {
+            slug?: string;
+            title_th?: string;
+            title_en?: string;
+            description_th?: string;
+            description_en?: string;
+            icon?: string;
+            is_active?: boolean;
+        };
+        /**
+         * @description Multipart payload for editing a category; absent keys are unchanged.
+         *
+         *     ``image: null`` removes the tile photo.
+         */
+        PatchedCategoryUpdateRequest: {
+            name?: string;
+            slug?: string;
+            description?: string;
+            icon?: string;
+            display_order?: number;
+            is_active?: boolean;
+            /** Format: binary */
+            image?: string | null;
         };
         /** @description Validates a partial course update; absent means unchanged. */
         PatchedCourseUpdateRequest: {
@@ -3084,7 +3951,7 @@ export interface components {
         /**
          * @description Payload for editing a post; absent keys are unchanged.
          *
-         *     ``image_ids`` reorders the gallery — it must be exactly the post's
+         *     ``image_ids`` reorders the gallery  it must be exactly the post's
          *     image-id set (the lessons reorder invariant), validated in the
          *     service. References may be cleared with ``null``.
          */
@@ -3096,9 +3963,17 @@ export interface components {
             image_ids?: number[];
         };
         /**
+         * @description Validates a staff edit. Absent means unchanged; blank is refused
+         *     an empty legal document is a bug, not a state.
+         */
+        PatchedLegalDocumentUpdateRequest: {
+            title?: string;
+            body?: string;
+        };
+        /**
          * @description Validates a partial lesson update.
          *
-         *     ``status`` is editable here — lessons have no completeness gate of their
+         *     ``status`` is editable here  lessons have no completeness gate of their
          *     own; publishing a lesson simply puts it on the syllabus and updates the
          *     course's counter through the repository choke point.
          */
@@ -3115,11 +3990,11 @@ export interface components {
             quiz_id?: number | null;
         };
         /**
-         * @description The per-event preference map — GET response and PATCH request.
+         * @description The per-event preference map  GET response and PATCH request.
          *
          *     One declared boolean per supported event type; ``StrictSerializer``
          *     rejects unknown event types (and any other stray key) loudly. All
-         *     fields optional on PATCH — absent means unchanged.
+         *     fields optional on PATCH  absent means unchanged.
          */
         PatchedNotificationPreferencesRequest: {
             review_received?: boolean;
@@ -3127,12 +4002,13 @@ export interface components {
             achievement_earned?: boolean;
             qa_answer_received?: boolean;
             qa_answer_accepted?: boolean;
+            announcement?: boolean;
         };
         /**
          * @description Validates a profile PATCH payload.
          *
          *     Every field is optional. Absence means "leave unchanged"; an explicit
-         *     ``null`` on a nullable field means "clear it" — without that distinction a
+         *     ``null`` on a nullable field means "clear it"  without that distinction a
          *     user could never remove their birthday.
          *
          *     Identity and permission fields are absent by construction, so they cannot
@@ -3163,7 +4039,7 @@ export interface components {
         /**
          * @description Validates a partial quiz update; absent means unchanged.
          *
-         *     ``question_ids`` replaces the whole composition in submitted order —
+         *     ``question_ids`` replaces the whole composition in submitted order
          *     reordering is this same operation.
          */
         PatchedQuizUpdateRequest: {
@@ -3205,7 +4081,7 @@ export interface components {
         /**
          * @description Validates a partial review update.
          *
-         *     ``status`` is moderation — accepted here for shape, enforced staff-only
+         *     ``status`` is moderation  accepted here for shape, enforced staff-only
          *     in the service. ``deleted`` is never settable through PATCH; deletion has
          *     its own verb.
          */
@@ -3240,7 +4116,31 @@ export interface components {
          * @enum {string}
          */
         PreferredLanguageEnum: "th" | "en";
-        /** @description The derived completion snapshot — computed, never stored. */
+        /** @description The preview envelope: whose feed, which kind, the ranked rows. */
+        PreviewResult: {
+            readonly username: string;
+            readonly kind: string;
+            readonly count: number;
+            readonly items: components["schemas"]["PreviewRow"][];
+        };
+        /**
+         * @description One ranked candidate with its score still attached.
+         *
+         *     Staff-only by construction (ADR 0028): the public feed never carries
+         *     a score. The row stays aggregate - a number and reason codes, never
+         *     the target user's raw history.
+         */
+        PreviewRow: {
+            readonly rank: number;
+            readonly target_id: number;
+            readonly slug: string | null;
+            readonly title: string | null;
+            /** Format: double */
+            readonly score: number;
+            readonly reasons: string[];
+            readonly primary_category: string;
+        };
+        /** @description The derived completion snapshot  computed, never stored. */
         ProfileCompletion: {
             readonly completed: number;
             readonly total: number;
@@ -3254,11 +4154,21 @@ export interface components {
          * @enum {string}
          */
         ProfileVisibilityEnum: "public" | "members" | "private";
+        /** @description Headline platform-learning totals. */
+        ProgressSummary: {
+            readonly enrollments_total: number;
+            readonly enrollments_active: number;
+            readonly enrollments_completed: number;
+            readonly enrollments_dropped: number;
+            readonly learners: number;
+            readonly lessons_completed: number;
+            readonly active_learners_7d: number;
+        };
         /**
          * @description Serialises a :class:`~apps.users.selectors.profile_selector.PublicProfileDTO`.
          *
          *     The DTO has already had the owner's privacy settings applied, so this class
-         *     contains no conditional logic — hidden fields simply arrive as ``None``.
+         *     contains no conditional logic  hidden fields simply arrive as ``None``.
          */
         PublicProfile: {
             /** @description Return the absolute URL of the avatar, or ``None`` when unset. */
@@ -3277,7 +4187,7 @@ export interface components {
         /**
          * @description Validates a question creation payload.
          *
-         *     Message shape only — the per-type choice rules (correct-answer counts,
+         *     Message shape only  the per-type choice rules (correct-answer counts,
          *     duplicates, true/false arity) are domain rules and live in
          *     ``validators/question_validator.py``.
          */
@@ -3356,7 +4266,7 @@ export interface components {
         /**
          * @description Validates a submission payload.
          *
-         *     Message shape only — matching the attempt snapshot (unknown ids, choices
+         *     Message shape only  matching the attempt snapshot (unknown ids, choices
          *     belonging to the question) is domain validation in the attempt service.
          */
         QuizSubmitRequest: {
@@ -3418,6 +4328,8 @@ export interface components {
             readonly published_at: string;
             /** Format: date-time */
             readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
             /** @description Return the absolute cover image URL, if any. */
             readonly cover_image_url: string | null;
             readonly author: components["schemas"]["AuthorRef"];
@@ -3491,6 +4403,8 @@ export interface components {
             readonly published_at: string;
             /** Format: date-time */
             readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
             /** @description Return the absolute cover image URL, if any. */
             readonly cover_image_url: string | null;
             readonly author: components["schemas"]["AuthorRef"];
@@ -3504,7 +4418,7 @@ export interface components {
             /** @description Return the absolute step image URL, if any. */
             readonly image_url: string | null;
         };
-        /** @description One recommended course — the courses mirror of the recipe item. */
+        /** @description One recommended course  the courses mirror of the recipe item. */
         RecommendedCourse: {
             readonly reasons: string[];
             /** @description Return the course card for this recommendation. */
@@ -3516,7 +4430,7 @@ export interface components {
          * @description One recommended recipe: the public card plus its reason codes.
          *
          *     The card comes from the recipes app's own list serializer, batch-fetched
-         *     by the view (the favorites stitching pattern) — this serializer never
+         *     by the view (the favorites stitching pattern)  this serializer never
          *     touches the ORM. Reasons are aggregate evidence codes; no score and no
          *     raw behavior ever appear here (ADR 0018 §10).
          */
@@ -3527,13 +4441,23 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
-        /** @description Validates a sign-up payload. */
+        /**
+         * @description Validates a sign-up payload.
+         *
+         *     The legal name is mandatory: certificates print it, and a certificate
+         *     naming a handle is not a credential. ``accept_terms`` must be an
+         *     explicit ``true``  PDPA consent is an action the user takes, never a
+         *     default the form ships with.
+         */
         RegistrationRequest: {
             /** Format: email */
             email: string;
             username: string;
+            first_name: string;
+            last_name: string;
             password: string;
             password_confirm: string;
+            accept_terms: boolean;
         };
         /** @description One review, reviewer embedded. */
         Review: {
@@ -3577,7 +4501,7 @@ export interface components {
         /**
          * @description One immutable ledger entry.
          *
-         *     No internal ids and no event keys — the row is information, not an
+         *     No internal ids and no event keys  the row is information, not an
          *     addressable resource; there is nothing a client could do to it.
          */
         RewardTransaction: {
@@ -3706,7 +4630,7 @@ export interface components {
          * @enum {string}
          */
         ThemeEnum: "system" | "light" | "dark";
-        /** @description A question thread — list and detail share this shape. */
+        /** @description A question thread  list and detail share this shape. */
         Thread: {
             readonly id: number;
             readonly author_handle: string;
@@ -3739,8 +4663,8 @@ export interface components {
          *
          *     ``score`` is the **stored** value; ``current_score`` is that value
          *     decayed to now. Both are exposed because they answer different
-         *     questions — "how bad was it at its worst" and "how bad is it right
-         *     now" — and a client that only saw one would have to guess the other.
+         *     questions  "how bad was it at its worst" and "how bad is it right
+         *     now"  and a client that only saw one would have to guess the other.
          */
         ThreatProfile: {
             readonly id: number;
@@ -3875,7 +4799,7 @@ export interface components {
          * @description The caller's level standing.
          *
          *     ``xp_for_next_level`` ships alongside ``current_xp`` so a client can
-         *     draw a progress bar without reimplementing the level curve — the
+         *     draw a progress bar without reimplementing the level curve  the
          *     curve is business logic and stays in `level_service` (ADR 0024).
          */
         _Level: {
@@ -3927,6 +4851,505 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Badge"][];
+                };
+            };
+        };
+    };
+    admin_achievements_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBadge"][];
+                };
+            };
+        };
+    };
+    admin_achievements_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BadgeCreateRequest"];
+                "multipart/form-data": components["schemas"]["BadgeCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BadgeCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBadge"];
+                };
+            };
+        };
+    };
+    admin_achievements_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_achievements_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedBadgeUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedBadgeUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedBadgeUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBadge"];
+                };
+            };
+        };
+    };
+    admin_achievements_awards_list: {
+        parameters: {
+            query?: {
+                achievement_type?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminAwardList"];
+                };
+            };
+        };
+    };
+    admin_certificates_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminCertificateList"];
+                };
+            };
+        };
+    };
+    admin_certificates_revoke_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                certificate_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertificateRevokeRequest"];
+                "multipart/form-data": components["schemas"]["CertificateRevokeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CertificateRevokeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCertificate"];
+                };
+            };
+        };
+    };
+    admin_favorites_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+                type?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminFavoriteList"];
+                };
+            };
+        };
+    };
+    admin_favorites_top_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoriteTop"];
+                };
+            };
+        };
+    };
+    admin_notifications_list: {
+        parameters: {
+            query?: {
+                event_type?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+                unread?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminNotificationList"];
+                };
+            };
+        };
+    };
+    admin_notifications_broadcast_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BroadcastRequest"];
+                "multipart/form-data": components["schemas"]["BroadcastRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BroadcastRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BroadcastResult"];
+                };
+            };
+        };
+    };
+    admin_progress_courses_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCourseStatRowList"];
+                };
+            };
+        };
+    };
+    admin_progress_courses_enrollments_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+                status?: string;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedLearnerRowList"];
+                };
+            };
+        };
+    };
+    admin_progress_summary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgressSummary"];
+                };
+            };
+        };
+    };
+    admin_recipe_categories_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategory"][];
+                };
+            };
+        };
+    };
+    admin_recipe_categories_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["CategoryCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CategoryCreateRequest"];
+                "application/json": components["schemas"]["CategoryCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategory"];
+                };
+            };
+        };
+    };
+    admin_recipe_categories_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_recipe_categories_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": components["schemas"]["PatchedCategoryUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCategoryUpdateRequest"];
+                "application/json": components["schemas"]["PatchedCategoryUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategory"];
+                };
+            };
+        };
+    };
+    admin_recommendations_config_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EngineConfig"];
+                };
+            };
+        };
+    };
+    admin_recommendations_preview_retrieve: {
+        parameters: {
+            query?: {
+                kind?: string;
+                username?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewResult"];
+                };
+            };
+        };
+    };
+    admin_reviews_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                rating?: number;
+                search?: string;
+                status?: string;
+                target?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminReviewList"];
                 };
             };
         };
@@ -4119,6 +5542,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SecurityVocabulary"];
+                };
+            };
+        };
+    };
+    admin_users_list: {
+        parameters: {
+            query?: {
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+                staff?: boolean;
+                status?: string;
+                verified?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminUserList"];
+                };
+            };
+        };
+    };
+    admin_users_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+        };
+    };
+    admin_users_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAdminUserUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAdminUserUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAdminUserUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
                 };
             };
         };
@@ -4479,6 +5979,12 @@ export interface operations {
                  */
                 scope?: "public" | "mine" | "all";
                 search?: string;
+                /**
+                 * @description * `draft` - Draft
+                 *     * `published` - Published
+                 *     * `archived` - Archived
+                 */
+                status?: "draft" | "published" | "archived" | "";
             };
             header?: never;
             path?: never;
@@ -5129,6 +6635,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedLeaderboardEntryList"];
+                };
+            };
+        };
+    };
+    legal_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalDocumentSummary"][];
+                };
+            };
+        };
+    };
+    legal_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalDocument"];
+                };
+            };
+        };
+    };
+    legal_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedLegalDocumentUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedLegalDocumentUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedLegalDocumentUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalDocument"];
                 };
             };
         };
@@ -6318,6 +7891,18 @@ export interface operations {
                  */
                 scope?: "public" | "mine" | "all";
                 search?: string;
+                /**
+                 * @description * `draft` - Draft
+                 *     * `published` - Published
+                 *     * `archived` - Archived
+                 */
+                status?: "draft" | "published" | "archived" | "";
+                /**
+                 * @description * `public` - Anyone
+                 *     * `unlisted` - Anyone with the link
+                 *     * `private` - Only me
+                 */
+                visibility?: "public" | "unlisted" | "private" | "";
             };
             header?: never;
             path?: never;
@@ -6710,6 +8295,18 @@ export interface operations {
                  */
                 scope?: "public" | "mine" | "all";
                 search?: string;
+                /**
+                 * @description * `draft` - Draft
+                 *     * `published` - Published
+                 *     * `archived` - Archived
+                 */
+                status?: "draft" | "published" | "archived" | "";
+                /**
+                 * @description * `public` - Anyone
+                 *     * `unlisted` - Anyone with the link
+                 *     * `private` - Only me
+                 */
+                visibility?: "public" | "unlisted" | "private" | "";
             };
             header?: never;
             path?: never;

@@ -46,7 +46,7 @@ class SessionCredentialIssuer:
             remember: Whether the session should outlive the browser session.
 
         Returns:
-            An empty credential — the cookie is set by ``SessionMiddleware``.
+            An empty credential  the cookie is set by ``SessionMiddleware``.
         """
         # `backend=` is passed explicitly so that appending an OAuth backend
         # later cannot raise "multiple authentication backends configured".

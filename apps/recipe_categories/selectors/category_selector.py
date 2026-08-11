@@ -1,7 +1,7 @@
 """Read-side queries for recipe categories.
 
 This module is the **public read API** of this app. Other apps call these
-functions and never touch :class:`RecipeCategory` directly — see
+functions and never touch :class:`RecipeCategory` directly  see
 ``docs/adr/0008-cross-app-model-references.md``.
 """
 
@@ -52,6 +52,20 @@ def list_categories(*, include_inactive: bool = False) -> QuerySet[RecipeCategor
             filter=Q(recipes__status="published", recipes__visibility="public"),
             distinct=True,
         )
+    )
+
+
+def get_by_id(*, category_id: int) -> RecipeCategory | None:
+    """Fetch one category by primary key, annotated with ``recipe_count``.
+
+    Args:
+        category_id: The category primary key.
+
+    Returns:
+        The category, or ``None`` when absent.
+    """
+    return (
+        list_categories(include_inactive=True).filter(id=category_id).first()
     )
 
 

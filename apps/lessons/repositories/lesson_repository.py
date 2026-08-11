@@ -3,7 +3,7 @@
 **This module is the single choke point for lesson mutations**, and therefore
 the only caller of ``course_service.sync_published_lesson_count``. Routing
 every create/update/delete/reorder through here is what keeps the counter on
-``Course`` from drifting — a mutation path that bypasses this module is a bug
+``Course`` from drifting  a mutation path that bypasses this module is a bug
 by definition. ``manage.py recount_lessons`` reconciles if one ever ships.
 """
 

@@ -16,10 +16,10 @@ from apps.recommendation.services import substitution_service
 
 
 class RecipeSubstitutionsView(ServiceAPIView):
-    """GET /recipes/{slug}/substitutions/ — substitution candidates.
+    """GET /recipes/{slug}/substitutions/  substitution candidates.
 
     Public, governed by the recipes visibility rule: a hidden recipe is the
-    same 404 as an absent one. Unpaginated on purpose — the result is
+    same 404 as an absent one. Unpaginated on purpose  the result is
     bounded by the recipe's own ingredient count.
     """
 

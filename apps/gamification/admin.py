@@ -1,6 +1,6 @@
 """Django admin for the gamification app.
 
-The ledger is append-only and the level/streak rows are derived — all
+The ledger is append-only and the level/streak rows are derived  all
 three are read-only here. Repairs go through recalculation, never field
 edits.
 """

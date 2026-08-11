@@ -21,7 +21,7 @@ from apps.rewards.services import reward_service
 
 
 class MyRewardsView(ServiceAPIView):
-    """GET /me/rewards/ — the caller's balance and lifetime totals."""
+    """GET /me/rewards/  the caller's balance and lifetime totals."""
 
     permission_classes = (IsAuthenticated,)
 
@@ -33,7 +33,7 @@ class MyRewardsView(ServiceAPIView):
 
 
 class MyRewardTransactionsView(PaginatedServiceAPIView):
-    """GET /me/rewards/transactions/ — the caller's ledger, newest first."""
+    """GET /me/rewards/transactions/  the caller's ledger, newest first."""
 
     permission_classes = (IsAuthenticated,)
 
@@ -53,12 +53,12 @@ class MyRewardTransactionsView(PaginatedServiceAPIView):
 
 
 class ClaimRewardsView(ServiceAPIView):
-    """POST /me/rewards/claim/ — settle earnings up to current facts.
+    """POST /me/rewards/claim/  settle earnings up to current facts.
 
     The pull door of the economy, mirroring
     ``/me/gamification/recalculate/``: idempotent, monotonic, safe to
     call after any learning action or on page load. Replaying it cannot
-    grant twice — every event is keyed and unique at the database.
+    grant twice  every event is keyed and unique at the database.
     """
 
     permission_classes = (IsAuthenticated,)
@@ -73,7 +73,7 @@ class ClaimRewardsView(ServiceAPIView):
 
 
 class RewardAdjustmentView(ServiceAPIView):
-    """POST /rewards/adjustments/ — staff-only balance correction."""
+    """POST /rewards/adjustments/  staff-only balance correction."""
 
     permission_classes = (IsAdminUser,)
 

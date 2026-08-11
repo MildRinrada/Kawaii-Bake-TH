@@ -42,7 +42,7 @@ class QuizCreateSerializer(StrictSerializer):
 class QuizUpdateSerializer(StrictSerializer):
     """Validates a partial quiz update; absent means unchanged.
 
-    ``question_ids`` replaces the whole composition in submitted order —
+    ``question_ids`` replaces the whole composition in submitted order 
     reordering is this same operation.
     """
 
@@ -89,7 +89,7 @@ class AnswerInputSerializer(StrictSerializer):
 class QuizSubmitSerializer(StrictSerializer):
     """Validates a submission payload.
 
-    Message shape only — matching the attempt snapshot (unknown ids, choices
+    Message shape only  matching the attempt snapshot (unknown ids, choices
     belonging to the question) is domain validation in the attempt service.
     """
 

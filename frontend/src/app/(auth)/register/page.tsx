@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Sign-up: three fields (email, handle, password), validated inline as
+ * Sign-up: email, handle, legal name, password - validated inline as
  * the user types. The handle is checked live against the backend; the
  * password gets a strength meter mirroring the server's validators; a
  * show/hide toggle replaces the confirm field. The server remains the
- * authority on every rule — inline checks only surface its verdicts
+ * authority on every rule  inline checks only surface its verdicts
  * earlier.
  */
 
@@ -23,7 +23,6 @@ import {
   PasswordStrengthMeter,
   passwordStrength,
 } from "@/components/ui/password-strength";
-import { useToast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useFormSubmit } from "@/lib/forms/use-form";
 
@@ -57,12 +56,14 @@ interface AvailabilityAnswer {
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
   const { submitting, formError, fieldErrors, submit } = useFormSubmit();
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [attempted, setAttempted] = useState(false);
   const [availability, setAvailability] = useState<AvailabilityAnswer | null>(
@@ -72,6 +73,8 @@ export default function RegisterPage() {
   const normalizedUsername = username.trim().toLowerCase();
   const emailError = emailFormatError(email.trim());
   const usernameError = usernameFormatError(normalizedUsername);
+  const firstNameError = firstName.trim() ? null : "กรุณากรอกชื่อจริง";
+  const lastNameError = lastName.trim() ? null : "กรุณากรอกนามสกุล";
   const strength = passwordStrength(password);
   const passwordError = !password
     ? "กรุณาตั้งรหัสผ่าน"
@@ -92,7 +95,7 @@ export default function RegisterPage() {
         )
         .then(setAvailability)
         .catch(() => {
-          // Advisory only — registration itself still enforces the rule.
+          // Advisory only  registration itself still enforces the rule.
         });
     }, 450);
     return () => clearTimeout(timer);
@@ -119,23 +122,39 @@ export default function RegisterPage() {
     ...(attempted && !password ? ["กรุณาตั้งรหัสผ่าน"] : []),
     ...(fieldErrors.password ?? []),
   ];
+  const firstNameErrors = [
+    ...(showError("first_name") && firstNameError ? [firstNameError] : []),
+    ...(fieldErrors.first_name ?? []),
+  ];
+  const lastNameErrors = [
+    ...(showError("last_name") && lastNameError ? [lastNameError] : []),
+    ...(fieldErrors.last_name ?? []),
+  ];
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setAttempted(true);
     if (emailError || usernameError || passwordError) return;
+    if (firstNameError || lastNameError) return;
     if (availabilityKnown === false) return;
+    if (!acceptTerms) return;
 
     const ok = await submit(() =>
       register({
         email: email.trim().toLowerCase(),
         username: normalizedUsername,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         password,
+        accept_terms: acceptTerms,
       }),
     );
     if (ok) {
-      toast("ยินดีต้อนรับสู่ KawaiiBake", "success");
-      router.replace("/");
+      // No session yet on purpose: the inbox is the next stop, and the
+      // user signs in themselves after confirming.
+      router.replace(
+        `/register/sent?email=${encodeURIComponent(email.trim().toLowerCase())}`,
+      );
     }
   }
 
@@ -169,7 +188,7 @@ export default function RegisterPage() {
           <Field
             label="ชื่อผู้ใช้"
             errors={usernameErrors}
-            hint="ชื่อสาธารณะของคุณ — คนอื่นเห็นชื่อนี้แทนอีเมลเสมอ"
+            hint="ชื่อสาธารณะของคุณ  คนอื่นเห็นชื่อนี้แทนอีเมลเสมอ"
             required
           >
             {(control) => (
@@ -202,6 +221,36 @@ export default function RegisterPage() {
             )}
           </Field>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="ชื่อจริง"
+              errors={firstNameErrors}
+              hint="ใช้พิมพ์บนใบประกาศนียบัตร ไม่แสดงต่อผู้อื่น"
+              required
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                  onBlur={() => markTouched("first_name")}
+                />
+              )}
+            </Field>
+            <Field label="นามสกุล" errors={lastNameErrors} required>
+              {(control) => (
+                <Input
+                  {...control}
+                  autoComplete="family-name"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                  onBlur={() => markTouched("last_name")}
+                />
+              )}
+            </Field>
+          </div>
+
           <Field label="รหัสผ่าน" errors={passwordErrors} required>
             {(control) => (
               <div>
@@ -218,12 +267,55 @@ export default function RegisterPage() {
           </Field>
 
           <p className="rounded-control bg-berry-soft/60 px-3.5 py-2.5 text-xs leading-relaxed text-fg-muted">
-            สมัครแล้วได้อะไร —{" "}
+            สมัครแล้วได้อะไร {" "}
             <span className="font-medium text-berry-ink">
               บันทึกสูตรโปรด
             </span>{" "}
             เรียนคอร์สพร้อมเก็บความคืบหน้า และถามผู้ช่วย AI ได้ทันที ฟรี
           </p>
+
+          <div className="space-y-1.5">
+            <label className="flex items-start gap-2.5 text-sm text-fg">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(event) => setAcceptTerms(event.target.checked)}
+                className="mt-1 size-4 shrink-0 cursor-pointer accent-accent"
+              />
+              <span className="leading-relaxed">
+                ฉันได้อ่านและยอมรับ{" "}
+                <Link
+                  href="/legal?doc=terms"
+                  target="_blank"
+                  className="font-medium text-accent underline underline-offset-2"
+                >
+                  ข้อตกลงการใช้งาน
+                </Link>{" "}
+                และ{" "}
+                <Link
+                  href="/legal?doc=privacy"
+                  target="_blank"
+                  className="font-medium text-accent underline underline-offset-2"
+                >
+                  นโยบายความเป็นส่วนตัว (PDPA)
+                </Link>
+                <span aria-hidden className="font-semibold text-danger">
+                  {" "}
+                  *
+                </span>
+              </span>
+            </label>
+            {attempted && !acceptTerms ? (
+              <p role="alert" className="pl-6.5 text-sm text-danger">
+                กรุณายอมรับข้อตกลงก่อนสมัครสมาชิก
+              </p>
+            ) : null}
+            {(fieldErrors.accept_terms ?? []).map((message) => (
+              <p key={message} role="alert" className="pl-6.5 text-sm text-danger">
+                {message}
+              </p>
+            ))}
+          </div>
 
           <Button type="submit" loading={submitting} className="w-full">
             สมัครสมาชิก

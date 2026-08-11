@@ -6,7 +6,7 @@ from django.db import models
 
 
 class NotificationEventType(models.TextChoices):
-    """What happened. Exactly the wired events — new types are an
+    """What happened. Exactly the wired events  new types are an
     ADR/docs change, not just another ``notify`` call (ADR 0016).
     Phase 10 shipped the first three; Phase 11 added the two Q&A events
     (ADR 0017)."""
@@ -16,6 +16,9 @@ class NotificationEventType(models.TextChoices):
     ACHIEVEMENT_EARNED = "achievement_earned", "Achievement earned"
     QA_ANSWER_RECEIVED = "qa_answer_received", "Your question got an answer"
     QA_ANSWER_ACCEPTED = "qa_answer_accepted", "Your answer was accepted"
+    # ADR 0028: the one staff-produced type. Broadcasts respect the same
+    # per-event opt-out as every other type.
+    ANNOUNCEMENT = "announcement", "Platform announcement"
 
 
 TITLE_MAX_LENGTH = 200

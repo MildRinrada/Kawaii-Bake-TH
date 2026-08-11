@@ -8,7 +8,7 @@ from django.db import models
 class RecipeStatus(models.TextChoices):
     """Editorial state of a recipe.
 
-    Orthogonal to :class:`RecipeVisibility` — status answers "is it finished?",
+    Orthogonal to :class:`RecipeVisibility`  status answers "is it finished?",
     visibility answers "who may see it?". Conflating them is the same mistake as
     conflating ``is_active`` with ``is_email_verified`` on ``User``.
     """

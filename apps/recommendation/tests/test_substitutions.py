@@ -132,7 +132,7 @@ class SubstitutionApiTests(TestCase):
 
     def test_blank_ingredient_acts_as_no_filter(self) -> None:
         # DRF treats an empty value on a non-required query field as absent
-        # (HTML-input semantics) — the same behavior as every other query
+        # (HTML-input semantics)  the same behavior as every other query
         # serializer in the project.
         response = self.client.get(url("sub-api"), {"ingredient": ""})
         self.assertEqual(response.status_code, 200)

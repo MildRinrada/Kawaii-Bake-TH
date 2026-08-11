@@ -21,6 +21,7 @@ from apps.courses.constants import (
     CourseDifficulty,
     CourseOrdering,
     CourseScope,
+    CourseStatus,
     CourseVisibility,
 )
 
@@ -93,5 +94,8 @@ class CourseListQuerySerializer(StrictSerializer):
     instructor = serializers.CharField(required=False, allow_blank=True, max_length=30)
     ordering = serializers.ChoiceField(choices=CourseOrdering.choices, required=False)
     scope = serializers.ChoiceField(choices=CourseScope.choices, required=False)
+    status = serializers.ChoiceField(
+        choices=CourseStatus.choices, required=False, allow_blank=True
+    )
     page = serializers.IntegerField(required=False, min_value=1)
     page_size = serializers.IntegerField(required=False, min_value=1)

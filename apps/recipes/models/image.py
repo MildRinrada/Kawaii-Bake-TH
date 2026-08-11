@@ -18,7 +18,7 @@ def recipe_image_upload_to(instance: RecipeImage, filename: str) -> str:
 class RecipeImage(TimeStampedModel):
     """An additional photo attached to a recipe.
 
-    The **cover** image is not stored here — it is a column on ``Recipe``. The
+    The **cover** image is not stored here  it is a column on ``Recipe``. The
     cover is read on every list row and every card in the product, so keeping it
     on the row costs zero joins, and "exactly one cover" becomes a schema
     invariant rather than a constraint that has to be trusted and repaired.

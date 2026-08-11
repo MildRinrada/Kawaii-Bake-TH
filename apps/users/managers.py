@@ -23,8 +23,8 @@ class UserManager(BaseUserManager):
     """Creates users together with their profile and preference rows.
 
     Account creation is centralised here rather than in a ``post_save`` signal
-    so that *every* path — the registration service, ``createsuperuser``, the
-    admin, test factories, data migrations — produces a complete user in a
+    so that *every* path  the registration service, ``createsuperuser``, the
+    admin, test factories, data migrations  produces a complete user in a
     single transaction. A signal would fire on every save and would need a
     ``created`` guard, a ``raw`` guard, and would make failures surface as
     opaque errors from ``.save()``.

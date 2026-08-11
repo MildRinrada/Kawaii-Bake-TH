@@ -96,7 +96,7 @@ class AssistantApiTests(TestCase):
         self.assertEqual(sent.status_code, 201)
         reply = sent.json()
         self.assertEqual(reply["role"], "assistant")
-        # The mock echoes — the exact Thai bytes must come back unchanged.
+        # The mock echoes  the exact Thai bytes must come back unchanged.
         self.assertIn(THAI_QUESTION, reply["content"])
 
         history = self.client.get(
@@ -184,7 +184,7 @@ class AssistantApiTests(TestCase):
                 content=f"คำถามที่ {index}",
             )
 
-        # session + user + conversation + count + page — flat regardless of
+        # session + user + conversation + count + page  flat regardless of
         # transcript length.
         with self.assertNumQueries(5):
             response = self.client.get(

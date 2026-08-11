@@ -12,7 +12,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 async function expect(page, selector, label, timeout = 10_000) {
@@ -40,7 +40,7 @@ try {
 
   // Recipe suggestion navigates straight to the detail.
   // Which recipe ranks first depends on live search relevance, so read the
-  // suggestion's own label and assert the page we land on matches it —
+  // suggestion's own label and assert the page we land on matches it 
   // hard-coding a slug here made this fail whenever the catalog changed.
   const suggestion = page.locator('p:has-text("สูตรขนม") ~ button').first();
   const suggested = (await suggestion.textContent()).trim();
@@ -115,7 +115,7 @@ try {
   await heart
     .and(page.locator(`[aria-pressed="${startedSaved}"]`))
     .waitFor({ timeout: 10_000 });
-  ok("toggled back — the account's favourites are unchanged by this run");
+  ok("toggled back  the account's favourites are unchanged by this run");
   await page.screenshot({ path: `${SHOT_DIR}/25-recipes-authed.png`, fullPage: true });
 
   // ---------- Mobile: sheet + horizontal categories ----------

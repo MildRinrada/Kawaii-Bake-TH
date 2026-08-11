@@ -51,7 +51,7 @@ class QuizPublishView(_TransitionView):
 
 
 class QuizUnpublishView(_TransitionView):
-    """Return a quiz to draft — the hard kill switch."""
+    """Return a quiz to draft  the hard kill switch."""
 
     transition = "unpublish"
 
@@ -62,7 +62,7 @@ class QuizUnpublishView(_TransitionView):
 
 
 class QuizArchiveView(_TransitionView):
-    """Archive a quiz — attempt history stays readable to its owners."""
+    """Archive a quiz  attempt history stays readable to its owners."""
 
     transition = "archive"
 

@@ -1,4 +1,4 @@
-"""Gallery models — public API."""
+"""Gallery models  public API."""
 
 from __future__ import annotations
 

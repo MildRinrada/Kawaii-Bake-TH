@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 
 /**
  * Live password guidance mirroring the backend's validators (minimum 10
- * characters, not entirely numeric — Django's configured set). The meter
+ * characters, not entirely numeric  Django's configured set). The meter
  * can only ever be *stricter* than the server; the server stays the
  * authority.
  */
@@ -31,7 +31,7 @@ export function passwordStrength(password: string): PasswordStrength {
   }
   return {
     level: 2,
-    label: "ใช้ได้ — เพิ่มตัวพิมพ์ใหญ่ ตัวเลข หรือสัญลักษณ์ให้ปลอดภัยขึ้น",
+    label: "ใช้ได้  เพิ่มตัวพิมพ์ใหญ่ ตัวเลข หรือสัญลักษณ์ให้ปลอดภัยขึ้น",
   };
 }
 

@@ -8,7 +8,7 @@ from config.settings.base import MIDDLEWARE, STORAGES, env, env_bool, env_int, e
 DEBUG = False
 
 # --------------------------------------------------------------------------
-# Static files — only Django admin's own CSS/JS; the frontend ships its own.
+# Static files  only Django admin's own CSS/JS; the frontend ships its own.
 # WhiteNoise lets the app serve them without a separate web-server config.
 # --------------------------------------------------------------------------
 MIDDLEWARE = [
@@ -43,7 +43,7 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # --------------------------------------------------------------------------
-# Password hashing — Argon2 first (requires argon2-cffi from production.txt)
+# Password hashing  Argon2 first (requires argon2-cffi from production.txt)
 # --------------------------------------------------------------------------
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
@@ -53,7 +53,7 @@ PASSWORD_HASHERS = [
 ]
 
 # --------------------------------------------------------------------------
-# Cache & sessions — Redis-backed, DB-durable sessions
+# Cache & sessions  Redis-backed, DB-durable sessions
 # --------------------------------------------------------------------------
 CACHES = {
     "default": {

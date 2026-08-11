@@ -127,7 +127,7 @@ def update_review(
 
     Owners may edit the rating and comment of their own non-deleted review;
     a hidden review stays hidden until a moderator restores it. ``status``
-    is moderation and staff-only — 403, not 404, because the caller already
+    is moderation and staff-only  403, not 404, because the caller already
     proved they can address the review.
 
     Args:

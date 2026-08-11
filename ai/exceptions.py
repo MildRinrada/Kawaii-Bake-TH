@@ -2,7 +2,7 @@
 
 Deliberately plain ``Exception`` subclasses, **not** ``DomainError``: this
 package is framework-free and knows nothing about HTTP. The assistant app
-catches these at its boundary and raises its own domain errors (ADR 0008 —
+catches these at its boundary and raises its own domain errors (ADR 0008 -
 a callee never raises the caller's exception, and vice versa).
 """
 

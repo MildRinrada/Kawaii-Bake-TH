@@ -1,8 +1,8 @@
-"""Who may see which quizzes — the single source of truth.
+"""Who may see which quizzes  the single source of truth.
 
 Same design as ``recipe_visibility``/``course_visibility``, with the branch
 this domain needs: an **archived quiz stays readable to anyone who has
-attempted it** — a student's result history must not vanish because the
+attempted it**  a student's result history must not vanish because the
 instructor tidied up (the archived-but-enrolled precedent from courses).
 Starting new attempts on an archived quiz is still blocked by the status
 check in the attempt service; this branch grants *reading* only.

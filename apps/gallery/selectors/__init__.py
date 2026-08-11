@@ -1,1 +1,1 @@
-"""Gallery selectors — read-side queries."""
+"""Gallery selectors  read-side queries."""

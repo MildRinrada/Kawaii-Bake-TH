@@ -1,4 +1,4 @@
-"""Deterministic offline provider — the development and test default.
+"""Deterministic offline provider - the development and test default.
 
 No network, no credentials, no randomness: the reply is a pure function of
 the prompt, so tests can assert on it and local development needs no API key.
@@ -45,7 +45,7 @@ class MockAIProvider(AIProvider):
 
         Args:
             messages: The full prompt; the last ``user`` turn is echoed.
-            language: ``th`` or ``en`` — selects the reply phrasing.
+            language: ``th`` or ``en`` - selects the reply phrasing.
             context: Optional content context; its title is acknowledged.
 
         Returns:
@@ -66,7 +66,7 @@ class MockAIProvider(AIProvider):
         return AICompletion(
             content=reply,
             model_name="mock-1",
-            # Rough char-based estimate — good enough for usage-log plumbing.
+            # Rough char-based estimate - good enough for usage-log plumbing.
             input_tokens=max(1, input_chars // 4),
             output_tokens=max(1, len(reply) // 4),
         )

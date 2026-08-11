@@ -214,12 +214,12 @@ class AnswerTests(TestCase):
 
     def test_hidden_thread_cannot_be_answered(self) -> None:
         hidden = create_thread(author=self.asker, status=ThreadStatus.HIDDEN)
-        # Stranger: cannot even see it — 404.
+        # Stranger: cannot even see it  404.
         with self.assertRaises(ThreadNotFoundError):
             answer_service.create_answer(
                 author_id=self.helper.id, thread_id=hidden.pk, data={"body": "x"}
             )
-        # Author: sees it, but it is not open — 409.
+        # Author: sees it, but it is not open  409.
         with self.assertRaises(ThreadNotActiveError):
             answer_service.create_answer(
                 author_id=self.asker.id, thread_id=hidden.pk, data={"body": "x"}

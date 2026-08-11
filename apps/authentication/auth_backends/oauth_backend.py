@@ -3,7 +3,7 @@
 Not implemented in Phase 1. When it lands:
 
 1. Add a provider-link table (``provider``, ``provider_uid``, user FK). This is
-   the one place the "no unnecessary tables" rule genuinely cannot hold — see
+   the one place the "no unnecessary tables" rule genuinely cannot hold  see
    ``docs/adr/0007-session-auth-for-phase-1.md``.
 2. Define ``OAuthBackend`` here and append it to
    ``settings.AUTHENTICATION_BACKENDS``.

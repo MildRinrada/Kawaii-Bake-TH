@@ -4,13 +4,13 @@
 /**
  * Category photography, in the two shapes it appears in.
  *
- * `CategoryThumb` is a small flat-colour glyph for inline chips/pills —
+ * `CategoryThumb` is a small flat-colour glyph for inline chips/pills 
  * a photo crop reads as noise at 20px, so it uses the category icon set
  * instead of `categoryArt`'s photography.
  *
  * `CategoryTile` is the "explore by category" unit: a fixed-size square
  * that always fills itself (`object-cover`) regardless of the source
- * photo's own aspect ratio — cropping is accepted on purpose so every
+ * photo's own aspect ratio  cropping is accepted on purpose so every
  * tile in a row lines up. A gentle zoom plays on hover/focus, respecting
  * `prefers-reduced-motion`.
  */
@@ -53,13 +53,17 @@ export function CategoryTile({
   /** `square` (default) for filter rows; `landscape` for the home page's
    *  "explore by category" grid, which wants width over height. */
   aspect = "square",
+  /** A photo uploaded by staff (`Category.image_url`); the built-in
+   *  slug-mapped artwork remains the fallback, so a fresh database with
+   *  no uploads still looks finished. */
+  imageUrl,
   className,
 }: {
   slug: string;
   name: string;
   /** A count shown under the name, when the caller has one. */
   count?: number;
-  /** Unit for `count` — recipes, posts, whatever the caller is counting. */
+  /** Unit for `count`  recipes, posts, whatever the caller is counting. */
   countLabel?: string;
   /** Renders an `<a>` when given; otherwise a `<button>` for onClick. */
   href?: Route;
@@ -67,12 +71,13 @@ export function CategoryTile({
   onClick?: () => void;
   compact?: boolean;
   aspect?: "square" | "landscape";
+  imageUrl?: string | null;
   className?: string;
 }) {
   const content = (
     <>
       <img
-        src={categoryArt(slug)}
+        src={imageUrl || categoryArt(slug)}
         alt=""
         aria-hidden
         draggable={false}

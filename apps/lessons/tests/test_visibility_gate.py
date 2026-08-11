@@ -3,7 +3,7 @@
 Asserts the exact 404 / 401 / 403-``enrollment_required`` / 200 split of the
 two-layer rule:
 
-* Layer 1 (404): course hidden, or lesson unpublished for a non-owner —
+* Layer 1 (404): course hidden, or lesson unpublished for a non-owner 
   existence protection, identical to Phase 2.
 * Layer 2 (401/403): existence is public via the syllabus; the viewer simply
   may not read the content yet.
@@ -68,7 +68,7 @@ class LessonGateMatrixTests(TestCase):
 
     def test_non_enrolled_gets_403_enrollment_required(self) -> None:
         # 403, not 404: the syllabus already made this lesson public, so a 404
-        # would be a lie — and the frontend needs the code for the Enroll CTA.
+        # would be a lie  and the frontend needs the code for the Enroll CTA.
         response = self._get(self.lesson.pk, user=self.outsider)
 
         self.assertEqual(response.status_code, 403)
@@ -180,7 +180,7 @@ class LessonGateMatrixTests(TestCase):
         self.assertIn("Unfinished", titles)
 
     def test_syllabus_carries_no_learner_state(self) -> None:
-        # Since Phase 6 the syllabus is pure lesson metadata — completion
+        # Since Phase 6 the syllabus is pure lesson metadata  completion
         # lives at the progress app's endpoints (ADR 0012).
         from apps.progress.tests.factories import complete_lesson_row
 

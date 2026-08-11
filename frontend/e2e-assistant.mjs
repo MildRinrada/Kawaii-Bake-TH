@@ -1,6 +1,6 @@
 /**
  * Assistant page browser E2E: the conversation list must load (this is
- * the regression that shipped a 405 — listing lives under /me/), a new
+ * the regression that shipped a 405  listing lives under /me/), a new
  * conversation appears in it, and a Thai question gets a reply.
  */
 import { chromium } from "playwright";
@@ -11,7 +11,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 const browser = await chromium.launch();
@@ -23,7 +23,7 @@ try {
   page.on("response", (response) => {
     const url = response.url();
     // 401 on the profile mirror is the designed "anonymous" signal
-    // (ADR 0007) — every page load makes it before sign-in.
+    // (ADR 0007)  every page load makes it before sign-in.
     const authProbe = url.includes("/users/profile/") && response.status() === 401;
     if (url.includes("/api/v1/") && response.status() >= 400 && !authProbe) {
       failures.push(`${response.status()} ${response.request().method()} ${url}`);
@@ -40,7 +40,7 @@ try {
   await page.waitForSelector("text=ผู้ช่วย AI");
   ok("assistant page renders");
 
-  // The conversation list must resolve — no error state in the sidebar.
+  // The conversation list must resolve  no error state in the sidebar.
   await page.waitForTimeout(1500);
   if (await page.locator("text=Method \"GET\" not allowed").count()) {
     throw new Error("conversation list still 405s");

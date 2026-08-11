@@ -1,4 +1,4 @@
-"""Courses models — public API."""
+"""Courses models  public API."""
 
 from __future__ import annotations
 

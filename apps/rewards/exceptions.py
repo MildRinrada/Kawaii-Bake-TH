@@ -9,7 +9,7 @@ class InsufficientBalanceError(DomainError):
     """Raised when a spend or downward adjustment exceeds the balance.
 
     409, the state-conflict family: the request was well-formed, the
-    account state refuses it. The balance can never go negative — the
+    account state refuses it. The balance can never go negative  the
     conditional UPDATE that raises this is the enforcement, not a check
     that races ahead of it.
     """

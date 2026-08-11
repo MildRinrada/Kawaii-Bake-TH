@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
 Every significant architectural decision gets one short, numbered ADR.
-Never delete an ADR — supersede it with a new one.
+Never delete an ADR  supersede it with a new one.
 
 ## Index
 

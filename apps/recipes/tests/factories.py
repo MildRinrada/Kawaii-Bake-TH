@@ -16,7 +16,7 @@ from apps.recipes.constants import Difficulty, RecipeStatus, RecipeVisibility
 from apps.recipes.models import Recipe, RecipeImage, RecipeIngredient, RecipeStep
 from apps.recipes.utils import normalize_ingredient_name
 
-# Real Thai bakery vocabulary — croissant, chocolate, macaron, wheat flour.
+# Real Thai bakery vocabulary  croissant, chocolate, macaron, wheat flour.
 THAI_TITLE = "ครัวซองต์ไส้ช็อกโกแลต"
 THAI_SEARCH_TERM = "ช็อกโกแลต"
 THAI_INGREDIENT = "แป้งสาลีอเนกประสงค์"

@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='lesson',
             name='quiz',
-            field=models.ForeignKey(blank=True, help_text='An optional quiz for this lesson — a reference only (Phase 4); quiz logic stays entirely in the quizzes app.', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='lessons', to='quizzes.quiz'),
+            field=models.ForeignKey(blank=True, help_text='An optional quiz for this lesson  a reference only (Phase 4); quiz logic stays entirely in the quizzes app.', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='lessons', to='quizzes.quiz'),
         ),
     ]

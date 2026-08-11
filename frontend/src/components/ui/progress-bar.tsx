@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 
-/** Accessible completion bar — mint fill on a sunken track. */
+/** Accessible completion bar  mint fill on a sunken track. */
 export function ProgressBar({
   percent,
   label = "ความคืบหน้า",

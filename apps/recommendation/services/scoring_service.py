@@ -1,6 +1,6 @@
 """The pure heart of recommendation: features, scoring, ranking, diversity.
 
-Everything in this module is a deterministic function of its arguments — no
+Everything in this module is a deterministic function of its arguments  no
 database, no clock, no randomness. ``now`` is a parameter precisely so the
 same facts always produce the same ranking, in production and in tests
 (ADR 0018 §8). Candidate generation and fact fetching live in
@@ -51,7 +51,7 @@ class TasteContext:
 
     Built once per request from behavioral facts; empty for anonymous or
     brand-new users, in which case scoring degrades to the global features
-    only — that *is* the cold-start strategy, not a separate code path.
+    only  that *is* the cold-start strategy, not a separate code path.
     """
 
     interest_weights: dict[str, float] = field(default_factory=dict)
@@ -165,7 +165,7 @@ def score_candidate(
 
 
 def rank(scored: list[ScoredCandidate]) -> list[ScoredCandidate]:
-    """Order by score, ties broken by ascending id — fully deterministic."""
+    """Order by score, ties broken by ascending id  fully deterministic."""
     return sorted(scored, key=lambda item: (-item.score, item.id))
 
 
@@ -174,7 +174,7 @@ def diversify(ranked: list[ScoredCandidate]) -> list[ScoredCandidate]:
 
     Deterministic greedy selection: at each step take the candidate whose
     score, minus ``DIVERSITY_PENALTY`` per already-selected result sharing
-    its primary category, is highest — ties broken by original rank. The
+    its primary category, is highest  ties broken by original rank. The
     penalty is bounded, so a clearly stronger candidate still wins; only
     near-ties get spread across categories.
 

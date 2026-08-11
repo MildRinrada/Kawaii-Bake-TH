@@ -21,3 +21,5 @@ class CourseListFilters:
     instructor_username: str = ""
     ordering: str = CourseOrdering.NEWEST
     scope: str = CourseScope.PUBLIC
+    # Narrow-only: intersects the visibility rule (see recipes).
+    status: str = ""

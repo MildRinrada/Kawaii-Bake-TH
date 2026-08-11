@@ -1,4 +1,4 @@
-"""Core models — public API."""
+"""Core models  public API."""
 
 from __future__ import annotations
 

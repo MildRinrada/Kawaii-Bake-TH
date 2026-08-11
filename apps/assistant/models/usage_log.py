@@ -7,12 +7,12 @@ from django.db import models
 
 
 class AIUsageLog(models.Model):
-    """One provider call's accounting — append-only.
+    """One provider call's accounting - append-only.
 
     Separate from :class:`AssistantMessage` on purpose: messages are the
     user's transcript (CASCADE with their conversation), while this ledger
     is the operator's billing/quota record and must survive conversation
-    deletion. Future quota enforcement aggregates this table at read time —
+    deletion. Future quota enforcement aggregates this table at read time -
     no counter columns anywhere, as everywhere else in the project.
     """
 

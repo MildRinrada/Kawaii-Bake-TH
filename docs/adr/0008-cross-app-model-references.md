@@ -1,4 +1,4 @@
-# 0008 — Cross-App Model References
+# 0008  Cross-App Model References
 
 - **Status:** Accepted
 - **Date:** 2026-08-07
@@ -26,11 +26,11 @@ considered a violation.
 ### Permitted
 
 1. A lazy string M2M/FK to another app's model. **`recipes` owns the
-   many-to-many**, because `recipes` is the dependent side — this keeps
+   many-to-many**, because `recipes` is the dependent side  this keeps
    `recipe_categories` a leaf that can ship on its own.
 2. Reads through the other app's selector package:
    - `category_selector.resolve_slugs(slugs=…) -> dict[str, int]`
-   - `category_selector.ref_queryset()` — the narrowed queryset to prefetch with
+   - `category_selector.ref_queryset()`  the narrowed queryset to prefetch with
    - `category_selector.list_categories()`
 3. Writing the join table (`recipe.categories.set(ids)`). That writes only the
    table `recipes` owns; it never writes a `RecipeCategory` row.
@@ -40,7 +40,7 @@ considered a violation.
 - `from apps.recipe_categories.models import RecipeCategory` inside `apps/recipes`
 - importing another app's `repositories` (write-side internals)
 - `RecipeCategory.objects.…` in a `recipes` selector or service
-- `recipe_categories` declaring a relation to `recipes` — that would invert the
+- `recipe_categories` declaring a relation to `recipes`  that would invert the
   dependency and make the taxonomy unshippable alone
 
 ### Errors belong to the caller
@@ -52,7 +52,7 @@ the caller's exception.
 ### `ref_queryset()` is the load-bearing detail
 
 Without it, the recipes selector would write
-`Prefetch("categories", queryset=RecipeCategory.objects.only(...))` — a real
+`Prefetch("categories", queryset=RecipeCategory.objects.only(...))`  a real
 import of another app's model into another app's ORM code. With it, `recipes`
 never names the class, and the day categories gain a visibility rule, one
 function fixes every consumer.
@@ -76,7 +76,7 @@ function fixes every consumer.
 
 Recorded here because it is the other boundary decision made in Phase 2.
 `infrastructure/search/postgres_search.py` uses `pg_trgm` and **is not executed
-by any test** — the suite runs on SQLite, and `SearchVector`/`TrigramWordSimilarity`
+by any test**  the suite runs on SQLite, and `SearchVector`/`TrigramWordSimilarity`
 cannot even be compiled without the PostgreSQL backend, so not even a SQL-string
 assertion is possible.
 

@@ -7,7 +7,7 @@
  * two-step write (create post, then one multipart request per photo) has
  * exactly one implementation.
  *
- * `?recipe=<id>` pre-attaches a recipe — the contextual shortcut from a
+ * `?recipe=<id>` pre-attaches a recipe  the contextual shortcut from a
  * recipe page. `?recipe_slug=` is an optional companion that lets the
  * preview card name the recipe without a lookup (the API has no
  * fetch-recipe-by-id endpoint).

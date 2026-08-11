@@ -1,4 +1,4 @@
-"""Pure scoring, ranking and diversification — plus rule-registry integrity."""
+"""Pure scoring, ranking and diversification  plus rule-registry integrity."""
 
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 """Restore missing freeze states from attempt history.
 
 Lives in **quizzes** because only this domain knows which questions have been
-attempted — the questions app owns the ``frozen_at`` state but cannot rebuild
+attempted  the questions app owns the ``frozen_at`` state but cannot rebuild
 it without inverting the dependency. Communication is the public service API,
 never another app's models.
 

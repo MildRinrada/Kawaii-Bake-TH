@@ -21,7 +21,7 @@ class EmailBackend(ModelBackend):
     * ``get_user`` performs no extra state checks, keeping session restoration
       to a single indexed lookup.
 
-    The API sign-in path does not call ``authenticate()`` at all — the login
+    The API sign-in path does not call ``authenticate()`` at all  the login
     service verifies credentials itself so it can distinguish "wrong password"
     from "deactivated" from "unverified", which ``authenticate()`` collapses
     into ``None``. This backend still serves Django admin sign-in and every

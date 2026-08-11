@@ -1,4 +1,4 @@
-# 0004 — Infrastructure Package for External Services
+# 0004  Infrastructure Package for External Services
 
 - **Status:** Accepted
 - **Date:** 2026-08-06
@@ -19,4 +19,4 @@ small base interface with concrete adapters (e.g. `storage/base.py` +
 
 - Vendor swaps are adapter swaps; business logic is untouched.
 - Test doubles are trivial (in-memory cache, console email).
-- Slight indirection cost — acceptable for a multi-year codebase.
+- Slight indirection cost  acceptable for a multi-year codebase.

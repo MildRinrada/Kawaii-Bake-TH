@@ -15,13 +15,13 @@ class BakingExperienceLevel(models.TextChoices):
 
 
 class BakingCategory(models.TextChoices):
-    """Baking category slugs — historical, kept for migrations.
+    """Baking category slugs  historical, kept for migrations.
 
     Phase 1 stored these slugs as JSON on ``Profile``; Phase 2 seeded the
     ``recipe_categories`` taxonomy from them; Phase 14 completed the
     promised backfill to a real many-to-many (ADR 0020). Live validation
     now runs against the taxonomy via ``category_selector.resolve_slugs``
-    — this enum remains only because the Phase 2 seed migration imports
+     this enum remains only because the Phase 2 seed migration imports
     it. Do not use it for new validation.
     """
 
@@ -68,7 +68,7 @@ class Theme(models.TextChoices):
 class PreferredLanguage(models.TextChoices):
     """The user's preferred content language.
 
-    Deliberately the same code set as ``assistant.AssistantLanguage`` —
+    Deliberately the same code set as ``assistant.AssistantLanguage`` 
     a compatibility test pins that, so the assistant can default a
     conversation to this preference without translation glue. Thai first:
     it is the platform default, not a fallback (ADR 0020 §8).
@@ -84,6 +84,9 @@ class PreferredLanguage(models.TextChoices):
 USERNAME_MIN_LENGTH = 3
 USERNAME_MAX_LENGTH = 30
 DISPLAY_NAME_MAX_LENGTH = 60
+# One part of a legal name (first or last). Generous for both Thai and
+# romanised names; certificates print these verbatim.
+NAME_PART_MAX_LENGTH = 80
 BIO_MAX_LENGTH = 500
 LOCATION_MAX_LENGTH = 120
 
@@ -115,7 +118,7 @@ COVER_UPLOAD_DIR = "covers"
 # Larger than an avatar because a banner is wide: the client crops before
 # uploading, but a 6:1 strip at a usable resolution is still ~1600px across.
 COVER_MAX_SIZE_BYTES = 4 * 1024 * 1024
-# Same allow-list as avatars, and for the same reason — SVG excluded.
+# Same allow-list as avatars, and for the same reason  SVG excluded.
 ALLOWED_COVER_EXTENSIONS = ALLOWED_AVATAR_EXTENSIONS
 ALLOWED_COVER_FORMATS = ALLOWED_AVATAR_FORMATS
 

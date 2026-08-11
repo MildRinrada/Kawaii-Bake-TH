@@ -1,6 +1,6 @@
 """Django admin for the certificates app.
 
-Certificates are immutable records and achievements are append-only facts —
+Certificates are immutable records and achievements are append-only facts 
 both are read-only here (revocation is a service concern, exposed as an
 admin action rather than field editing). Badge definitions are the one
 curated surface: system-owned rows with no public CRUD API.
@@ -48,7 +48,7 @@ class CertificateAdmin(admin.ModelAdmin):
 
 @admin.register(Achievement)
 class AchievementAdmin(admin.ModelAdmin):
-    """Inspect earned achievements — strictly read-only."""
+    """Inspect earned achievements  strictly read-only."""
 
     list_display = ("id", "user", "achievement_type", "awarded_at")
     list_filter = ("achievement_type",)

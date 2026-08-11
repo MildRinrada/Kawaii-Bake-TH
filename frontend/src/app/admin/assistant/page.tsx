@@ -5,13 +5,13 @@
  *
  * The assistant API lists conversations strictly by owner
  * (`conversation_selector.list_for_user(user_id=request.user.id)`), so
- * there is no cross-user monitoring to render — the spec's "conversations
+ * there is no cross-user monitoring to render  the spec's "conversations
  * / user / failure state" table would need a new endpoint.
  *
  * What the payloads do carry is real and shown: language, context
  * anchor and prompt version on the conversation, and provider, model
  * name and token counts on each message. Those last three only exist
- * per message, so the list has no provider column — they appear in the
+ * per message, so the list has no provider column  they appear in the
  * transcript, where they are actually recorded. API keys live
  * server-side and appear nowhere in any response.
  *
@@ -57,7 +57,7 @@ export default function AdminAssistantPage() {
   if (list.error) return <ErrorState error={list.error} onRetry={list.refetch} />;
 
   // `messages` is a paginated envelope, so these totals describe the
-  // loaded page only — labelled as such below rather than passed off as
+  // loaded page only  labelled as such below rather than passed off as
   // the conversation's lifetime cost.
   const messages: Message[] = detail.data?.messages.results ?? [];
   const tokensIn = messages.reduce((sum, item) => sum + (item.token_input ?? 0), 0);
@@ -78,7 +78,7 @@ export default function AdminAssistantPage() {
 
       <AdminPanel
         title="บทสนทนาของบัญชีนี้"
-        description="GET /me/assistant/conversations/ — API ไม่มีมุมมองข้ามผู้ใช้"
+        description="GET /me/assistant/conversations/  API ไม่มีมุมมองข้ามผู้ใช้"
       >
         <DataTable
           caption="บทสนทนากับผู้ช่วย AI"
@@ -156,7 +156,7 @@ export default function AdminAssistantPage() {
             "จำนวนข้อความและยอดโทเคนรวมในหน้ารายการ (ต้องเปิดดูรายตัว)",
             "operation สำหรับกลั่นกรองข้อความ (ตอนนี้บทสนทนาอ่านอย่างเดียว)",
           ]}
-          workaround="กุญแจ API ของผู้ให้บริการอยู่ฝั่งเซิร์ฟเวอร์เท่านั้นและต้องอยู่อย่างนั้น — ไม่ควรถูกส่งมาที่หน้าเว็บไม่ว่ากรณีใด"
+          workaround="กุญแจ API ของผู้ให้บริการอยู่ฝั่งเซิร์ฟเวอร์เท่านั้นและต้องอยู่อย่างนั้น  ไม่ควรถูกส่งมาที่หน้าเว็บไม่ว่ากรณีใด"
         />
       </div>
 
@@ -186,7 +186,7 @@ export default function AdminAssistantPage() {
                 {messages.length} จากทั้งหมด {detail.data?.messages.count ?? 0}
               </DetailRow>
               <DetailRow label="โมเดลที่ใช้">
-                {models.length ? models.join(", ") : "—"}
+                {models.length ? models.join(", ") : ""}
               </DetailRow>
               <DetailRow label="โทเคน (เฉพาะหน้านี้)">
                 <span className="font-mono text-xs">

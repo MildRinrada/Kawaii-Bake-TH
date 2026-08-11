@@ -1,6 +1,6 @@
 """Completeness rules that only apply when publishing a course.
 
-Deliberately not enforced on every save — a draft must be saveable while
+Deliberately not enforced on every save  a draft must be saveable while
 incomplete.
 """
 
@@ -24,8 +24,8 @@ def assert_publishable(course: Course) -> None:
     Collects **every** failure so the frontend renders a checklist rather than
     one problem per attempt.
 
-    The lesson requirement reads ``published_lesson_count`` — this app's own
-    column, pushed by the lessons app — so no other app's rows are counted here
+    The lesson requirement reads ``published_lesson_count``  this app's own
+    column, pushed by the lessons app  so no other app's rows are counted here
     and the ``lessons → courses`` dependency direction holds.
 
     Args:

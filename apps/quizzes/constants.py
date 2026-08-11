@@ -19,7 +19,7 @@ class QuizVisibility(models.TextChoices):
     ``UNLISTED`` is the course-integration answer: a quiz linked from an
     enrollment-gated lesson is set unlisted, so it never appears in browse and
     is only reached through the lesson. A true course-only gate would require
-    this app to know about lessons and enrollments — the forbidden direction.
+    this app to know about lessons and enrollments  the forbidden direction.
     """
 
     PUBLIC = "public", "Anyone"

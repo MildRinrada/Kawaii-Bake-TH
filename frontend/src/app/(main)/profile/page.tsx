@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Profile — the user's baking identity and learning hub.
+ * Profile  the user's baking identity and learning hub.
  *
  * Every number, status and event on this page is read from a real
  * endpoint: identity and completion from `/me/settings/`, learning from
@@ -9,7 +9,7 @@
  * from `/me/certificates/` and `/me/achievements/`, community posts from
  * `/gallery/?author=`. Zero-valued metrics are dropped rather than shown,
  * and the activity timeline is assembled from those same records'
- * real timestamps — nothing here is synthesised to look complete.
+ * real timestamps  nothing here is synthesised to look complete.
  *
  * Deliberately absent because the backend has no such concept: personal
  * notes / baking log (the recipe workspace keeps its checklist in this
@@ -92,7 +92,7 @@ function Section({
 }
 
 /* ------------------------------------------------------------------ */
-/* Activity timeline — merged from real records' own timestamps         */
+/* Activity timeline  merged from real records' own timestamps         */
 /* ------------------------------------------------------------------ */
 
 /** Either a monochrome UI glyph or a badge's own catalogue artwork. */
@@ -148,7 +148,7 @@ function buildActivity(
     if (recipe) {
       events.push({
         at: favorite.favorited_at,
-        icon: { kind: "ui", name: "heart-filled-2" },
+        icon: { kind: "ui", name: "heart-filled" },
         text: `บันทึกสูตร ${recipe.title}`,
         href: `/recipes/${recipe.slug}`,
       });
@@ -159,7 +159,7 @@ function buildActivity(
     if (course) {
       events.push({
         at: favorite.favorited_at,
-        icon: { kind: "ui", name: "heart-filled-2" },
+        icon: { kind: "ui", name: "heart-filled" },
         text: `บันทึกคอร์ส ${course.title}`,
         href: `/courses/${course.slug}`,
       });
@@ -279,7 +279,7 @@ function ProfileContent() {
     myPosts,
   );
 
-  // Only metrics with something to report — a wall of zeros is not a
+  // Only metrics with something to report  a wall of zeros is not a
   // learning identity.
   const metrics = [
     { label: "คอร์สที่เรียนจบ", value: completedCourses.length, icon: "graduation" as UiIconName },
@@ -292,14 +292,14 @@ function ProfileContent() {
 
   return (
     <div className="space-y-8">
-      {/* 1 — Identity ------------------------------------------------ */}
+      {/* 1  Identity ------------------------------------------------ */}
       <Card className="overflow-hidden">
         <CoverEditor
           coverUrl={profile.cover_url}
           onChanged={() => settings.refetch()}
         />
         {/* `relative z-10`: the banner above is positioned, and a positioned
-            element paints over a static one whatever the DOM order says —
+            element paints over a static one whatever the DOM order says 
             without this the cover would cover the avatar pulled up into it. */}
         <CardBody className="relative z-10 -mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
@@ -350,7 +350,7 @@ function ProfileContent() {
         </CardBody>
       </Card>
 
-      {/* 2 — Learning identity --------------------------------------- */}
+      {/* 2  Learning identity --------------------------------------- */}
       {metrics.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {metrics.map((metric) => (
@@ -365,7 +365,7 @@ function ProfileContent() {
         </div>
       ) : null}
 
-      {/* 3 — Currently learning -------------------------------------- */}
+      {/* 3  Currently learning -------------------------------------- */}
       <Section
         title="กำลังเรียนอยู่"
         hint={
@@ -430,7 +430,7 @@ function ProfileContent() {
         )}
       </Section>
 
-      {/* 4 — Certificates preview ------------------------------------ */}
+      {/* 4  Certificates preview ------------------------------------ */}
       <Section
         title="ใบประกาศนียบัตรของฉัน"
         hint={
@@ -489,7 +489,7 @@ function ProfileContent() {
         )}
       </Section>
 
-      {/* 5–8 — Saved content + secondary column ----------------------- */}
+      {/* 5–8  Saved content + secondary column ----------------------- */}
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-8 lg:col-span-2">
           {/* Saved recipes */}
@@ -544,10 +544,10 @@ function ProfileContent() {
             )}
           </Section>
 
-          {/* Saved courses — kept separate from what is being learned */}
+          {/* Saved courses  kept separate from what is being learned */}
           <Section
             title="คอร์สที่บันทึกไว้"
-            hint="ตั้งใจจะเรียนทีหลัง — คนละกลุ่มกับคอร์สที่กำลังเรียนอยู่"
+            hint="ตั้งใจจะเรียนทีหลัง  คนละกลุ่มกับคอร์สที่กำลังเรียนอยู่"
             action={
               courseFavorites.length > 0 ? (
                 <Link
@@ -592,7 +592,9 @@ function ProfileContent() {
             )}
           </Section>
 
-          {/* Community creations — only when the user actually posted */}
+          {/* Community creations  only when the user actually posted.
+              Each tile opens its post, and the section links to the
+              feed's "my posts" view where hide/edit/delete live. */}
           {myPosts.length > 0 ? (
             <Section
               title="ผลงานที่แชร์ไว้"
@@ -601,20 +603,35 @@ function ProfileContent() {
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {myPosts.slice(0, 4).map((post) => (
                   <li key={post.id}>
-                    <div className="aspect-square overflow-hidden rounded-surface border border-edge">
-                      <MediaFrame
-                        src={post.images[0]?.url}
-                        seed={String(post.id)}
-                      />
-                    </div>
-                    {post.caption ? (
-                      <p className="mt-1 line-clamp-1 text-xs text-fg-muted">
-                        {post.caption}
-                      </p>
-                    ) : null}
+                    <Link
+                      href={`/community/posts/${post.id}`}
+                      className="block rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                    >
+                      <div className="aspect-square overflow-hidden rounded-surface border border-edge">
+                        <MediaFrame
+                          src={post.images[0]?.url}
+                          seed={String(post.id)}
+                        />
+                      </div>
+                      {post.caption ? (
+                        <p className="mt-1 line-clamp-1 text-xs text-fg-muted">
+                          {post.caption}
+                        </p>
+                      ) : null}
+                    </Link>
                   </li>
                 ))}
               </ul>
+              {username ? (
+                <div className="mt-3">
+                  <Link
+                    href={`/community?author=${username}` as "/community"}
+                    className="text-sm font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+                  >
+                    จัดการโพสต์ทั้งหมดของฉัน →
+                  </Link>
+                </div>
+              ) : null}
             </Section>
           ) : null}
         </div>
@@ -627,7 +644,7 @@ function ProfileContent() {
             <CardBody>
               {activity.length === 0 ? (
                 <p className="text-sm text-fg-muted">
-                  ยังไม่มีความเคลื่อนไหว — ความสำเร็จของคุณจะมาปรากฏที่นี่
+                  ยังไม่มีความเคลื่อนไหว  ความสำเร็จของคุณจะมาปรากฏที่นี่
                 </p>
               ) : (
                 <ol className="space-y-3">
@@ -671,7 +688,7 @@ function ProfileContent() {
             </CardBody>
           </Card>
 
-          {/* Achievements — badge metadata comes from the backend */}
+          {/* Achievements  badge metadata comes from the backend */}
           {badges.length > 0 ? (
             <Card>
               <CardHeader
@@ -700,7 +717,7 @@ function ProfileContent() {
             </Card>
           ) : null}
 
-          {/* Profile preferences — profile-level only, not app settings */}
+          {/* Profile preferences  profile-level only, not app settings */}
           <Card>
             <CardHeader title="ข้อมูลโปรไฟล์" />
             <CardBody className="space-y-4">
@@ -723,7 +740,7 @@ function ProfileContent() {
                   </div>
                 ) : (
                   <p className="text-sm text-fg-muted">
-                    ยังไม่ได้เลือก — ช่วยให้เราแนะนำได้ตรงใจขึ้น
+                    ยังไม่ได้เลือก  ช่วยให้เราแนะนำได้ตรงใจขึ้น
                   </p>
                 )}
               </div>

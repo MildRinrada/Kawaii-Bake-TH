@@ -1,7 +1,7 @@
 """Rate limiter backed by Django's cache framework.
 
-The concrete store comes from ``settings.CACHES`` — Redis in production,
-local memory in development and tests — so this adapter never imports a client.
+The concrete store comes from ``settings.CACHES``  Redis in production,
+local memory in development and tests  so this adapter never imports a client.
 """
 
 from __future__ import annotations

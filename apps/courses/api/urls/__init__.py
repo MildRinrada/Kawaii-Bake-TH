@@ -1,7 +1,7 @@
 """Course API routes, mounted at ``/api/v1/courses/``.
 
 The lessons app mounts two additional routes under the same prefix
-(``{slug}/lessons/…`` and ``{slug}/progress/``) from its own urlconf — the
+(``{slug}/lessons/…`` and ``{slug}/progress/``) from its own urlconf  the
 shared prefix is a config concern, not app coupling.
 
 Literals are declared before ``<str:slug>`` (which also would not match a

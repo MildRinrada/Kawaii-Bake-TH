@@ -17,7 +17,7 @@ from apps.qa.constants import (
 class QuestionThread(TimeStampedModel):
     """One user's question about a recipe or course.
 
-    Targets are nullable ``SET_NULL`` — not reviews' CASCADE — because a
+    Targets are nullable ``SET_NULL``  not reviews' CASCADE  because a
     thread contains **other users' answers**: deleting a recipe must not
     silently destroy a discussion (the rule 10/12 history mandate). The
     check constraint forbids both targets at once; the service requires
@@ -26,9 +26,9 @@ class QuestionThread(TimeStampedModel):
 
     ``accepted_answer`` is a nullable same-app FK with ``SET_NULL``:
     replacing the accepted answer is one field UPDATE (the old unset is
-    implicit — a single column cannot point at two rows), and deleting
+    implicit  a single column cannot point at two rows), and deleting
     the accepted answer clears it at the database layer with no code to
-    forget. No ``answer_count`` — it aggregates live.
+    forget. No ``answer_count``  it aggregates live.
     """
 
     author = models.ForeignKey(

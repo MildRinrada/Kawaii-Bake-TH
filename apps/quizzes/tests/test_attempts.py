@@ -2,9 +2,9 @@
 
 The two regression tests this file exists for:
 
-* ``test_start_freezes_questions_in_the_same_transaction`` — the W2 fix
+* ``test_start_freezes_questions_in_the_same_transaction``  the W2 fix
   (freeze at start, not submit).
-* ``test_submit_grades_against_the_snapshot_not_the_live_composition`` — the
+* ``test_submit_grades_against_the_snapshot_not_the_live_composition``  the
   W1 fix (``points_possible`` snapshotted, so mid-attempt recomposition
   cannot corrupt grading).
 """
@@ -99,7 +99,7 @@ class StartAttemptTests(TestCase):
         self.assertEqual(QuizAttempt.objects.count(), 1)
 
     def test_start_requires_published(self) -> None:
-        # A stranger sees a drafted quiz as 404 — the visibility layer.
+        # A stranger sees a drafted quiz as 404  the visibility layer.
         self.quiz.status = QuizStatus.DRAFT
         self.quiz.save(update_fields=["status"])
         with self.assertRaises(QuizNotVisibleError):
@@ -107,7 +107,7 @@ class StartAttemptTests(TestCase):
                 user_id=self.student.id, slug=self.quiz.slug
             )
 
-        # The owner sees it, but starting is still blocked — the status layer.
+        # The owner sees it, but starting is still blocked  the status layer.
         with self.assertRaises(QuizNotAvailableError):
             attempt_service.start_attempt(
                 user_id=self.owner.id, slug=self.quiz.slug

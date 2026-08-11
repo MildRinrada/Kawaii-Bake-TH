@@ -40,7 +40,7 @@ def lines_for_recipe(
 
     Returns:
         The lines in display order (possibly empty), or ``None`` when the
-        recipe is absent or hidden — the caller must not distinguish those
+        recipe is absent or hidden  the caller must not distinguish those
         two cases to the client.
     """
     recipe_id = (

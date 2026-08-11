@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
 /**
- * Friendly empty state: one restrained badge, a warm message — never a
+ * Friendly empty state: one restrained badge, a warm message  never a
  * wall of gray.
  *
  * `icon` is a node so callers pass real artwork from `public/icons/`
- * (via `<Icon>`/`<ArtIcon>`); there is no default — an empty state with
+ * (via `<Icon>`/`<ArtIcon>`); there is no default  an empty state with
  * nothing to show a picture of gets a plain soft badge instead of a
  * stock illustration standing in for content. The badge sizes itself
- * from the icon plus padding rather than a fixed box — `shrink-0` on a
+ * from the icon plus padding rather than a fixed box  `shrink-0` on a
  * flex-row ancestor (there is none here, but a caller's wrapper might
  * be one) would otherwise squish a wide child down to fit a fixed box,
  * which distorts anything that isn't already square.

@@ -1,7 +1,7 @@
 """Authorization rules for the question bank.
 
 Pure functions over primitives. The bank's entire knowledge of users is the
-``author_id`` comparison below — nothing here may ever join into user state.
+``author_id`` comparison below  nothing here may ever join into user state.
 """
 
 from __future__ import annotations

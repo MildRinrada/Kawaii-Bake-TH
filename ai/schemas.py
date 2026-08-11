@@ -16,7 +16,7 @@ class AIMessage:
 
     Attributes:
         role: ``system``, ``user`` or ``assistant``.
-        content: The text of the turn. UTF-8 throughout — Thai and emoji
+        content: The text of the turn. UTF-8 throughout - Thai and emoji
             must survive this boundary byte-perfect.
     """
 

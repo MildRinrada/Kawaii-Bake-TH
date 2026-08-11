@@ -1,7 +1,9 @@
-"""Notification endpoints — all owner-scoped, all authenticated.
+"""Notification endpoints  all owner-scoped, all authenticated.
 
-There is deliberately no create endpoint: notifications exist only
-because a producer service called ``notification_service.notify``.
+There is deliberately no create endpoint here: notifications exist
+because a producer service called ``notification_service.notify``. The
+one human producer is the staff broadcast in ``admin_views``, which
+still goes through the service layer like every other producer.
 """
 
 from __future__ import annotations

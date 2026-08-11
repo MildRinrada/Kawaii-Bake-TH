@@ -1,7 +1,7 @@
 """Read-side queries for lessons.
 
 Every query composes the **courses** visibility rule across the join via
-``visible_detail_q(prefix="course__")`` — one rule, one implementation, applied
+``visible_detail_q(prefix="course__")``  one rule, one implementation, applied
 on both sides of the boundary.
 """
 
@@ -20,7 +20,7 @@ from apps.lessons.models import Lesson
 class LessonRef:
     """A lesson reference safe to hand across the app boundary.
 
-    Added in Phase 6 for the ``progress`` app — the same frozen-ref mechanism
+    Added in Phase 6 for the ``progress`` app  the same frozen-ref mechanism
     as ``CourseRef``/``RecipeRef`` (ADR 0009). Carries identity, the owning
     course, and the state pair progress gating needs.
     """
@@ -115,7 +115,7 @@ def get_lesson_ref(
     """Fetch a lesson reference for another app.
 
     Part of the public cross-app API (Phase 6). Applies the full existence
-    layer — course visibility across the join plus lesson status — and
+    layer  course visibility across the join plus lesson status  and
     returns ``None`` when the lesson does not exist for this viewer; the
     caller raises its own domain error, never this app's.
 
@@ -152,7 +152,7 @@ def get_lesson_ref(
 def list_published_refs(*, course_id: int) -> list[LessonRef]:
     """Return a course's published lessons as refs, in syllabus order.
 
-    Part of the public cross-app API (Phase 6) — the required-lesson set the
+    Part of the public cross-app API (Phase 6)  the required-lesson set the
     progress app aggregates against. The caller has already resolved the
     course through courses' visibility.
 

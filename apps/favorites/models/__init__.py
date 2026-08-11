@@ -1,4 +1,4 @@
-"""Favorites models — public API."""
+"""Favorites models  public API."""
 
 from __future__ import annotations
 

@@ -41,6 +41,8 @@ def build_filters(validated: dict) -> RecipeListFilters:
         max_total_minutes=validated.get("max_total_minutes"),
         ordering=validated.get("ordering", RecipeListFilters.ordering),
         scope=validated.get("scope", RecipeScope.PUBLIC),
+        status=validated.get("status", "") or "",
+        visibility=validated.get("visibility", "") or "",
     )
 
 

@@ -1,4 +1,4 @@
-"""Gamification serializers — public API."""
+"""Gamification serializers  public API."""
 
 from __future__ import annotations
 

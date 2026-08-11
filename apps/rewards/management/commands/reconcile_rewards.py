@@ -2,7 +2,7 @@
 
 Conservative and monotonic (ADR 0019 §10): it may append earnings whose
 authoritative source fact exists but whose ledger entry is missing, and
-it may recompute the materialized account aggregates from the ledger —
+it may recompute the materialized account aggregates from the ledger 
 its own derived state. It never deletes a transaction, never subtracts a
 suspected overpayment, and never invents a fact. Anything it cannot
 repair safely, it reports.
@@ -93,7 +93,7 @@ class Command(BaseCommand):
                     f"(+{result['points']} points)"
                 )
             if drifted:
-                # Recompute the materialized aggregates from the ledger —
+                # Recompute the materialized aggregates from the ledger 
                 # repair of this app's own derived state, never of facts.
                 fresh = reward_selector.ledger_totals(user_id=user.id)
                 RewardAccount.objects.update_or_create(

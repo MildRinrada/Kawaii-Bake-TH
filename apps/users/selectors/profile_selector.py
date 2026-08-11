@@ -42,7 +42,7 @@ class PersonalizationFact:
 
     Part of the public cross-app API (Phase 12, extended Phase 14). A
     deliberate subset: the explicitly chosen favourite categories, the
-    self-declared experience level and the preferred language — things the
+    self-declared experience level and the preferred language  things the
     user *told* the system about their taste. Never anything inferred, and
     nothing privacy-gated (location, birthday), so a consumer cannot leak
     what it never receives (ADR 0020 §2–3).
@@ -84,7 +84,7 @@ def get_personalization_fact(*, user_id: int) -> PersonalizationFact | None:
 
 # Own-profile fields that count toward completion. `experience_level` is
 # excluded on purpose: it has a non-empty default, so its presence carries
-# no signal about the user's intent. Deterministic and derived — never a
+# no signal about the user's intent. Deterministic and derived  never a
 # stored counter (ADR 0020 §4).
 COMPLETION_FIELDS: tuple[str, ...] = (
     "display_name",
@@ -111,7 +111,7 @@ def profile_completion(profile: Profile) -> ProfileCompletion:
 
     Pure given its input (the favourite-category relation must be
     prefetched or one extra query runs). Privacy settings do not affect
-    the count — completion is the owner's private view of their own
+    the count  completion is the owner's private view of their own
     profile, so hiding a field publicly does not un-complete it.
 
     Args:

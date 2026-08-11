@@ -36,7 +36,7 @@ class _TargetRefSerializer(serializers.Serializer):
 
 
 class ThreadSerializer(serializers.Serializer):
-    """A question thread — list and detail share this shape."""
+    """A question thread  list and detail share this shape."""
 
     id = serializers.IntegerField(read_only=True)
     author_handle = serializers.CharField(read_only=True, source="author.username")

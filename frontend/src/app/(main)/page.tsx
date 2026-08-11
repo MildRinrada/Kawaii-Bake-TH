@@ -106,7 +106,7 @@ function CardGridSkeleton({ count = 3 }: { count?: number }) {
 /* ------------------------------------------------------------------ */
 
 /* The banner is one wide illustration from `public/banners/`, anchored
-   right so it never sits under the headline, and purely decorative — the
+   right so it never sits under the headline, and purely decorative  the
    hero's words stay real HTML for search engines and screen readers. */
 
 function Hero() {
@@ -244,21 +244,21 @@ const SKILL_LEVELS = [
     difficulty: "beginner",
     icon: "sprout" as const,
     name: "เริ่มต้นได้เลย",
-    description: "ยังไม่เคยอบก็เริ่มได้ — อุปกรณ์ วัตถุดิบ และสูตรแรกที่สำเร็จแน่",
+    description: "ยังไม่เคยอบก็เริ่มได้  อุปกรณ์ วัตถุดิบ และสูตรแรกที่สำเร็จแน่",
     className: "bg-mint-soft text-mint-ink",
   },
   {
     difficulty: "intermediate",
     icon: "croissant" as const,
     name: "ระดับกลาง",
-    description: "อบเป็นแล้ว อยากไปต่อ — เทคนิคแป้ง ครีม และการขึ้นรูป",
+    description: "อบเป็นแล้ว อยากไปต่อ  เทคนิคแป้ง ครีม และการขึ้นรูป",
     className: "bg-butter-soft text-butter-ink",
   },
   {
     difficulty: "advanced",
     icon: "chef-hat" as const,
     name: "ขั้นสูง",
-    description: "เก็บรายละเอียดระดับร้าน — งานตกแต่งและสูตรที่ท้าทาย",
+    description: "เก็บรายละเอียดระดับร้าน  งานตกแต่งและสูตรที่ท้าทาย",
     className: "bg-peach-soft text-peach-ink",
   },
 ] as const;
@@ -515,6 +515,7 @@ function CategoryExplorer() {
               slug={category.slug}
               name={category.name}
               count={category.recipe_count}
+              imageUrl={category.image_url}
               href={`/recipes?category=${category.slug}` as Route}
             />
           ))}
@@ -533,7 +534,7 @@ function CategoryExplorer() {
  *
  * A composer-shaped invitation, not a working editor: tapping it opens
  * `/community/create`, where the real post is written. Anonymous
- * visitors get a sign-in call instead — the backend refuses anonymous
+ * visitors get a sign-in call instead  the backend refuses anonymous
  * writes anyway, so showing a composer that cannot submit would be a
  * lie.
  */

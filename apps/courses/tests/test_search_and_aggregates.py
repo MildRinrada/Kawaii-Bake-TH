@@ -73,7 +73,7 @@ class CourseSearchApiTests(TestCase):
 
 
 class CourseListAggregateFieldTests(TestCase):
-    """The list payload carries the stored aggregates — no extra queries."""
+    """The list payload carries the stored aggregates  no extra queries."""
 
     def setUp(self) -> None:
         self.client = APIClient()

@@ -17,7 +17,7 @@ def normalize_ingredient_name(name: str) -> str:
 
     Lived in ``apps.recipes.utils`` through Phase 11; moved here (and
     re-exported from there) when the recommendation app's substitution
-    lookup needed the exact same normalisation — two implementations of one
+    lookup needed the exact same normalisation  two implementations of one
     matching rule would drift, which is the failure mode the
     ``normalized_name`` column exists to prevent.
 

@@ -2,11 +2,11 @@
 
 Two audiences with very different trust levels:
 
-* **Public** — the client policy (read-only, no user data) and the signal
+* **Public**  the client policy (read-only, no user data) and the signal
   ingest. Write shapes are :class:`StrictSerializer` and every field is
   bounded, because this is the one endpoint an unauthenticated attacker
   can post to on purpose.
-* **Staff** — the dashboard's read models and its three actions.
+* **Staff**  the dashboard's read models and its three actions.
 
 No serializer here ever exposes a user's email; where an actor is shown
 it is the public handle, matching the platform-wide rule.
@@ -70,7 +70,7 @@ class BoundedDetailField(serializers.DictField):
 class ClientPolicySerializer(serializers.Serializer):
     """What the browser guard is allowed to do, as configured by env.
 
-    Served to anyone, including anonymous visitors — it contains no user
+    Served to anyone, including anonymous visitors  it contains no user
     data and describes only this deployment's own posture. Publishing it
     is not a leak: the guard's behaviour is visible in the shipped
     JavaScript regardless, and a client that cannot read the policy would
@@ -112,7 +112,7 @@ class EdgeSignalSerializer(StrictSerializer):
     """One signal forwarded by the trusted frontend edge.
 
     Unlike :class:`ClientSignalSerializer` this one **does** carry an
-    ``ip`` — the visitor's, as the edge saw it. That is only safe because
+    ``ip``  the visitor's, as the edge saw it. That is only safe because
     the caller proves itself with the shared secret first; the field is
     the whole reason the secret exists.
     """
@@ -140,7 +140,7 @@ class ClientSignalResultSerializer(serializers.Serializer):
 
 
 # --------------------------------------------------------------------------
-# Staff — reads
+# Staff  reads
 # --------------------------------------------------------------------------
 
 
@@ -176,8 +176,8 @@ class ThreatProfileSerializer(serializers.Serializer):
 
     ``score`` is the **stored** value; ``current_score`` is that value
     decayed to now. Both are exposed because they answer different
-    questions — "how bad was it at its worst" and "how bad is it right
-    now" — and a client that only saw one would have to guess the other.
+    questions  "how bad was it at its worst" and "how bad is it right
+    now"  and a client that only saw one would have to guess the other.
     """
 
     id = serializers.IntegerField(read_only=True)
@@ -255,7 +255,7 @@ class SecurityVocabularySerializer(serializers.Serializer):
 
 
 # --------------------------------------------------------------------------
-# Staff — actions
+# Staff  actions
 # --------------------------------------------------------------------------
 
 
@@ -279,7 +279,7 @@ class ReviewRequestSerializer(StrictSerializer):
 class PaginatedFilterSerializer(StrictSerializer):
     """Base for strict query-parameter validation on a paginated list.
 
-    A strict serializer rejects any key it does not declare — which is
+    A strict serializer rejects any key it does not declare  which is
     the point, so a typo'd filter is a 400 rather than a silently
     unfiltered page. That makes it the serializer's job to know about the
     paginator's own parameters too: without these two fields, page 2 of

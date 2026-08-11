@@ -1,6 +1,6 @@
-"""Lessons models — public API.
+"""Lessons models  public API.
 
-``LessonProgress`` moved to ``apps.progress`` in Phase 6 — learner progress
+``LessonProgress`` moved to ``apps.progress`` in Phase 6  learner progress
 is its own domain (ADR 0012).
 """
 

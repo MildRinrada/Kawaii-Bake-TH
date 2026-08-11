@@ -31,7 +31,7 @@ def for_recipe(
 
     Scoped to the recipe on purpose: the endpoint answers "what can I swap
     *in this recipe*", so an ingredient the recipe does not contain yields
-    an empty list — a correct answer, not an error. An ingredient the
+    an empty list  a correct answer, not an error. An ingredient the
     registry does not know yields the line with zero candidates: an honest
     empty, never a guess (ADR 0018 §12).
 
@@ -47,7 +47,7 @@ def for_recipe(
 
     Raises:
         RecipeNotFoundError: If the recipe is absent or hidden from this
-            viewer — indistinguishable, as everywhere else.
+            viewer  indistinguishable, as everywhere else.
     """
     lines = ingredient_selector.lines_for_recipe(
         slug=slug, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff
@@ -57,7 +57,7 @@ def for_recipe(
 
     if ingredient:
         # Canonical-key comparison, not raw equality: asking for "butter"
-        # must find the recipe's "เนย" line — both fold to one rule key.
+        # must find the recipe's "เนย" line  both fold to one rule key.
         wanted = substitution_rules.canonical_key(
             normalize_ingredient_name(ingredient)
         )

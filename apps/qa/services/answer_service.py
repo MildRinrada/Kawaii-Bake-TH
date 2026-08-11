@@ -32,7 +32,7 @@ def create_answer(
     Raises:
         ThreadNotFoundError: If the thread is absent or hidden (404).
         ThreadNotActiveError: If visible but not open (author's own
-            hidden thread) — 409.
+            hidden thread)  409.
     """
     thread = thread_service.require_visible_thread(
         thread_id=thread_id, viewer_id=author_id
@@ -95,7 +95,7 @@ def delete_answer(
     """Hard-delete the caller's own answer.
 
     If it was the accepted answer, the thread's pointer reverts to null
-    at the database layer (``SET_NULL``) — no code to forget.
+    at the database layer (``SET_NULL``)  no code to forget.
 
     Args:
         answer_id: Primary key of the answer.

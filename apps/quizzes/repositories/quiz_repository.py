@@ -63,7 +63,7 @@ def update_quiz(*, quiz: Quiz, changes: Mapping[str, Any]) -> Quiz:
 def set_composition(*, quiz: Quiz, question_ids: Sequence[int]) -> None:
     """Replace a quiz's composition as a collection.
 
-    Safe because nothing references ``QuizQuestion`` rows — attempts snapshot
+    Safe because nothing references ``QuizQuestion`` rows  attempts snapshot
     what they need at start (see the model docstrings).
 
     Args:
@@ -86,7 +86,7 @@ def delete_quiz(*, quiz: Quiz) -> None:
     """Delete a quiz and its composition rows.
 
     Raises:
-        django.db.models.ProtectedError: If attempts exist — the service maps
+        django.db.models.ProtectedError: If attempts exist  the service maps
             this to the ``quiz_has_attempts`` domain error.
     """
     quiz.delete()

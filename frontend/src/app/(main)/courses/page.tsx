@@ -6,14 +6,14 @@
  * Search and every facet the API supports run **server-side**
  * (`?search=` + category/difficulty/instructor, ADR 0021) with the URL
  * as the single source of truth. Cards read the stored aggregates the
- * list payload now carries — total duration and rating — so nothing
+ * list payload now carries  total duration and rating  so nothing
  * here fans out per-course requests. The learning-status facet filters
  * the current page client-side over the real `is_enrolled` /
  * `is_completed` flags.
  */
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 
@@ -35,6 +35,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
+import { PageBar } from "@/components/ui/page-bar";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -52,19 +53,19 @@ const LEVELS = [
     value: "beginner",
     icon: "sprout" as const,
     name: "เริ่มต้นได้เลย",
-    detail: "ไม่ต้องมีพื้นฐาน — อุปกรณ์ การตวง และโดแรกของคุณ",
+    detail: "ไม่ต้องมีพื้นฐาน  อุปกรณ์ การตวง และโดแรกของคุณ",
   },
   {
     value: "intermediate",
     icon: "croissant" as const,
     name: "ระดับกลาง",
-    detail: "ต่อยอดจากพื้นฐาน — กลูเตน ครีม และการขึ้นรูป",
+    detail: "ต่อยอดจากพื้นฐาน  กลูเตน ครีม และการขึ้นรูป",
   },
   {
     value: "advanced",
     icon: "chef-hat" as const,
     name: "ขั้นสูง",
-    detail: "งานละเอียดระดับร้าน — ลามิเนตและการตกแต่งขั้นสูง",
+    detail: "งานละเอียดระดับร้าน  ลามิเนตและการตกแต่งขั้นสูง",
   },
 ] as const;
 
@@ -81,7 +82,7 @@ const SORTS = [
   { value: "oldest", label: "เก่าสุด" },
 ];
 
-/** "45 นาที" · "1 ชม. 20 นาที" — hidden entirely when the sum is 0. */
+/** "45 นาที" · "1 ชม. 20 นาที"  hidden entirely when the sum is 0. */
 function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes} นาที`;
   const hours = Math.floor(minutes / 60);
@@ -279,7 +280,7 @@ function CourseLearningCard({
 }
 
 /* ------------------------------------------------------------------ */
-/* Featured course — richer metadata, still zero extra rating calls    */
+/* Featured course  richer metadata, still zero extra rating calls    */
 /* ------------------------------------------------------------------ */
 
 function FeaturedCourse({
@@ -407,27 +408,47 @@ function CoursesContent() {
     setSearchInput(search);
   }
 
+  // `router.replace` does not update `searchParams` until the next
+  // render, so two quick filter clicks would both merge into the same
+  // pre-click URL and the first selection would vanish. The pending copy
+  // bridges that gap; the effect clears it once the URL catches up.
+  const pendingQuery = useRef<string | null>(null);
+  useEffect(() => {
+    pendingQuery.current = null;
+  }, [searchParams]);
+
   function setParams(updates: Record<string, string | null>) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(
+      pendingQuery.current ?? searchParams.toString(),
+    );
     for (const [key, value] of Object.entries(updates)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
     if (!("page" in updates)) params.delete("page");
     const qs = params.toString();
+    pendingQuery.current = qs;
     router.replace((qs ? `/courses?${qs}` : "/courses") as Route, {
       scroll: false,
     });
   }
 
-  function toggleInList(current: string[], value: string, key: string) {
-    const next = current.includes(value)
-      ? current.filter((item) => item !== value)
-      : [...current, value];
+  function toggleInList(_current: string[], value: string, key: string, max = 5) {
+    // Membership from the freshest query (pending write included), never
+    // the render snapshot - see setParams.
+    const params = new URLSearchParams(
+      pendingQuery.current ?? searchParams.toString(),
+    );
+    const live = params.get(key)?.split(",").filter(Boolean) ?? [];
+    const next = live.includes(value)
+      ? live.filter((item) => item !== value)
+      : live.length < max
+        ? [...live, value]
+        : live;
     setParams({ [key]: next.join(",") || null });
   }
 
-  // Debounced live search — the URL updates after the user pauses.
+  // Debounced live search  the URL updates after the user pauses.
   useEffect(() => {
     const term = searchInput.trim();
     if (term === search) return;
@@ -618,7 +639,7 @@ function CoursesContent() {
         description={`เรียนเบเกอรี่เป็นลำดับขั้นจากครูตัวจริง ทั้งหมด ${overview.data?.count ?? "…"} คอร์ส พร้อมแบบทดสอบและใบประกาศนียบัตร`}
       />
 
-      {/* Search — debounced, server-side */}
+      {/* Search  debounced, server-side */}
       <form
         role="search"
         className="flex max-w-md gap-2"
@@ -690,7 +711,7 @@ function CoursesContent() {
         </div>
       </section>
 
-      {/* Featured course — hidden while filtering so results stay primary */}
+      {/* Featured course  hidden while filtering so results stay primary */}
       {featured ? (
         <section className="mt-8" aria-label="คอร์สแนะนำ">
           <FeaturedCourse
@@ -741,8 +762,12 @@ function CoursesContent() {
 
       {/* Recommended for your skill */}
       {!filtered && recommendedItems.length > 0 ? (
-        <section className="mt-10" aria-label="คอร์สแนะนำสำหรับคุณ">
-          <h2 className="font-display mb-1 text-xl font-medium text-fg">
+        <section
+          aria-label="คอร์สแนะนำสำหรับคุณ"
+          className="mt-10 rounded-surface border border-berry-ink/10 bg-berry-soft/35 p-5 sm:p-6"
+        >
+          <h2 className="font-display mb-1 flex items-center gap-2 text-xl font-medium text-fg">
+            <Icon name="ui/sparkle" className="size-5 text-berry-ink" />
             แนะนำตามระดับของคุณ
           </h2>
           <p className="mb-4 text-sm text-fg-muted">
@@ -770,10 +795,17 @@ function CoursesContent() {
         </section>
       ) : null}
 
+      {/* The catalog region starts here - a rule and its own heading keep
+          the filters from visually belonging to the recommendation box. */}
+      <hr aria-hidden className="mt-10 border-edge" />
+      <h2 className="font-display mt-8 text-xl font-medium text-fg">
+        คอร์สทั้งหมด
+      </h2>
+
       {/* Categories relevant to courses */}
       {courseCategories.length > 0 ? (
         <div
-          className="mt-10 flex snap-x gap-2.5 overflow-x-auto pb-2"
+          className="mt-4 flex snap-x gap-2.5 overflow-x-auto pb-2"
           role="group"
           aria-label="หมวดคอร์ส"
         >
@@ -967,32 +999,12 @@ function CoursesContent() {
               />
             ))}
           </div>
-          {totalPages > 1 ? (
-            <nav
-              aria-label="เปลี่ยนหน้า"
-              className="mt-8 flex items-center justify-center gap-3"
-            >
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setParams({ page: String(page - 1) })}
-              >
-                ← ก่อนหน้า
-              </Button>
-              <span className="text-sm text-fg-muted">
-                หน้า {page} / {totalPages}
-              </span>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setParams({ page: String(page + 1) })}
-              >
-                ถัดไป →
-              </Button>
-            </nav>
-          ) : null}
+          <PageBar
+            page={page}
+            totalPages={totalPages}
+            onPage={(next) => setParams({ page: next === 1 ? null : String(next) })}
+            className="mt-8"
+          />
         </>
       )}
 

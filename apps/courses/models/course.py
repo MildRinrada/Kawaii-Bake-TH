@@ -34,7 +34,7 @@ class Course(TimeStampedModel):
 
     **``published_lesson_count`` is the app boundary made physical.** The
     publish gate requires "lessons exist", but this app must never count
-    another app's rows — that would invert the ``lessons → courses`` dependency
+    another app's rows  that would invert the ``lessons → courses`` dependency
     and stop this app being shippable alone. Instead the ``lessons`` app pushes
     the count through ``course_service.sync_published_lesson_count()`` inside
     the same transaction as every lesson mutation. It also serves every course

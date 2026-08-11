@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class QuizNotVisibleError(DomainError):
     """Raised when a quiz is absent, or present but hidden from the viewer.
 
-    404 in both cases — a 403 would confirm the slug exists.
+    404 in both cases  a 403 would confirm the slug exists.
     """
 
     code = "not_found"
@@ -59,7 +59,7 @@ class InvalidQuizQuestionError(DomainError):
     """Raised when composing a quiz with unusable question ids.
 
     "Someone else's question" and "no such question" are the same problem to
-    the client — distinguishing them would confirm foreign ids exist.
+    the client  distinguishing them would confirm foreign ids exist.
     """
 
     code = "invalid_questions"

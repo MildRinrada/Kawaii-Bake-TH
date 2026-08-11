@@ -48,7 +48,7 @@ def publish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Reci
     error. ``published_at`` is stamped only the first time, which is what keeps
     the slug frozen across an unpublish/republish cycle.
 
-    An archived recipe is re-validated on its way back to published — rules may
+    An archived recipe is re-validated on its way back to published  rules may
     have changed since it was archived.
 
     Args:
@@ -84,7 +84,7 @@ def unpublish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Re
     """Return a published recipe to draft.
 
     ``published_at`` is deliberately retained, so the original publication date
-    survives and the slug stays frozen — a URL that has already been shared must
+    survives and the slug stays frozen  a URL that has already been shared must
     not become reusable.
 
     Args:

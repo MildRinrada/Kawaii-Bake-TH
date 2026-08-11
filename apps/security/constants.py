@@ -17,7 +17,7 @@ class SignalKind(models.TextChoices):
     The two families are scored very differently on purpose. *Server-side*
     kinds are observations the backend made itself and cannot be forged by
     the visitor. *Client-reported* kinds arrive from browser JavaScript,
-    which any attacker can silence or spam — so they are worth a nudge,
+    which any attacker can silence or spam  so they are worth a nudge,
     never a verdict (ADR 0025).
     """
 
@@ -42,7 +42,7 @@ class SignalKind(models.TextChoices):
 
 
 #: Kinds a browser is allowed to report. Anything else arriving at the
-#: public ingest endpoint is rejected — a client must not be able to
+#: public ingest endpoint is rejected  a client must not be able to
 #: manufacture a "scanner_agent" event against someone else's address.
 CLIENT_REPORTABLE = frozenset(
     {
@@ -54,7 +54,7 @@ CLIENT_REPORTABLE = frozenset(
 )
 
 
-#: Kinds the *trusted edge* may report — the Next.js origin, proving
+#: Kinds the *trusted edge* may report  the Next.js origin, proving
 #: itself with `SECURITY_INGEST_SECRET`. It sees trap requests aimed at
 #: the public site that never reach Django, so it may report the
 #: server-observed kinds a browser may not. Windowed kinds stay out:
@@ -86,8 +86,8 @@ class ReviewState(models.TextChoices):
     """Where a profile sits in the operator's triage queue."""
 
     OPEN = "open", "Needs review"
-    ACKNOWLEDGED = "acknowledged", "Reviewed — watching"
-    IGNORED = "ignored", "Reviewed — benign"
+    ACKNOWLEDGED = "acknowledged", "Reviewed  watching"
+    IGNORED = "ignored", "Reviewed  benign"
 
 
 #: Points a single observation adds to the offender's score.
@@ -184,7 +184,7 @@ SENSITIVE_SUFFIXES: tuple[str, ...] = (
 
 #: Substrings that identify a security tool by name. These are advertised
 #: by the tool itself, so a match is a strong signal and a miss means
-#: nothing — the absence of evidence is not evidence of absence.
+#: nothing  the absence of evidence is not evidence of absence.
 SCANNER_AGENT_MARKERS: tuple[str, ...] = (
     "sqlmap",
     "nikto",
@@ -201,7 +201,7 @@ SCANNER_AGENT_MARKERS: tuple[str, ...] = (
 )
 
 #: Ordinary scripting clients. Suspicious on a browser-facing site,
-#: perfectly normal against an API — hence the low weight.
+#: perfectly normal against an API  hence the low weight.
 AUTOMATION_AGENT_MARKERS: tuple[str, ...] = (
     "curl/",
     "wget",
@@ -288,7 +288,7 @@ AUTH_FAILURE_THRESHOLD = 10
 FLOOD_WINDOW_SECONDS = 10
 FLOOD_THRESHOLD = 80
 
-#: Field caps — these columns hold attacker-controlled text, so they are
+#: Field caps  these columns hold attacker-controlled text, so they are
 #: bounded here and truncated on write rather than trusted.
 PATH_MAX_LENGTH = 400
 USER_AGENT_MAX_LENGTH = 400

@@ -1,4 +1,4 @@
-# 0002 — Service / Repository / Selector Layers
+# 0002  Service / Repository / Selector Layers
 
 - **Status:** Accepted
 - **Date:** 2026-08-06
@@ -22,4 +22,4 @@ impossible to localize.
 
 - The future REST API and mobile app reuse services unchanged.
 - Read-path optimization (caching, `select_related`) has one home: selectors.
-- More files per feature — mitigated by a strictly uniform layout.
+- More files per feature  mitigated by a strictly uniform layout.

@@ -2,7 +2,7 @@
 
 Nested serializers are used here for **validation**, which is permitted: they
 produce plain dicts in ``validated_data``. What is banned is nested
-*persistence* — no ``.save()``, ``.create()`` or ``.update()`` anywhere. The
+*persistence*  no ``.save()``, ``.create()`` or ``.update()`` anywhere. The
 service layer performs every write.
 
 Read and write shapes are separate classes on purpose. A single serializer used

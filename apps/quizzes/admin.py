@@ -45,7 +45,7 @@ class QuizAttemptAnswerInline(admin.TabularInline):
 
 @admin.register(QuizAttempt)
 class QuizAttemptAdmin(admin.ModelAdmin):
-    """Admin for attempts — read-only history."""
+    """Admin for attempts  read-only history."""
 
     list_display = ("id", "quiz", "user", "status", "percentage", "passed", "submitted_at")
     list_filter = ("status", "passed")

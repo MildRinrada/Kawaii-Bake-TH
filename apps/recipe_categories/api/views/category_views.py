@@ -27,5 +27,8 @@ class CategoryListView(ServiceAPIView):
         """
         categories = category_service.list_active_categories()
         return Response(
-            CategorySerializer(categories, many=True).data, status=status.HTTP_200_OK
+            CategorySerializer(
+                categories, many=True, context=self.get_serializer_context()
+            ).data,
+            status=status.HTTP_200_OK,
         )

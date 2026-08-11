@@ -68,7 +68,7 @@ class ObservationTests(TestCase):
 
         A clean request must cost the same with the watcher on as with it
         off. The one query the watcher can add is the blocklist read, and
-        that is cached — so the cache is warmed first, exactly as it is in
+        that is cached  so the cache is warmed first, exactly as it is in
         a running process after the first request.
         """
         from django.db import connection

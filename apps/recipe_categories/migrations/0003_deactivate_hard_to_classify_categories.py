@@ -2,7 +2,7 @@
 
 "Cake Decorating", "Vegan Baking" and "Gluten Free" describe a *technique*
 or *dietary constraint* that cuts across every other category rather than
-sitting beside them — a macaron can be vegan, a cake can be decorated,
+sitting beside them  a macaron can be vegan, a cake can be decorated,
 neither fact tells you what to bake. In practice this made them attract
 mis-tagged recipes and left authors guessing which single category to
 pick.
@@ -10,7 +10,7 @@ pick.
 Deactivating (not deleting) uses the field the model already documents
 for exactly this: "Inactive categories stay assigned but are hidden from
 listings." No recipe or course currently references any of the three, so
-this is a pure visibility change — reversible, and nothing to reassign.
+this is a pure visibility change  reversible, and nothing to reassign.
 """
 
 from __future__ import annotations

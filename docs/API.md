@@ -1,9 +1,9 @@
-# KawaiiBake — API
+# KawaiiBake  API
 
 Django is **API-only**. It serves JSON at `/api/v1/` and renders no pages; the
 Next.js frontend owns all UI. The only non-API route is Django admin.
 
-- **OpenAPI schema:** `GET /api/schema/` — or `python manage.py spectacular --file schema.yml`
+- **OpenAPI schema:** `GET /api/schema/`  or `python manage.py spectacular --file schema.yml`
 - **Interactive docs:** `GET /api/docs/`
 - The frontend generates its TypeScript types from that schema.
 
@@ -45,7 +45,7 @@ await fetch(`${API}/api/v1/auth/login/`, {
 `{"user": null}` when nobody is signed in, so page loads never treat "anonymous"
 as an error.
 
-The payload carries `is_staff` — the **caller's own** staff flag, so a client
+The payload carries `is_staff`  the **caller's own** staff flag, so a client
 can decide whether to render an admin surface at all (ADR 0022). It is
 presentation input only: staff-widened reads (`scope=all`) and every
 moderation write are still authorised server-side from `request.user`, and a
@@ -55,28 +55,28 @@ non-staff caller who forces an admin route simply sees the public catalogue.
 
 `settings.AUTH_CREDENTIAL_ISSUER` names the class that establishes credentials.
 Writing `api/credentials/jwt_issuer.py` and repointing that setting is the whole
-change — no view, serializer, service, repository, selector or URL is touched.
+change  no view, serializer, service, repository, selector or URL is touched.
 `/api/v1/auth/token/refresh/` is already reserved in the URL conf.
 
 ## Endpoints
 
-### Authentication — `/api/v1/auth/`
+### Authentication  `/api/v1/auth/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
-| GET | `/csrf/` | — | 204 | Sets the `csrftoken` cookie |
-| POST | `/register/` | — | 201 | Returns the identity payload; does **not** sign in |
-| GET | `/username-available/` | — | 200 | `?username=` → `{username, available}`; advisory, rate limited per IP |
-| POST | `/login/` | — | 200 | `{status, user}`; sets `sessionid` |
+| GET | `/csrf/` |  | 204 | Sets the `csrftoken` cookie |
+| POST | `/register/` |  | 201 | Returns the identity payload; does **not** sign in |
+| GET | `/username-available/` |  | 200 | `?username=` → `{username, available}`; advisory, rate limited per IP |
+| POST | `/login/` |  | 200 | `{status, user}`; sets `sessionid` |
 | POST | `/logout/` | session | 204 | POST-only; deletes the server-side session |
 | GET | `/me/` | optional | 200 | `{"user": …}` or `{"user": null}` |
-| POST | `/password-reset/` | — | **202 always** | Never reveals whether the account exists |
-| POST | `/password-reset/confirm/` | — | 200 | Invalidates all other sessions |
+| POST | `/password-reset/` |  | **202 always** | Never reveals whether the account exists |
+| POST | `/password-reset/confirm/` |  | 200 | Invalidates all other sessions |
 | POST | `/password-change/` | session | 200 | Keeps the caller signed in, drops other sessions |
-| POST | `/verify-email/` | — | 200 | Confirms the address; does **not** sign in |
+| POST | `/verify-email/` |  | 200 | Confirms the address; does **not** sign in |
 | POST | `/verify-email/resend/` | session | 202 | Rate limited |
 
-### Recipes — `/api/v1/recipes/`
+### Recipes  `/api/v1/recipes/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
@@ -84,7 +84,7 @@ change — no view, serializer, service, repository, selector or URL is touched.
 | POST | `/` | session | 201 | Creates a **draft**; nested ingredients and steps |
 <!-- Read payloads carry `id` alongside `slug` (ADR 0023): slug is the
      addressing identity, `id` exists so a caller can fill another app's
-     `recipe_id` write field — the gallery post attachment. -->
+     `recipe_id` write field  the gallery post attachment. -->
 
 | GET | `/search/` | optional | 200 | `q` required; relevance ordering |
 | GET | `/{slug}/` | optional | 200 / 404 | |
@@ -96,13 +96,13 @@ change — no view, serializer, service, repository, selector or URL is touched.
 | POST | `/{slug}/images/` | owner/admin | 201 | `multipart/form-data` |
 | DELETE | `/{slug}/images/{id}/` | owner/admin | 204 | |
 
-### Recipe categories — `/api/v1/recipe-categories/`
+### Recipe categories  `/api/v1/recipe-categories/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/` | optional | 200 | Unpaginated; includes published `recipe_count` |
 
-### Courses — `/api/v1/courses/`
+### Courses  `/api/v1/courses/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
@@ -114,19 +114,19 @@ change — no view, serializer, service, repository, selector or URL is touched.
 | POST | `/{slug}/publish\|unpublish\|archive/` | owner/admin | 200 / 400 | Publish validates title, description, thumbnail, ≥1 published lesson |
 | POST | `/{slug}/enroll/` | session | 201 first / 200 after | Idempotent; 404 on hidden course; 400 `own_course` |
 | DELETE | `/{slug}/unenroll/` | session | 204 | Soft drop; history kept |
-| GET | `/{slug}/lessons/` | optional | 200 | **Syllabus** — lesson metadata only (learner state lives at the progress endpoints) |
+| GET | `/{slug}/lessons/` | optional | 200 | **Syllabus**  lesson metadata only (learner state lives at the progress endpoints) |
 | POST | `/{slug}/lessons/` | owner/admin | 201 | Appends at the end |
 | POST | `/{slug}/lessons/reorder/` | owner/admin | 200 / 400 | Full ordered id array; diff reported on mismatch |
-| GET | `/{slug}/progress/` | enrolled | 200 / 403 | Aggregate + per-lesson — served by the **progress** app |
+| GET | `/{slug}/progress/` | enrolled | 200 / 403 | Aggregate + per-lesson  served by the **progress** app |
 
-### Lessons — `/api/v1/lessons/`
+### Lessons  `/api/v1/lessons/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/{id}/` | see gate below | 200 / 401 / 403 / 404 | Full content incl. video, linked recipe and linked quiz |
 | PATCH / DELETE | `/{id}/` | owner/admin | 200 / 204 | Delete renumbers survivors |
 
-### Progress — nested under lessons, courses and `/api/v1/me/`
+### Progress  nested under lessons, courses and `/api/v1/me/`
 
 Owned by ``apps/progress`` (ADR 0012); routes are mounted under the prefixes
 of what they decorate.
@@ -136,9 +136,9 @@ of what they decorate.
 | POST | `/lessons/{id}/complete/` | enrolled | 200 | Idempotent; returns `course_completed`; records the day's activity fact |
 | DELETE | `/lessons/{id}/complete/` | enrolled | 200 | Clears `completed_at`; `first_completed_at` history survives |
 | GET | `/courses/{slug}/progress/` | enrolled | 200 / 403 | Aggregate + per-lesson; the self-healing completion read |
-| GET | `/me/progress/` | session | 200 | `{courses: [...]}` — per-course completion overview, flat query count |
+| GET | `/me/progress/` | session | 200 | `{courses: [...]}`  per-course completion overview, flat query count |
 
-### Questions — `/api/v1/questions/` (authenticated authoring surface)
+### Questions  `/api/v1/questions/` (authenticated authoring surface)
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
@@ -149,15 +149,15 @@ of what they decorate.
 | PATCH | `/{id}/` | owner/admin | 200 / 409 | Content locked once frozen; `explanation`/`difficulty`/`tags` always editable |
 | DELETE | `/{id}/` | owner/admin | 204 / 409 | 409 `question_frozen` (has attempts) or `question_in_use` (in a quiz) |
 
-### Quizzes — `/api/v1/quizzes/`
+### Quizzes  `/api/v1/quizzes/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/` | optional | 200 | Paginated; `owner`, `ordering`, `scope` |
 | POST | `/` | session | 201 | Creates a draft; optional ordered `question_ids` |
 | GET | `/{slug}/` | optional | 200 / 404 | One shape for every viewer; questions **without correctness** |
-| PATCH | `/{slug}/` | owner/admin | 200 | `question_ids` replaces the whole composition — reorder **is** this call |
-| DELETE | `/{slug}/` | owner/admin | 204 / 409 | 409 `quiz_has_attempts` once history exists — archive instead |
+| PATCH | `/{slug}/` | owner/admin | 200 | `question_ids` replaces the whole composition  reorder **is** this call |
+| DELETE | `/{slug}/` | owner/admin | 204 / 409 | 409 `quiz_has_attempts` once history exists  archive instead |
 | POST | `/{slug}/publish\|unpublish\|archive/` | owner/admin | 200 / 400 | Publish validates title, description, ≥1 question, **every question's answers** |
 | POST | `/{slug}/start/` | session | 201 / 200 | Idempotent per user; freezes questions + snapshots the composition |
 | POST | `/{slug}/submit/` | session | 200 | Grades against the **snapshot**; omitted questions = skipped (wrong) |
@@ -165,17 +165,17 @@ of what they decorate.
 | GET | `/{slug}/attempts/{id}/` | own/admin | 200 / 404 | Per-question review; explanations only after submit |
 | DELETE | `/{slug}/attempts/{id}/` | own | 204 / 409 | Abandon an open attempt; submitted history is permanent |
 
-### Reviews — nested under recipes and courses
+### Reviews  nested under recipes and courses
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/recipes/{slug}/reviews/` · `/courses/{slug}/reviews/` | optional | 200 | Paginated **active** reviews, newest first, reviewer embedded |
 | POST | same | session | 201 | One active review per user per target; 400 `own_content`; 409 `already_reviewed` |
-| GET | `/recipes/{slug}/rating/` · `/courses/{slug}/rating/` | optional | 200 | `{average, count, distribution}` — computed, never stored |
+| GET | `/recipes/{slug}/rating/` · `/courses/{slug}/rating/` | optional | 200 | `{average, count, distribution}`  computed, never stored |
 | PATCH | `/reviews/{id}/` | owner/admin | 200 | Owner edits `rating`/`comment`; `status` (active/hidden) is staff-only → 403 |
-| DELETE | `/reviews/{id}/` | owner/admin | 204 | **Soft** delete — history survives; the author may review again |
+| DELETE | `/reviews/{id}/` | owner/admin | 204 | **Soft** delete  history survives; the author may review again |
 
-### Favorites — nested under recipes, courses and users
+### Favorites  nested under recipes, courses and users
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
@@ -183,22 +183,22 @@ of what they decorate.
 | DELETE | same | session | 204 | Idempotent |
 | GET | `/users/me/favorites/` | session | 200 | Paginated, `?type=recipe\|course`; target cards embedded; only currently-visible targets appear |
 
-### AI Assistant — `/api/v1/assistant/` and `/api/v1/me/`
+### AI Assistant  `/api/v1/assistant/` and `/api/v1/me/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | POST | `/assistant/conversations/` | session | 201 | `{language, context_type, recipe_id?\|lesson_id?\|course_id?}`; hidden target ⇒ 404; gated lesson ⇒ 403 `enrollment_required`; mismatched ids ⇒ 400 `invalid_context` |
-| GET | `/assistant/conversations/{id}/` | session (owner) | 200 / 404 | `{conversation, messages}` — messages paginated, oldest first |
+| GET | `/assistant/conversations/{id}/` | session (owner) | 200 / 404 | `{conversation, messages}`  messages paginated, oldest first |
 | POST | `/assistant/conversations/{id}/messages/` | session (owner) | 201 / 404 / 429 / 503 | Sends the user's message, returns the assistant's reply; provider failure ⇒ 503 `assistant_unavailable` with the user message kept |
 | GET | `/me/assistant/conversations/` | session | 200 | Paginated, most recently active first; only the caller's |
 
-Messages are append-only — there is no edit or delete. Replies come from
+Messages are append-only  there is no edit or delete. Replies come from
 the provider configured by `AI_PROVIDER` (the offline deterministic mock by
 default; no API key needed for local work). Each conversation stamps the
 prompt template version it was created under and keeps it for life; sends
 are rate-limited per user before the provider is called. See ADR 0013.
 
-### Certificates — nested under courses, `/api/v1/me/` and `/api/v1/certificates/`
+### Certificates  nested under courses, `/api/v1/me/` and `/api/v1/certificates/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
@@ -206,63 +206,63 @@ are rate-limited per user before the provider is called. See ADR 0013.
 | GET | `/me/certificates/` | session | 200 | Paginated, newest first, revoked included with `status` |
 | GET | `/certificates/{verification_token}/` | **anonymous** | 200 / 404 | Employer verification by UUID token; returns `valid`/`revoked`; never an email |
 | GET | `/me/achievements/` | session | 200 | Paginated earned achievements with bilingual badge metadata |
-| GET | `/achievements/` | **anonymous** | 200 | The active badge catalogue — *what there is to earn*, unpaginated. Pair with `/me/achievements/` (*what I have earned*) to render locked badges (ADR 0024). Inactive badges are hidden here without un-earning anything |
+| GET | `/achievements/` | **anonymous** | 200 | The active badge catalogue  *what there is to earn*, unpaginated. Pair with `/me/achievements/` (*what I have earned*) to render locked badges (ADR 0024). Inactive badges are hidden here without un-earning anything |
 
-Completion is read from the progress app's stamped fact — certificates
+Completion is read from the progress app's stamped fact  certificates
 never count lessons. Certificates are immutable once issued (number,
 dates and the printable snapshot never change); revocation is stamp-once,
 keeps the row, and frees the (user, course) slot for a re-issue with a new
-number. The sequential `KB-YYYY-NNNNNN` number is never a lookup key —
+number. The sequential `KB-YYYY-NNNNNN` number is never a lookup key 
 only the unguessable token verifies. See ADR 0014.
 
-### Gamification — `/api/v1/me/` and `/api/v1/leaderboard/`
+### Gamification  `/api/v1/me/` and `/api/v1/leaderboard/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
-| GET | `/me/gamification/` | session | 200 | `{level, streak, recent_transactions}` — derived on first read. `level.xp_for_next_level` states the current level's XP span so clients draw the bar without restating the curve (ADR 0024) |
+| GET | `/me/gamification/` | session | 200 | `{level, streak, recent_transactions}`  derived on first read. `level.xp_for_next_level` states the current level's XP span so clients draw the bar without restating the curve (ADR 0024) |
 | POST | `/me/gamification/recalculate/` | session | 200 | Rebuild XP + streak from the domains' facts; idempotent |
 | GET | `/me/streak/` | session | 200 | `{current, longest, last_activity}` |
-| GET | `/leaderboard/` | **anonymous** | 200 | Paginated; each row is exactly `{public_handle, level, total_xp}` — never an email |
+| GET | `/leaderboard/` | **anonymous** | 200 | Paginated; each row is exactly `{public_handle, level, total_xp}`  never an email |
 
 All XP is derived: the ledger reconciles against fact counts owned by
-progress, certificates, quizzes and reviews (10/100/20/25/5 XP —
+progress, certificates, quizzes and reviews (10/100/20/25/5 XP 
 lesson/course/quiz/certificate/review), so recalculating twice changes
 nothing and nothing is ever clawed back. Levels and streaks are computed
 rows rebuilt from the ledger and from progress' activity calendar. See
 ADR 0015.
 
-### Notifications — `/api/v1/me/notifications/`
+### Notifications  `/api/v1/me/notifications/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/me/notifications/` | session | 200 | Paginated, newest first; `?unread=true`; body carries live `unread_count`; strictly the caller's own |
 | POST | `/me/notifications/{id}/read/` | session (owner) | 200 / 404 | Stamp-once `read_at`; repeat calls stay 200 with the same stamp |
-| POST | `/me/notifications/read-all/` | session | 200 | One conditional bulk UPDATE; returns `{marked_read}` — rows newly stamped |
+| POST | `/me/notifications/read-all/` | session | 200 | One conditional bulk UPDATE; returns `{marked_read}`  rows newly stamped |
 | GET | `/me/notifications/preferences/` | session | 200 | Every supported event type; absent row resolves to `true` |
 | PATCH | `/me/notifications/preferences/` | session | 200 / 400 | Strict `{event_type: bool}` subset; unknown event types rejected |
 
 There is no create endpoint: notifications exist only because a producer
 service (reviews, courses, certificates) called the notification service
-after its own transaction committed. Three wired events —
+after its own transaction committed. Three wired events 
 `review_received`, `course_enrollment`, `achievement_earned`. Rows are
 immutable snapshots (title/body/actor handle/link) with no FK to content;
 delivery is best-effort and never fails the producer. See ADR 0016.
 
-### Gallery — `/api/v1/gallery/`
+### Gallery  `/api/v1/gallery/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/gallery/` | optional | 200 | Paginated feed, newest first; anon sees published, owners also their own; filters `recipe_id`, `course_id`, `category`, `author` |
 | POST | `/gallery/` | session | 201 | `{caption?, status?, recipe_id?, course_id?}`; references must be publicly listed ⇒ else 400 `invalid_reference` |
 | GET | `/gallery/{id}/` | optional | 200 / 404 | Same rule as the list; unpublished-and-not-yours ⇒ 404 |
-| PATCH | `/gallery/{id}/` | owner/admin | 200 / 404 | caption/status/references; `image_ids` (exact set) reorders — 400 `invalid_order` otherwise |
+| PATCH | `/gallery/{id}/` | owner/admin | 200 / 404 | caption/status/references; `image_ids` (exact set) reorders  400 `invalid_order` otherwise |
 | DELETE | `/gallery/{id}/` | owner/admin | 204 / 404 | **Hard** delete; every stored image file is removed |
 | POST | `/gallery/{id}/images/` | owner/admin | 201 | One multipart image; byte-validated before storage; max 10/post |
 | DELETE | `/gallery/{id}/images/{image_id}/` | owner/admin | 204 / 404 | Row and file together |
 
-### Q&A — `/api/v1/qa/`
+### Q&A  `/api/v1/qa/`
 
-Community discussion — a different domain from `/questions/` (the quiz
+Community discussion  a different domain from `/questions/` (the quiz
 item bank); see ADR 0017 §14.
 
 | Method | Path | Auth | Success | Notes |
@@ -271,30 +271,30 @@ item bank); see ADR 0017 §14.
 | POST | `/qa/threads/` | session | 201 | `{target_type, target_slug, title, body?}`; hidden target ⇒ 404 |
 | GET | `/qa/threads/{id}/` | optional | 200 / 404 | Active public; hidden ⇒ author/staff only; deleted ⇒ 404 for everyone |
 | PATCH | `/qa/threads/{id}/` | author/staff | 200 | title/body; `status` (hide/restore) is staff-only ⇒ 403 otherwise |
-| DELETE | `/qa/threads/{id}/` | author/staff | 204 | **Soft** delete — history survives, no API returns it again |
+| DELETE | `/qa/threads/{id}/` | author/staff | 204 | **Soft** delete  history survives, no API returns it again |
 | GET | `/qa/threads/{id}/answers/` | optional | 200 / 404 | Oldest first; hidden/deleted thread ⇒ 404, never an empty page |
 | POST | `/qa/threads/{id}/answers/` | session | 201 / 409 | Active threads only; notifies the asker (never yourself) |
 | POST | `/qa/threads/{id}/accept/` | thread author/staff | 200 | `{answer_id}`; replaces any previous accepted answer atomically; notifies the answerer |
 | PATCH / DELETE | `/qa/answers/{id}/` | answer author/staff | 200 / 204 | Hard delete; deleting the accepted answer clears the thread's pointer |
 
-### Rewards — `/api/v1/me/rewards/` and `/api/v1/rewards/`
+### Rewards  `/api/v1/me/rewards/` and `/api/v1/rewards/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/me/rewards/` | session | 200 | Balance + lifetime earned/spent; zeros before first earn (no row is minted by a GET) |
 | GET | `/me/rewards/transactions/` | session | 200 | Own ledger only, newest first, paginated; each entry: kind, amount, balance_after, `reason {code, title_th, title_en}`, note, actor_handle, created_at |
-| POST | `/me/rewards/claim/` | session | 200 | Settles earnings up to current facts — idempotent and monotonic; replaying grants nothing. `{claimed, points, balance}` |
-| POST | `/rewards/adjustments/` | staff | 201 / 404 / 409 | `{username, amount, reason, idempotency_key?}` — audited ledger entry; reason required; 409 `insufficient_balance` on overdraw (balance can never go negative) |
+| POST | `/me/rewards/claim/` | session | 200 | Settles earnings up to current facts  idempotent and monotonic; replaying grants nothing. `{claimed, points, balance}` |
+| POST | `/rewards/adjustments/` | staff | 201 / 404 / 409 | `{username, amount, reason, idempotency_key?}`  audited ledger entry; reason required; 409 `insufficient_balance` on overdraw (balance can never go negative) |
 
 Earning is pull-based (the gamification `recalculate` pattern, ADR 0019):
 call `claim` after learning actions or on page load. Every earning is
 keyed to an identified source fact and unique at the database, so
-duplicate delivery — retries, double clicks, races — cannot grant twice.
+duplicate delivery  retries, double clicks, races  cannot grant twice.
 Spending exists at the service layer only; a user-facing spend endpoint
 arrives with the future shop phase. No email, no event keys, no internal
 ids in any payload.
 
-### Recommendations — `/api/v1/recommendations/` and nested under recipes
+### Recommendations  `/api/v1/recommendations/` and nested under recipes
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
@@ -302,30 +302,43 @@ ids in any payload.
 | GET | `/recommendations/courses/` | optional | 200 | Same shape for courses; enrolled/completed courses never appear |
 | GET | `/recipes/{slug}/substitutions/` | optional | 200 / 404 | Substitution candidates per ingredient; optional `?ingredient=` filter; recipe visibility governs, hidden ⇒ 404 |
 
-Each feed item is `{reasons: [code…], recipe|course: card}` — the card is
+Each feed item is `{reasons: [code…], recipe|course: card}`  the card is
 the content app's own list shape, the reasons are aggregate evidence codes
 (`matches_your_favorite_categories`, `highly_rated`, …). Scores, feature
 values and raw behavior never appear, and neither does an email. Each
 substitution entry is `{ingredient, normalized, substitutions: [{name,
-ratio, note, confidence}]}` — `ratio` is empty when no reliable conversion
+ratio, note, confidence}]}`  `ratio` is empty when no reliable conversion
 exists, `confidence` is coarse (`high/medium/low`) on purpose, and an
 unknown ingredient returns an empty candidate list, never a guess. See
 ADR 0018.
 
-### Users — `/api/v1/users/` and `/api/v1/me/settings/`
+### Users  `/api/v1/users/` and `/api/v1/me/settings/`
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/profile/` | session | 200 | The caller's own profile |
-| PATCH | `/profile/update/` | session | 200 | Partial; accepts `multipart/form-data` for `avatar` and `cover`; `favorite_categories` slugs are validated against the **live** taxonomy (Phase 14) — unknown slug ⇒ 400, nothing persists |
+| PATCH | `/profile/update/` | session | 200 | Partial; accepts `multipart/form-data` for `avatar` and `cover`; `favorite_categories` slugs are validated against the **live** taxonomy (Phase 14)  unknown slug ⇒ 400, nothing persists |
 | GET | `/preferences/` | session | 200 | Privacy, learning and interface settings; `locale` is `th`/`en` (Thai default), assistant-compatible |
 | PATCH | `/preferences/` | session | 200 | Partial |
 | GET | `/<username>/` | optional | 200 / 404 | Redacted per the owner's privacy settings |
 | POST | `/account/deactivate/` | session | 204 | Disables the account and ends the session |
-| GET | `/api/v1/me/settings/` | session | 200 | **Read-only composition** (Phase 14): `{profile, preferences, notifications, profile_completion}` — the notifications block comes from that app's own effective-preferences read; writes still go to each owner's endpoint. Completion is derived (`{completed, total, percent, missing}`), never stored |
+| GET | `/api/v1/me/settings/` | session | 200 | **Read-only composition** (Phase 14): `{profile, preferences, notifications, profile_completion}`  the notifications block comes from that app's own effective-preferences read; writes still go to each owner's endpoint. Completion is derived (`{completed, total, percent, missing}`), never stored |
 
 Literal paths are routed before `<username>`, and those words are also in
 `RESERVED_USERNAMES`, so a handle can never shadow an endpoint.
+
+### Legal documents - `/api/v1/legal/`
+
+| Method | Path | Auth | Success | Notes |
+|---|---|---|---|---|
+| GET | `/` | none | 200 | All four documents' metadata (kind, title, version, updated_at) |
+| GET | `/{kind}/` | none | 200 / 404 | Full text; kinds: `terms`, `privacy`, `pdpa`, `cookie` |
+| PATCH | `/{kind}/` | staff | 200 | Edit title and/or body; every change bumps `version` atomically |
+
+Bodies use the RichText mini-format (`##` headings, `-`/`1.` lists,
+`**bold**`, `*italic*`, `__underline__`) rendered client-side as elements,
+never HTML. Reads are public because a visitor must be able to read what
+they consent to at registration.
 
 ## Request and response shapes
 
@@ -333,8 +346,15 @@ Literal paths are routed before `<username>`, and those words are also in
 
 ```json
 { "email": "baker@example.com", "username": "baker",
-  "password": "…", "password_confirm": "…" }
+  "first_name": "มินตรา", "last_name": "อบอุ่น",
+  "password": "…", "password_confirm": "…", "accept_terms": true }
 ```
+
+`first_name`/`last_name` are required - certificates print them - and
+`accept_terms` must be an explicit `true` (PDPA consent; the timestamp is
+stored on the account). Registration does **not** start a session: the
+account confirms its email first (`/verify-email/{uid}/{token}` on the
+frontend → `POST /auth/verify-email/`), then signs in itself.
 
 ```json
 { "id": 2, "username": "baker", "email": "baker@example.com",
@@ -347,7 +367,7 @@ Literal paths are routed before `<username>`, and those words are also in
 { "username": "baker", "available": false }
 ```
 
-Advisory only — a malformed or reserved handle answers `available: false`
+Advisory only  a malformed or reserved handle answers `available: false`
 rather than 400 (the caller is a live keystroke check), and two racing
 sign-ups are still settled by registration's unique constraint. Rate
 limited per IP (`USERNAME_CHECK_RATE_LIMIT_*`, default 30/min) so it
@@ -364,7 +384,7 @@ cannot be scripted into a bulk enumeration scan.
 ```
 
 `status` is `authenticated` today and will be `mfa_required` once two-factor
-auth ships — the field exists now so that addition is not a breaking change.
+auth ships  the field exists now so that addition is not a breaking change.
 
 `remember_me: true` gives a 30-day session; omitted or `false` gives a session
 cookie that dies with the browser.
@@ -381,7 +401,7 @@ nullable field (`birthday`, `location`, `avatar`, `cover`) clears it.
   "favorite_categories": ["bread", "macaron"] }
 ```
 
-Unknown keys are **rejected with 400**, not silently ignored — a typo like
+Unknown keys are **rejected with 400**, not silently ignored  a typo like
 `favourite_categories` fails loudly rather than returning a misleading 200.
 
 Identity and permission fields (`email`, `username`, `is_staff`, …) are absent
@@ -389,9 +409,9 @@ from the serializer entirely, so they cannot be mass-assigned.
 
 **Images (`avatar`, `cover`)** go in a `multipart/form-data` request. Both are
 validated by decoding the bytes, never by trusting `content_type`: allowed
-formats are JPEG/PNG/WebP (SVG is excluded — it can carry script), the cap is
+formats are JPEG/PNG/WebP (SVG is excluded  it can carry script), the cap is
 2 MB for an avatar and 4 MB for a cover, and the client filename is used only
-for its extension. `cover` arrives **already cropped** — the browser performs
+for its extension. `cover` arrives **already cropped**  the browser performs
 the fixed-ratio pan/zoom crop and uploads only the result, so there is no
 server-side image pipeline and no original to re-crop from.
 
@@ -403,7 +423,7 @@ nothing renders a stranger's banner yet.
 
 ### Permission matrix
 
-Hidden always means **404**, never 403 — a 403 would confirm the slug exists.
+Hidden always means **404**, never 403  a 403 would confirm the slug exists.
 
 | status | visibility | anon | signed-in stranger | owner | admin |
 |---|---|---|---|---|---|
@@ -425,7 +445,7 @@ every listing *and from search*. Being undiscoverable is the entire point.
 |---|---|
 | `public` (default) | Published and public only |
 | `mine` | Every recipe you own, any status. **401** when anonymous |
-| `all` | Everything — staff only; silently narrowed to `public` otherwise |
+| `all` | Everything  staff only; silently narrowed to `public` otherwise |
 
 `scope=mine` pins the author to the session user, so no combination of query
 parameters can reach another author's drafts. Your own drafts deliberately do
@@ -443,7 +463,7 @@ Every transition is reversible; only `DELETE` is terminal. Publishing is
 idempotent, and an archived recipe is **re-validated** on its way back to
 published.
 
-Completeness is checked **at publish, not on every save** — a draft must be
+Completeness is checked **at publish, not on every save**  a draft must be
 saveable while incomplete. `POST /publish/` returns every unmet requirement at
 once so the frontend can render a checklist:
 
@@ -472,7 +492,7 @@ Requirements to publish: a title, ≥1 ingredient, ≥1 step, ≥1 category, a c
 | `scope` | `?scope=mine` | See above |
 | `page`, `page_size` | `?page=2&page_size=50` | `page_size` capped at 100 |
 
-Unknown parameters are **rejected with 400**, not ignored — `?catgeory=cake`
+Unknown parameters are **rejected with 400**, not ignored  `?catgeory=cake`
 silently returning everything is a miserable bug to chase.
 
 One deliberate asymmetry: an unknown category *in a filter* returns an empty
@@ -497,7 +517,7 @@ Filtering is a query; assignment is an assertion.
 ```
 
 - **PATCH semantics:** an absent key is unchanged. A supplied `ingredients` or
-  `steps` array **replaces that collection entirely** — which is also how
+  `steps` array **replaces that collection entirely**  which is also how
   reordering is expressed, since `position` is derived from array order and is
   never accepted from the client.
 - `"nutrition": null` clears it; omitting it leaves it alone.
@@ -506,7 +526,7 @@ Filtering is a query; assignment is an assertion.
   editable, because it has no precondition.
 - `cover_image` is uploaded as `multipart/form-data`; gallery images use
   `POST /{slug}/images/`. Nested arrays are JSON-only.
-- Slugs are generated from the title and **frozen once first published** —
+- Slugs are generated from the title and **frozen once first published** 
   changing one would break every shared link. There is no redirect table yet, so
   a published typo is permanent (see Known limitations).
 
@@ -544,7 +564,7 @@ Lessons introduce the one principled carve-out from "hidden ⇒ 404":
 | Layer | Condition | Response |
 |---|---|---|
 | Existence | course hidden from viewer, or lesson unpublished | **404** `not_found` |
-| Gating | lesson is on the public syllabus; viewer just isn't enrolled | **403** `enrollment_required` — or **401** if anonymous |
+| Gating | lesson is on the public syllabus; viewer just isn't enrolled | **403** `enrollment_required`  or **401** if anonymous |
 
 The syllabus already makes the lesson's existence public, so a 404 at the
 gating layer would be a lie. The distinct codes are load-bearing for the
@@ -553,13 +573,13 @@ Enroll CTA. Preview lessons (`is_preview`) skip the gate for reading;
 **completing** any lesson still requires enrollment.
 
 The syllabus endpoint returns metadata only (title, duration, preview flag,
-`has_video`) — never `content` or `video_url`.
+`has_video`)  never `content` or `video_url`.
 
 ### Course lifecycle
 
 Same machine as recipes (all transitions reversible, publish idempotent and
 re-validated from archived). Publish requires: title, a real description, a
-thumbnail, and **≥ 1 published lesson** — reported all at once as a checklist
+thumbnail, and **≥ 1 published lesson**  reported all at once as a checklist
 in `details`. The lesson requirement reads a counter the lessons app maintains;
 see [ADR 0009](adr/0009-courses-lessons-boundary.md).
 
@@ -567,7 +587,7 @@ see [ADR 0009](adr/0009-courses-lessons-boundary.md).
 
 ```
 POST enroll      → no row: create ACTIVE (201)
-                 → dropped: reactivate — COMPLETED if ever finished, else ACTIVE (200)
+                 → dropped: reactivate  COMPLETED if ever finished, else ACTIVE (200)
                  → active/completed: no-op (200)
 DELETE unenroll  → status = DROPPED (204). Nothing is deleted.
 ```
@@ -577,7 +597,7 @@ DELETE unenroll  → status = DROPPED (204). Nothing is deleted.
 - Instructors cannot enroll in their own course (400 `own_course`); only
   published courses are enrollable.
 - Dropping hides the course, its content **and its progress report** until
-  re-enrollment, which restores everything — including COMPLETED status.
+  re-enrollment, which restores everything  including COMPLETED status.
 
 ### Lesson progress flow (owned by the progress app since Phase 6)
 
@@ -598,16 +618,16 @@ GET /me/progress/              → {courses: [{id, slug, title, completed_lesson
                                   total_lessons, percentage, completed_at}]}
 ```
 
-Completing requires an access-granting enrollment even on preview lessons —
+Completing requires an access-granting enrollment even on preview lessons 
 reading is free, progress is not. Course completion is **derived** from
 lesson completion at write and read time (write-through + self-healing read),
-never counter-maintained, and never downgrades — not by un-completing a
+never counter-maintained, and never downgrades  not by un-completing a
 lesson, not by the instructor adding new lessons.
 
 ### Lesson ordering
 
 Built for drag-and-drop: `POST /courses/{slug}/lessons/reorder/` takes
-`{"lesson_ids": [...]}` — the full id array, exactly the course's lesson set.
+`{"lesson_ids": [...]}`  the full id array, exactly the course's lesson set.
 Missing, duplicate or foreign ids return 400 with the diff
 (`missing_ids` / `duplicate_ids` / `unknown_ids`). New lessons append at the
 end; deleting renumbers the survivors densely.
@@ -617,7 +637,7 @@ end; deleting renumbers the survivors densely.
 A lesson may reference the recipe it teaches (`recipe_id`). Linking validates
 the author can see the recipe; on read, the embed is resolved with the
 **viewer's** identity, so a recipe that has since gone private serializes as
-`recipe: null` — degrades, never leaks.
+`recipe: null`  degrades, never leaks.
 
 ## Questions & Quizzes
 
@@ -642,11 +662,11 @@ browse, reachable only through the (enrollment-gated) lesson.
 
 ### The answer key never travels
 
-Every taker-facing payload — quiz detail, start, submit, attempt review — is
+Every taker-facing payload  quiz detail, start, submit, attempt review  is
 built from DTOs that structurally have no `is_correct` field, and choices are
 always ordered by `position`. The only endpoint that renders correctness is
 the owner's own `GET /questions/{id}/`. After submitting, takers receive
-`was_correct` and the question's `explanation` — the outcome, never the key.
+`was_correct` and the question's `explanation`  the outcome, never the key.
 
 ### Attempt flow
 
@@ -663,22 +683,22 @@ DELETE attempts/{id} → abandons an open attempt; submitted rows are permanent
 ```
 
 Because grading never reads the live composition, instructors may edit a
-quiz's `question_ids` at any time — in-flight attempts finish against what
+quiz's `question_ids` at any time  in-flight attempts finish against what
 they were shown. Frozen questions refuse content edits with 409
 `question_frozen`; duplicate the question to change it (versioning via
-`supersedes` is the prepared future path — [ADR 0010](adr/0010-question-bank-and-quiz-boundary.md)).
+`supersedes` is the prepared future path  [ADR 0010](adr/0010-question-bank-and-quiz-boundary.md)).
 
 ### Scoring
 
 Single choice and true/false grade exact-one; multiple choice grades
-**exact-set** (all correct choices, nothing else — no partial credit).
+**exact-set** (all correct choices, nothing else  no partial credit).
 Skipped questions are incorrect. `percentage` is `score/max_score` to two
 decimals; `passed` is `percentage >= pass_percent`. All figures are stamped
 onto the attempt at grading time and never recomputed.
 
 ### Lesson ↔ quiz links
 
-A lesson may reference one quiz (`quiz_id`) — a reference only; quiz logic
+A lesson may reference one quiz (`quiz_id`)  a reference only; quiz logic
 never crosses into lessons. The embed carries `{id, slug, title,
 pass_percent, question_count}` (never questions) and is resolved with the
 viewer's identity, so a hidden quiz serializes as `quiz: null`.
@@ -688,7 +708,7 @@ viewer's identity, so a hidden quiz serializes as `quiz: null`.
 ### Review lifecycle
 
 `active → hidden` (moderation, staff) and `active → deleted` (the author, via
-DELETE) — nothing is ever hard-deleted. Listings and rating statistics count
+DELETE)  nothing is ever hard-deleted. Listings and rating statistics count
 **active** reviews only, so hiding a review changes the average instantly.
 Deleting frees the one-active-review-per-target slot: the author may write a
 fresh review, and the old row survives as history. Reviewing requires seeing
@@ -697,7 +717,7 @@ the target (hidden ⇒ 404) and not owning it (400 `own_content`).
 ### Rating statistics
 
 `GET …/rating/` computes `{average (2 dp, null when unreviewed), count,
-distribution per star}` in one aggregate query — there are no stored rating
+distribution per star}` in one aggregate query  there are no stored rating
 columns anywhere ([ADR 0011](adr/0011-review-target-architecture.md)); the
 selector is the future caching seam.
 
@@ -705,7 +725,7 @@ selector is the future caching seam.
 
 A favorite is an idempotent toggle (the enroll pattern: 201 first, 200 after,
 204 on remove, always). The list shows only targets the caller could
-currently open — a recipe that went private silently leaves the list (the
+currently open  a recipe that went private silently leaves the list (the
 bookmark row survives and returns with the recipe); an archived course stays
 for its enrolled student. Both behaviours are the content apps' own
 visibility rules composed across the join, not favorites-specific logic.
@@ -729,7 +749,7 @@ GET  /me/assistant/conversations/               (paginated, mine only)
 Creating a typed conversation requires exactly the matching id
 (`context_type:"recipe"` ⇒ `recipe_id`, nothing else) and the target must be
 readable **by the caller**: hidden ⇒ 404, enrollment-gated lesson content ⇒
-403 `enrollment_required` — the same two-layer rule as reading the lesson
+403 `enrollment_required`  the same two-layer rule as reading the lesson
 itself. After creation the check is lenient: a target that is later deleted
 or made private silently degrades the conversation to context-free answers;
 history is never lost and hidden content is never injected.
@@ -739,7 +759,7 @@ history is never lost and hidden content is never injected.
 The system prompt is a server-owned versioned template plus a fenced,
 data-labelled context block (recipe ingredients/steps, lesson content,
 course syllabus) loaded live through the content apps' public visibility
-APIs. User messages travel only as `user` turns — they are never
+APIs. User messages travel only as `user` turns  they are never
 concatenated into the system prompt, and the `system` role is never stored,
 so stored content cannot rewrite the assistant's instructions.
 
@@ -747,8 +767,8 @@ so stored content cannot rewrite the assistant's instructions.
 
 | Situation | Response |
 |---|---|
-| Send allowance exhausted (per user) | 429 `rate_limited` — before the provider is called |
-| Provider down / misconfigured | 503 `assistant_unavailable` — the user's message **is saved**; no reply row appears; retrying is safe |
+| Send allowance exhausted (per user) | 429 `rate_limited`  before the provider is called |
+| Provider down / misconfigured | 503 `assistant_unavailable`  the user's message **is saved**; no reply row appears; retrying is safe |
 | Message empty or > 4000 chars | 400 |
 
 ## Certificates & Achievements
@@ -761,17 +781,17 @@ POST /courses/khanom-course/certificate/
   403  enrollment_required               (visible, but you are not a student)
   409  course_not_completed              (progress has not stamped completion)
   201  {certificate_number:"KB-2026-000001", verification_token:"…", …}
-  200  same body on every later call     (idempotent — one active per course)
+  200  same body on every later call     (idempotent  one active per course)
 ```
 
-The response carries the **printable snapshot** — `student_name`,
-`course_title`, `completed_at`, `certificate_number` — frozen at issuance.
+The response carries the **printable snapshot**  `student_name`,
+`course_title`, `completed_at`, `certificate_number`  frozen at issuance.
 Renaming the course or changing your handle later never rewrites an issued
 certificate; the future PDF phase reads exactly these fields.
 
 ### Verification (public)
 
-`GET /certificates/{verification_token}/` needs no account — it is the
+`GET /certificates/{verification_token}/` needs no account  it is the
 employer-facing check for a printed certificate. The token is an
 unguessable UUID; the sequential certificate number is deliberately not
 routable, so the registry cannot be enumerated. Revoked certificates
@@ -784,7 +804,7 @@ Earned facts, append-only: unique per (user, type), never edited, never
 removed. `course_completed` and `first_course` are awarded at first
 issuance; `ten_courses` when the progress fact count reaches ten.
 `quiz_master` / `recipe_author` are declared (badges seeded) but not yet
-awarded — recorded in ADR 0014. Badge presentation is bilingual
+awarded  recorded in ADR 0014. Badge presentation is bilingual
 (`title_th` first-class) and system-owned; there is no badge CRUD API.
 
 ## Gamification
@@ -804,7 +824,7 @@ POST /me/gamification/recalculate/
                   recent_transactions:[…]}
 ```
 
-The XP ledger is append-only — no entry is ever edited or deleted, and a
+The XP ledger is append-only  no entry is ever edited or deleted, and a
 fact that later disappears (a deleted review) never claws back earned XP.
 `UserLevel` and `DailyStreak` are recomputed rows: droppable, rebuildable,
 never incremented in place. The level curve is progressive (level *L* →
@@ -813,7 +833,7 @@ is today or yesterday.
 
 ### Freshness
 
-XP is current as of the last recalculation — user-triggered in this phase,
+XP is current as of the last recalculation  user-triggered in this phase,
 scheduled later. The summary read derives missing rows on first access but
 does not re-reconcile per request.
 
@@ -828,14 +848,14 @@ producer service (review / enrollment / award)
 notification_service.notify(…)        registered via transaction.on_commit
         ▼
 preference gate → snapshot INSERT     best-effort: failures are logged
-                                      and swallowed — the producer never
+                                      and swallowed  the producer never
                                       sees them
 ```
 
 A notification is a private, immutable snapshot of an event: what it says
 was true when it happened, and it survives deletion of the content it
 mentions (no content FKs). The `link` is a frontend path that may go
-stale — a stale link 404s at its own endpoint, never here. Actor identity
+stale  a stale link 404s at its own endpoint, never here. Actor identity
 is the public handle only; emails structurally cannot appear.
 
 ### Wired events
@@ -849,7 +869,7 @@ is the public handle only; emails structurally cannot appear.
 | `qa_answer_accepted` *(Phase 11)* | your answer is marked accepted (first time per answer) | answer author |
 
 Adding an event type is an ADR/docs change, not just another call.
-Preferences are per event type, in-app axis only — the email-channel
+Preferences are per event type, in-app axis only  the email-channel
 toggles remain on `users` preferences; absent row means enabled.
 
 ## Error contract
@@ -866,9 +886,9 @@ Every error uses one envelope, produced by a single DRF exception handler
 } }
 ```
 
-- `code` — stable machine string; branch on this, not on `message`.
-- `details` — `{field: [messages]}`, present for validation failures.
-- `request_id` — also returned as the `X-Request-ID` header; quote it in bug reports.
+- `code`  stable machine string; branch on this, not on `message`.
+- `details`  `{field: [messages]}`, present for validation failures.
+- `request_id`  also returned as the `X-Request-ID` header; quote it in bug reports.
 
 | Code | HTTP | Meaning |
 |---|---|---|
@@ -901,10 +921,10 @@ Every error uses one envelope, produced by a single DRF exception handler
 | `no_open_attempt` | 404 | Submitting with nothing in progress |
 | `question_frozen` | 409 | Content edit/delete of a question with attempt history |
 | `question_in_use` | 409 | Deleting a question a quiz still references |
-| `quiz_has_attempts` | 409 | Deleting a quiz with attempt history — archive instead |
+| `quiz_has_attempts` | 409 | Deleting a quiz with attempt history  archive instead |
 | `attempt_already_submitted` | 409 | Second submit, or abandoning a submitted attempt |
 | `own_content` | 400 | Authors cannot review their own recipe/course |
-| `already_reviewed` | 409 | An active review already exists — edit it instead |
+| `already_reviewed` | 409 | An active review already exists  edit it instead |
 | `slug_immutable` | 409 | Slug of a published recipe/course cannot change |
 | `slug_taken` | 409 | Requested slug already used |
 | `limit_exceeded` | 400 | Collection over its size cap |
@@ -931,7 +951,7 @@ per-request `COUNT(*)` becomes the bottleneck, preserves it exactly.
 - **Published slugs are frozen.** Fixing a typo in a published recipe's URL is
   not possible; doing it properly needs a slug-history table serving 301s.
 - **`ordering=popular` is a placeholder** mapped to publication date.
-- **PostgreSQL search is not exercised by the test suite** — the default
+- **PostgreSQL search is not exercised by the test suite**  the default
   portable backend is. See [ADR 0008](adr/0008-cross-app-model-references.md).
 
 ## Security behaviour worth knowing
@@ -939,7 +959,7 @@ per-request `COUNT(*)` becomes the bottleneck, preserves it exactly.
 - **No account enumeration.** `/password-reset/` always returns 202. Wrong
   password and unknown email return an identical 401 body. A private profile
   returns 404, never 403.
-- **Rate limiting** is cache-backed (no tables). Login is keyed by *IP + email* —
+- **Rate limiting** is cache-backed (no tables). Login is keyed by *IP + email* 
   IP alone both punishes shared networks and is bypassed by rotating addresses.
 - **Verification links never sign you in.** A forwarded email must not become a
   session.
@@ -948,16 +968,16 @@ per-request `COUNT(*)` becomes the bottleneck, preserves it exactly.
 - **Deactivation invalidates live sessions** on their next request, because the
   auth backend re-checks `is_active` on every session restore.
 
-## Security & threat watching — `/api/v1/security/` and `/api/v1/admin/security/`
+## Security & threat watching  `/api/v1/security/` and `/api/v1/admin/security/`
 
-Public — two endpoints, both anonymous-safe:
+Public  two endpoints, both anonymous-safe:
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
-| GET | `/security/client-policy/` | **anonymous** | 200 | `{guard_mode, exempt_authenticated, report_signals}` — the env-configured browser-guard posture. A settings read; no database access, no user data |
+| GET | `/security/client-policy/` | **anonymous** | 200 | `{guard_mode, exempt_authenticated, report_signals}`  the env-configured browser-guard posture. A settings read; no database access, no user data |
 | POST | `/security/client-signals/` | **anonymous** | 201 | Report one browser-observed signal. Accepts **only** `devtools_opened`, `view_source_attempt`, `context_menu_attempt`, `console_tamper`; anything else ⇒ 400. Throttled (`SECURITY_SIGNAL_RATE`, default `30/min`). Answers `{"recorded": bool}` and nothing more |
 
-Staff (`is_staff`) — the dashboard. Every view declares `IsAdminUser` itself;
+Staff (`is_staff`)  the dashboard. Every view declares `IsAdminUser` itself;
 the `admin/` prefix is naming, not permission:
 
 | Method | Path | Auth | Success | Notes |
@@ -969,7 +989,7 @@ the `admin/` prefix is naming, not permission:
 | GET | `/admin/security/profiles/{id}/` | staff | 200 / 404 | Profile plus its 20 most recent events |
 | POST | `/admin/security/profiles/{id}/block/` | staff | 200 | `{minutes}` (1 … 43200). Blocks always expire |
 | DELETE | `/admin/security/profiles/{id}/block/` | staff | 200 | Lift immediately |
-| POST | `/admin/security/profiles/{id}/review/` | staff | 200 | `{state: acknowledged\|ignored, note?}`. `open` is rejected — a profile returns to the queue only through fresh activity |
+| POST | `/admin/security/profiles/{id}/review/` | staff | 200 | `{state: acknowledged\|ignored, note?}`. `open` is rejected  a profile returns to the queue only through fresh activity |
 
 A source's `level` is banded from a decaying score (half-life 12h):
 `low < 15 ≤ medium < 45 ≤ high < 85 ≤ critical`. `score` is the stored
@@ -982,7 +1002,7 @@ Detection is server-side and cannot be forged by a client: trap paths
 (`/.env`, `/wp-login.php`, …), backup-file suffixes, traversal, SQLi/XSS
 markers, attack-tool user agents, scripted clients, 404 sweeps, auth-failure
 bursts and request floods. Search-engine crawlers are matched *before* the
-automation list and scored zero. See ADR 0025 — including the part that says
+automation list and scored zero. See ADR 0025  including the part that says
 plainly that a web page cannot prevent DevTools from opening.
 
 ### Security configuration
@@ -993,12 +1013,102 @@ plainly that a web page cannot prevent DevTools from opening.
 | `SECURITY_BLOCKING_ENABLED` | `true` | Whether an active block is enforced (observe-only when off) |
 | `SECURITY_AUTO_BLOCK` | `false` | Block automatically on reaching `critical` |
 | `SECURITY_AUTO_BLOCK_MINUTES` | `60` | Length of an automatic block |
-| `SECURITY_TRUSTED_IPS` | `127.0.0.1,::1` | Never scored, never blocked — put the operator's address here **before** testing a honeypot |
+| `SECURITY_TRUSTED_IPS` | `127.0.0.1,::1` | Never scored, never blocked  put the operator's address here **before** testing a honeypot |
 | `SECURITY_CLIENT_GUARD_MODE` | `detect` | `off` / `detect` (observe only) / `deter` (also intercept F12, Ctrl+Shift+I/J, Ctrl+U, right-click). An unrecognised value falls back to `off` |
 | `SECURITY_GUARD_EXEMPT_AUTHENTICATED` | `true` | Leave signed-in visitors alone |
 | `SECURITY_CLIENT_REPORTS_ENABLED` | `true` | Whether the public ingest stores anything |
 | `SECURITY_SIGNAL_RATE` | `30/min` | Throttle on the public ingest |
 | `SECURITY_INGEST_SECRET` | *(empty)* | Shared secret letting the Next.js edge forward a visitor's real address for trap hits Django never sees. Empty disables forwarding |
+
+## Back-office admin API - `/api/v1/admin/…` (ADR 0027)
+
+The management surfaces behind the `/admin` frontend. Same convention as
+security: the `admin/` prefix is naming only - every view declares
+`IsAdminUser` itself. Every list validates its query strictly (an
+unknown filter is a 400, not a silent ignore) and paginates with the
+standard envelope unless noted.
+
+**Categories - `/admin/recipe-categories/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/recipe-categories/` | 200 | Unpaginated array, **inactive included**, `recipe_count` annotated. The public list additionally gained `image_url` |
+| POST | `/admin/recipe-categories/` | 201 | Multipart. `name` required; `slug` derives from the name (Thai-safe) when omitted; optional `description`, `icon`, `display_order`, `is_active`, `image`. Duplicate slug ⇒ 409 `duplicate_category_slug` |
+| PATCH | `/admin/recipe-categories/{id}/` | 200 | Partial; multipart or JSON. JSON `{"image": null}` removes the tile photo (and its stored file) |
+| DELETE | `/admin/recipe-categories/{id}/` | 204 | Unlinks recipe/course assignments; deletes no content |
+
+**Users - `/admin/users/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/users/` | 200 | Roster with profile joined. Filters `search` (username/email/legal name/display name), `status` (`active`/`suspended`), `verified`, `staff`; `ordering` ∈ `newest\|oldest\|username\|recently_active`. Rows carry PII (email, legal name) - staff-only by construction |
+| GET | `/admin/users/{id}/` | 200 / 404 | One account |
+| PATCH | `/admin/users/{id}/` | 200 | Partial: `first_name`, `last_name`, `is_active` (maintains `deactivated_at` like self-service), `is_staff`, `is_email_verified` (emergency override; stamps/clears `email_verified_at` like the real flow). Editing your **own** access flags, or any flag of a superuser ⇒ 403 `protected_account` |
+
+**Achievements - `/admin/achievements/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/achievements/` | 200 | Unpaginated badge catalogue, inactive included, `awarded_count` annotated |
+| POST | `/admin/achievements/` | 201 | `slug`, `title_th`, `title_en` required. Duplicate ⇒ 409 `duplicate_badge_slug`. Creating a badge never awards it |
+| PATCH | `/admin/achievements/{slug}/` | 200 | Partial edit |
+| DELETE | `/admin/achievements/{slug}/` | 204 | Only while unawarded; else 409 `badge_in_use` (deactivate instead - PROTECT keeps earned presentation alive) |
+| GET | `/admin/achievements/awards/` | 200 | The cross-user ledger, read-only by design (append-only facts, ADR 0012). Filters `search` (earner), `achievement_type` |
+
+**Reviews - `/admin/reviews/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/reviews/` | 200 | Flat list across recipes **and** courses with target titles. Filters `rating`, `status` (`active`/`hidden`/`deleted`), `target` (`recipe`/`course`), `search` (comment/reviewer). Without `status`, tombstones are excluded. Mutations stay on `PATCH/DELETE /reviews/{id}/` - there is deliberately no endpoint that edits review text |
+
+**Favorites - `/admin/favorites/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/favorites/` | 200 | Every favorite across users, owner + target embedded. Filters `type` (`recipe`/`course`), `search` (owner username / target title) |
+| GET | `/admin/favorites/top/` | 200 | `{recipes: [...], courses: [...]}` - top ten by live count. No admin write path exists: a favorite is a user's private signal |
+
+Related changes on public routes, all narrow-only (they intersect the
+visibility rule and can never widen it): `GET /gallery/` accepts `status`
+(`published`/`unpublished`), and `GET /recipes/` / `GET /courses/` accept
+`status` (`draft`/`published`/`archived`) - a public viewer asking for
+drafts simply gets an empty page; staff use it as the
+Draft/Published/Archived filter.
+
+Roster/registry conveniences: `GET /admin/users/` also accepts
+`joined_days` (trailing-window "new users" count) and its rows carry
+`experience_level`; `GET /admin/reviews/` and `GET /admin/certificates/`
+accept an exact-match `username` so a per-user activity count cannot be
+inflated by fuzzy search hits.
+
+**Progress - `/admin/progress/` (ADR 0028)**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/progress/summary/` | 200 | Platform totals: enrollments by status, distinct learners, lesson completions, active learners over 7 days |
+| GET | `/admin/progress/courses/` | 200 | Per-course enrollment funnel (`enrolled/active/completed/dropped`, `completion_rate`), most enrolled first. Filter `search` (title) |
+| GET | `/admin/progress/courses/{slug}/enrollments/` | 200 / 404 | The learner roster: per-learner completed lessons, percent (computed live), enrollment state and last activity (`Max(last_viewed_at)` - null means never started, the drop-off signal). Filters `status`, `search` |
+
+**Certificates - `/admin/certificates/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/certificates/` | 200 | The platform registry. `search` matches number / printed name / course / holder; `status` ∈ `valid\|revoked` |
+| POST | `/admin/certificates/{id}/revoke/` | 200 | Body `{reason}` (required). Records `revoked_by` + `revoked_reason` with the stamp. Already revoked ⇒ 409 `certificate_already_revoked` - the first operator's reason stays. The public verification answer flips to `revoked`, never to missing |
+
+**Notifications - `/admin/notifications/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/notifications/` | 200 | Cross-user log with read state. Filters `search`, `event_type`, `unread` |
+| POST | `/admin/notifications/broadcast/` | 201 | `{title, body?, link?}` → `{recipients}`. Creates an `announcement` for every active account that has not opted out - the new sixth event type, same preference machinery as the rest. In-app only: there is no email channel, so no delivered/bounced status exists to report |
+
+**Recommendations - `/admin/recommendations/`**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/recommendations/preview/` | 200 / 404 | `?username=&kind=recipes\|courses` - the live pipeline as that user, **scores attached** (top 50). Cards resolve with the target user as viewer, so staff see exactly that user's feed. ADR 0018 §10 amended for this staff seam only; the public feed still never carries a score, and raw history never crosses either boundary |
+| GET | `/admin/recommendations/config/` | 200 | The deployed scoring weights, read-only - weights are code, not configuration |
 
 ## Email links point at the frontend
 

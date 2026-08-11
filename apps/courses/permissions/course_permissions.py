@@ -1,7 +1,7 @@
 """Authorization rules for course writes.
 
 Pure functions over primitives. Read visibility lives in
-``selectors/course_visibility.py`` as Q builders — see the recipes app for why
+``selectors/course_visibility.py`` as Q builders  see the recipes app for why
 a parallel boolean would drift.
 """
 

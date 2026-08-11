@@ -1,4 +1,4 @@
-"""The security event — one observation, recorded once, never edited."""
+"""The security event  one observation, recorded once, never edited."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ class SecurityEvent(models.Model):
     :class:`~apps.security.models.profile.ThreatProfile`, which is the
     mutable summary; the events underneath it stay frozen.
 
-    ``actor`` is nullable and ``SET_NULL`` on purpose — most events come
+    ``actor`` is nullable and ``SET_NULL`` on purpose  most events come
     from anonymous traffic, and deleting a user account must not erase
     the record that their session did something. The row holds no email
     and no session key; ``ip`` and ``user_agent`` are the only

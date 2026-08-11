@@ -21,7 +21,7 @@ def _answers_prefetch() -> Prefetch:
 def list_attempts(*, user_id: int, quiz_id: int) -> QuerySet[QuizAttempt]:
     """Build the attempt-history queryset for one user on one quiz.
 
-    Own attempts only — a quiz owner's view of student results is future
+    Own attempts only  a quiz owner's view of student results is future
     instructor analytics, deliberately not this endpoint.
 
     Args:
@@ -45,7 +45,7 @@ def get_attempt(
         viewer_is_staff: Whether the viewer is a staff member.
 
     Returns:
-        The attempt, or ``None`` when absent **or** someone else's — callers
+        The attempt, or ``None`` when absent **or** someone else's  callers
         must not distinguish the two to the client.
     """
     queryset = QuizAttempt.objects.prefetch_related(_answers_prefetch())
@@ -76,7 +76,7 @@ def get_open_attempt(*, user_id: int, quiz_id: int) -> QuizAttempt | None:
 def completed_quiz_count(*, user_id: int) -> int:
     """How many distinct quizzes the user has submitted at least once.
 
-    Part of the public cross-app API (Phase 9) — the fact count behind
+    Part of the public cross-app API (Phase 9)  the fact count behind
     quiz XP. Distinct quizzes, not attempts: retries are unlimited, so
     counting attempts would make XP farmable.
 
@@ -99,7 +99,7 @@ def completed_quiz_count(*, user_id: int) -> int:
 def completed_quiz_ids(*, user_id: int) -> list[int]:
     """The distinct quizzes the user has submitted, as identities.
 
-    Part of the public cross-app API (Phase 13) — the identified sibling
+    Part of the public cross-app API (Phase 13)  the identified sibling
     of :func:`completed_quiz_count`, same anti-farming rule: distinct
     quizzes, not attempts.
 

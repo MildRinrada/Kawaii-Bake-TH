@@ -1,6 +1,6 @@
 """Serializers for certificate and achievement payloads.
 
-All read-only field maps — issuance takes no body, and nothing here is
+All read-only field maps  issuance takes no body, and nothing here is
 ever written through a serializer.
 """
 
@@ -13,7 +13,7 @@ from apps.certificates.models import Certificate
 
 
 class CertificateSerializer(serializers.Serializer):
-    """The owner's view of a certificate — the printable metadata."""
+    """The owner's view of a certificate  the printable metadata."""
 
     id = serializers.IntegerField(read_only=True)
     certificate_number = serializers.CharField(read_only=True)
@@ -33,7 +33,7 @@ class CertificateSerializer(serializers.Serializer):
 
 
 class CertificateVerificationSerializer(serializers.Serializer):
-    """The public (employer-facing) view — deliberately narrow.
+    """The public (employer-facing) view  deliberately narrow.
 
     The student's public handle as printed, the course, the dates, the
     verdict. Never an email, never a user id, never the internal pk.
@@ -57,7 +57,7 @@ class BadgeSerializer(serializers.Serializer):
 
     The same shape whether it is embedded in an earned achievement or
     listed in the catalogue: presentation only, no user data, nothing
-    about whether *this* caller earned it — that fact lives on the
+    about whether *this* caller earned it  that fact lives on the
     achievement row (ADR 0024).
     """
 

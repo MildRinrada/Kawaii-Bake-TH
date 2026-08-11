@@ -1,4 +1,4 @@
-"""The notification entity — a private snapshot of an event."""
+"""The notification entity  a private snapshot of an event."""
 
 from __future__ import annotations
 
@@ -17,21 +17,21 @@ from apps.notifications.constants import (
 class Notification(models.Model):
     """One event, as told to one recipient.
 
-    **Snapshot, deliberately no FK to any content** — the reasoned
+    **Snapshot, deliberately no FK to any content**  the reasoned
     departure from the ADR 0011 explicit-FK rule: reviews/favorites need
     FKs to compose visibility ``Q`` objects across joins, but a
     notification is private to its recipient and never joins anything.
     The only thing a content FK would add here is a CASCADE we do not
-    want — deleting a recipe must not erase the recipient's history. The
+    want  deleting a recipe must not erase the recipient's history. The
     ``link`` is a frontend path that may go stale and 404 later; that is
     accepted (the assistant-context precedent, ADR 0013).
 
-    ``actor_handle`` is the actor's public handle and nothing more — this
+    ``actor_handle`` is the actor's public handle and nothing more  this
     row's content is rendered verbatim to the recipient, so no email or
     private field may ever enter it.
 
     The one mutation is the stamp-once ``read_at`` (nullable timestamp,
-    not a boolean — the ``completed_at`` convention). No ``updated_at``;
+    not a boolean  the ``completed_at`` convention). No ``updated_at``;
     there is nothing else to update. No delete API; history stays.
     """
 

@@ -1,6 +1,6 @@
 """Read-side queries for learner progress.
 
-Counts are always computed from ``LessonProgress`` rows — there is no stored
+Counts are always computed from ``LessonProgress`` rows  there is no stored
 counter anywhere in this domain to drift (ADR 0012).
 """
 
@@ -15,7 +15,7 @@ from apps.progress.models import CourseProgress, LearningActivity, LessonProgres
 def progress_for_course(*, user_id: int, course_id: int) -> QuerySet[LessonProgress]:
     """The user's progress rows for one course's lessons.
 
-    Traverses this app's own ``lesson`` FK — filtering across an owned
+    Traverses this app's own ``lesson`` FK  filtering across an owned
     relation is the join the prefix-Q mechanism exists for.
 
     Args:
@@ -31,7 +31,7 @@ def progress_for_course(*, user_id: int, course_id: int) -> QuerySet[LessonProgr
 def completed_count_for_course(*, user_id: int, course_id: int) -> int:
     """How many **published** lessons of a course the user has completed.
 
-    Draft lessons never count — they are not part of the required set.
+    Draft lessons never count  they are not part of the required set.
 
     Args:
         user_id: Primary key of the user.
@@ -53,7 +53,7 @@ def completed_counts_by_course(
 ) -> dict[int, int]:
     """Completed published-lesson counts per course, in one query.
 
-    The batch shape behind ``/me/progress/`` — no per-course queries.
+    The batch shape behind ``/me/progress/``  no per-course queries.
 
     Args:
         user_id: Primary key of the user.
@@ -81,7 +81,7 @@ def completed_counts_by_course(
 def get_course_completed_at(*, user_id: int, course_id: int):
     """When the user completed a course, or ``None``.
 
-    Part of the public cross-app API (Phase 8) — the completion **fact**
+    Part of the public cross-app API (Phase 8)  the completion **fact**
     certificates trust. Reads the stamped ``CourseProgress.completed_at``
     (written once by ``recalculate_course_progress``, never downgraded);
     consumers must never re-derive completion themselves.
@@ -105,7 +105,7 @@ def get_course_completed_at(*, user_id: int, course_id: int):
 def completed_course_count(*, user_id: int) -> int:
     """How many courses the user has completed, ever.
 
-    Part of the public cross-app API (Phase 8) — the count behind
+    Part of the public cross-app API (Phase 8)  the count behind
     volume-based achievements (``ten_courses``). Computed live from the
     stamped facts; no counter column exists to drift.
 
@@ -123,7 +123,7 @@ def completed_course_count(*, user_id: int) -> int:
 def completed_lesson_count(*, user_id: int) -> int:
     """How many published lessons the user has completed, ever.
 
-    Part of the public cross-app API (Phase 9) — the per-lesson fact count
+    Part of the public cross-app API (Phase 9)  the per-lesson fact count
     behind XP derivation. Computed live from the stamped rows.
 
     Args:
@@ -142,7 +142,7 @@ def completed_lesson_count(*, user_id: int) -> int:
 def completed_lesson_ids(*, user_id: int) -> list[int]:
     """The published lessons the user has completed, as identities.
 
-    Part of the public cross-app API (Phase 13) — the **identified**
+    Part of the public cross-app API (Phase 13)  the **identified**
     sibling of :func:`completed_lesson_count`: the rewards ledger keys
     idempotency to the lesson id, so it needs the facts themselves, not
     their count. Same rule (published only, stamped ``completed_at``).
@@ -167,7 +167,7 @@ def completed_lesson_ids(*, user_id: int) -> list[int]:
 def completed_course_ids(*, user_id: int) -> list[int]:
     """The courses the user has completed, as identities.
 
-    Part of the public cross-app API (Phase 13) — the identified sibling
+    Part of the public cross-app API (Phase 13)  the identified sibling
     of :func:`completed_course_count`, reading the same stamped fact.
 
     Args:
@@ -186,7 +186,7 @@ def completed_course_ids(*, user_id: int) -> list[int]:
 def activity_dates(*, user_id: int) -> list:
     """Every distinct date the user learned something, newest first.
 
-    Part of the public cross-app API (Phase 9) — the day-facts the streak
+    Part of the public cross-app API (Phase 9)  the day-facts the streak
     derivation consumes. The ledger is append-only (ADR 0012), so this
     list only ever grows.
 

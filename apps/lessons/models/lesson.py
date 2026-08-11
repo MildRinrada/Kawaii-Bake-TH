@@ -20,14 +20,14 @@ class Lesson(TimeStampedModel):
     string reference (no import edge), and the ``courses`` app never uses the
     reverse accessor it creates. See ``docs/adr/0009-courses-lessons-boundary.md``.
 
-    Lessons are **entities, not value objects** — ``LessonProgress`` rows point
+    Lessons are **entities, not value objects**  ``LessonProgress`` rows point
     at them, so the whole-collection-replace write pattern used for recipe
     steps must never be applied here (it would cascade-delete every student's
     progress). Lessons are created, edited and deleted individually, and
     reordered by a dedicated endpoint.
 
     ``position`` is dense (0..n-1), server-assigned, renumbered on delete, and
-    deliberately **not** unique-constrained — a non-deferrable unique breaks
+    deliberately **not** unique-constrained  a non-deferrable unique breaks
     bulk renumbering mid-flight. Ordering ties break on ``id``.
     """
 
@@ -51,7 +51,7 @@ class Lesson(TimeStampedModel):
         null=True,
         blank=True,
         help_text=(
-            "An optional quiz for this lesson — a reference only (Phase 4); "
+            "An optional quiz for this lesson  a reference only (Phase 4); "
             "quiz logic stays entirely in the quizzes app."
         ),
     )
@@ -73,7 +73,7 @@ class Lesson(TimeStampedModel):
         db_index=True,
     )
 
-    # External embeds only — no video infrastructure exists yet.
+    # External embeds only  no video infrastructure exists yet.
     video_url = models.URLField(blank=True)
     video_provider = models.CharField(
         max_length=20, choices=VideoProvider.choices, blank=True

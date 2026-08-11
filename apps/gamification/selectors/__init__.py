@@ -1,1 +1,1 @@
-"""Gamification selectors — read-side queries."""
+"""Gamification selectors  read-side queries."""

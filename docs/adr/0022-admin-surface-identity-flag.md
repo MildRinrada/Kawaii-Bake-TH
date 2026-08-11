@@ -1,4 +1,4 @@
-# ADR 0022 — The admin surface reads one flag; authorization stays server-side
+# ADR 0022  The admin surface reads one flag; authorization stays server-side
 
 - **Status:** Accepted
 - **Date:** 2026-08-09
@@ -14,7 +14,7 @@ before this change:
 - staff-widened reads through the existing `scope=all` parameter
   (recipes, courses, quizzes, questions) and through `viewer_is_staff`
   in the visibility selectors;
-- staff moderation writes on content the caller does not own — review
+- staff moderation writes on content the caller does not own  review
   `status` PATCH, question/thread/answer PATCH and DELETE, gallery post
   PATCH and DELETE, recipe/course/quiz `publish|unpublish|archive`;
 - one genuinely staff-only endpoint, `POST /rewards/adjustments/`
@@ -24,7 +24,7 @@ What did **not** exist was any way for a client to know whether the
 caller is staff. `MeSerializer` carried identity but no authorization
 state, and no other payload exposes the flag. Without it the admin shell
 has three bad options: render itself to everyone and let each page fail
-piecemeal; probe a staff-only endpoint (the only one is a *write* — an
+piecemeal; probe a staff-only endpoint (the only one is a *write*  an
 auditable balance adjustment, so probing is out of the question); or
 infer staff status from the fact that `scope=all` silently returns more
 rows, which is unobservable without a second reference request and
@@ -69,7 +69,7 @@ chrome renders. It grants nothing:
 
 - *A dedicated `/admin/…` API namespace.* The capabilities already
   exist on the domain endpoints; a parallel namespace would duplicate
-  visibility rules — precisely the drift ADR 0008 exists to prevent.
+  visibility rules  precisely the drift ADR 0008 exists to prevent.
 - *Adding `is_staff` to `OwnProfileSerializer`.* The profile is public-
   facing data about a person and is consumed by the learner UI; an
   authorization flag does not belong in it.

@@ -6,7 +6,7 @@ import { ArtIcon } from "@/components/ui/icon";
 import { ApiError, NetworkError } from "@/lib/api/errors";
 
 /**
- * Designed error states in the KawaiiBake voice — HTTP families get
+ * Designed error states in the KawaiiBake voice  HTTP families get
  * friendly Thai copy and matching status art from `public/icons/modal/`,
  * never a browser default.
  *

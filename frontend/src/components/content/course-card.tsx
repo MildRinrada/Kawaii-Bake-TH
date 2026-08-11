@@ -5,7 +5,7 @@ import { Badge, DifficultyBadge, flavorFor } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { MediaFrame } from "@/components/content/media-frame";
 
-/** Course discovery card — sibling of RecipeCard, lavender-leaning. */
+/** Course discovery card  sibling of RecipeCard, lavender-leaning. */
 export function CourseCard({ course }: { course: CourseListItem }) {
   return (
     <Link

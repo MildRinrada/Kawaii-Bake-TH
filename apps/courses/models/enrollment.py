@@ -17,7 +17,7 @@ class Enrollment(TimeStampedModel):
     complicate every "is enrolled" check; state changes mutate this row.
 
     * ``enrolled_at`` records the *first* enrollment and is never re-stamped.
-    * ``completed_at`` is stamped once and never cleared — the ``published_at``
+    * ``completed_at`` is stamped once and never cleared  the ``published_at``
       pattern. It is the durable fact a future certificate will reference, and
       it is what lets a re-enrolling user come back as ``COMPLETED`` rather
       than starting from zero.

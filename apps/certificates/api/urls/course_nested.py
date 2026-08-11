@@ -1,4 +1,4 @@
-"""Certificate routes nested under ``/api/v1/courses/`` — mounted by config.
+"""Certificate routes nested under ``/api/v1/courses/``  mounted by config.
 
 The shared prefix is a config concern, not app coupling (ADR 0009); the
 two-segment pattern cannot collide with courses' own routes.

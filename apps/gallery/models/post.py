@@ -15,11 +15,11 @@ class GalleryPost(TimeStampedModel):
     Content references are nullable ``SET_NULL`` FKs (the assistant
     precedent, ADR 0013): deleting a recipe must not delete anyone's
     showcase, so the post degrades to reference-free instead. Both may be
-    null — a free-standing bake is a valid post. The reference must be
+    null  a free-standing bake is a valid post. The reference must be
     **publicly visible at creation** (service rule): the post itself is
     public, so its card may only ever name content the public could open.
 
-    No like/comment/view counters — interactions are a future phase, and
+    No like/comment/view counters  interactions are a future phase, and
     when they arrive they will aggregate live (the standing no-counters
     rule).
     """

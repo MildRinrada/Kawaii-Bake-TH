@@ -2,7 +2,7 @@
 
 Read serializers are plain field maps over model instances; write
 serializers are :class:`StrictSerializer` (unknown keys rejected) and are
-never model-backed — writes go through services (Architecture.md DRF rules).
+never model-backed - writes go through services (Architecture.md DRF rules).
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ class MessageSerializer(serializers.Serializer):
 
 
 class ConversationSerializer(serializers.Serializer):
-    """A conversation row — list and creation payloads."""
+    """A conversation row - list and creation payloads."""
 
     id = serializers.IntegerField(read_only=True)
     title = serializers.CharField(read_only=True)
@@ -81,8 +81,8 @@ class _PaginatedMessagesSerializer(serializers.Serializer):
 class ConversationDetailSerializer(serializers.Serializer):
     """Schema shape of the history endpoint (docs only).
 
-    The view assembles this response by hand — the conversation from the
-    service, the message page from the paginator — so this serializer exists
+    The view assembles this response by hand - the conversation from the
+    service, the message page from the paginator - so this serializer exists
     for drf-spectacular, not for serialisation.
     """
 

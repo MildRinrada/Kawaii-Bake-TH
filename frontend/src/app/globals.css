@@ -4,7 +4,7 @@
 /*
  * Map the semantic tokens into Tailwind utilities (Tailwind v4 CSS-first).
  * Components use ONLY these semantic names (bg-surface, text-fg-muted,
- * border-edge, …) — never raw palette values — so the future visual
+ * border-edge, …)  never raw palette values  so the future visual
  * design lands by editing tokens.css alone.
  */
 @theme inline {
@@ -40,10 +40,10 @@
   --font-sans: var(--kb-font-sans);
   --font-display: var(--kb-font-display);
   --font-mono: var(--kb-font-mono);
-  /* Certificate signature line only — see layout.tsx. */
+  /* Certificate signature line only  see layout.tsx. */
   --font-signature: var(--kb-font-signature);
 
-  /* Flavor family — decorative/categorical accents */
+  /* Flavor family  decorative/categorical accents */
   --color-berry-soft: var(--kb-berry-soft);
   --color-berry-ink: var(--kb-berry-ink);
   --color-peach-soft: var(--kb-peach-soft);
@@ -74,12 +74,61 @@ h1, h2, h3, h4 {
   color: var(--kb-berry-ink);
 }
 
+/*
+ * Scrollbars.
+ *
+ * The platform default is a grey slab with stepper arrows that belongs to
+ * a different decade than the rest of this interface. These rules give it
+ * the same pill geometry and palette as every other control: a rounded
+ * thumb on an invisible track, sized down to a hairline, with the arrows
+ * gone. The transparent border plus `background-clip: content-box` is
+ * what insets the thumb inside its track  padding does not apply to a
+ * scrollbar thumb, so this is the way to get breathing room around it.
+ *
+ * Firefox gets the same result from the two standard properties; it has
+ * no equivalent of the pseudo-elements and does not need one.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--kb-edge-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--kb-edge-strong);
+  background-clip: content-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--kb-fg-subtle);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--kb-accent);
+}
+
+/* Steppers: the arrows at each end of the track. */
+*::-webkit-scrollbar-button {
+  display: none;
+}
+
 /* The one decorative gradient surface (hero/banners). */
 .kb-hero {
   background: var(--kb-hero-gradient);
 }
 
-/* Gentle bob for hero decorations — short, subtle, and off entirely
+/* Gentle bob for hero decorations  short, subtle, and off entirely
    when the visitor prefers reduced motion. */
 @keyframes kb-float {
   from { transform: translateY(0) rotate(var(--kb-tilt, 0deg)); }
@@ -97,7 +146,7 @@ h1, h2, h3, h4 {
 }
 
 /* Badge celebration: a short reveal plus a handful of falling sprinkles,
-   played once when an earned badge is opened — never on page load. Both
+   played once when an earned badge is opened  never on page load. Both
    stop entirely under prefers-reduced-motion, where the badge simply
    appears at full size. */
 @keyframes kb-badge-pop {
@@ -137,7 +186,7 @@ h1, h2, h3, h4 {
   container-type: inline-size;
 }
 
-/* Printing a certificate prints the document alone — this is the
+/* Printing a certificate prints the document alone  this is the
    "download" path (browser → Save as PDF); there is no server-side
    certificate file to fetch. */
 @media print {

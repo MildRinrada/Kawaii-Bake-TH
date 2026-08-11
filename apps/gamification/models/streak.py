@@ -1,4 +1,4 @@
-"""The per-user streak row — derived from the LearningActivity ledger."""
+"""The per-user streak row  derived from the LearningActivity ledger."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ class DailyStreak(models.Model):
     recomputes every field from progress' append-only ``LearningActivity``
     day-facts (ADR 0012 built that ledger precisely as "the streak
     substrate"). Because the source is append-only, this row can always be
-    rebuilt — including ``longest_streak``, which needs no separate
+    rebuilt  including ``longest_streak``, which needs no separate
     history.
     """
 

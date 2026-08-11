@@ -11,8 +11,8 @@ from apps.quizzes.constants import DEFAULT_QUESTION_POINTS
 class QuizQuestion(TimeStampedModel):
     """One question's placement in one quiz.
 
-    **Nothing references these rows** — attempt answers point at the bank
-    ``Question`` directly — so the whole-collection-replace write pattern is
+    **Nothing references these rows**  attempt answers point at the bank
+    ``Question`` directly  so the whole-collection-replace write pattern is
     safe here, unlike lessons (where progress rows made it destructive).
     Replacing the composition destroys no history because attempts snapshot
     everything they need (order and ``points_possible``) at start.

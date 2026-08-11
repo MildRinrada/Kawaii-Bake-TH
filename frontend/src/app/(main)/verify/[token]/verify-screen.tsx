@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Public certificate verification — the employer-facing view.
+ * Public certificate verification  the employer-facing view.
  *
  * Anonymous by design: it reads `GET /certificates/{token}/`, which the
  * backend serves without a session and which deliberately returns only
- * the printable snapshot (handle as printed, course, dates, verdict) —
+ * the printable snapshot (handle as printed, course, dates, verdict) 
  * never an email or user id. An unknown or malformed token is a plain
  * 404, so this page cannot be used to probe for certificates.
  */
@@ -59,7 +59,7 @@ export function VerifyScreen({ token }: { token: string }) {
               </h1>
               <p className="mt-2 text-sm text-fg-muted">
                 ลิงก์ตรวจสอบอาจไม่ถูกต้อง หรือใบประกาศนี้ไม่มีอยู่ในระบบ
-                KawaiiBake — ลองตรวจสอบลิงก์อีกครั้งกับผู้ที่ส่งมาให้คุณ
+                KawaiiBake  ลองตรวจสอบลิงก์อีกครั้งกับผู้ที่ส่งมาให้คุณ
               </p>
               <Link href="/" className="mt-6 inline-block">
                 <Button variant="secondary">กลับหน้าแรก</Button>
@@ -98,7 +98,7 @@ export function VerifyScreen({ token }: { token: string }) {
           <p className="mt-1 text-sm text-fg-muted">
             {revoked
               ? "KawaiiBake ได้เพิกถอนใบประกาศฉบับนี้ จึงไม่ถือเป็นหลักฐานการเรียนจบอีกต่อไป"
-              : "ตรวจสอบกับระบบของ KawaiiBake แล้ว — เป็นใบประกาศที่ออกให้จริง"}
+              : "ตรวจสอบกับระบบของ KawaiiBake แล้ว  เป็นใบประกาศที่ออกให้จริง"}
           </p>
         </div>
 

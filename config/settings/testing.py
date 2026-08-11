@@ -15,7 +15,7 @@ DATABASES = {  # noqa: F405
     }
 }
 
-# Fast, insecure hashing — tests must never assert on hash strength.
+# Fast, insecure hashing  tests must never assert on hash strength.
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

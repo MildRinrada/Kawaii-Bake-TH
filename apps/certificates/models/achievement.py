@@ -1,4 +1,4 @@
-"""The achievement entity — append-only earned facts."""
+"""The achievement entity  append-only earned facts."""
 
 from __future__ import annotations
 
@@ -9,15 +9,15 @@ from apps.certificates.constants import AchievementType
 
 
 class Achievement(models.Model):
-    """One earned achievement — a fact, never edited or deleted.
+    """One earned achievement  a fact, never edited or deleted.
 
     The LearningActivity precedent (ADR 0012): facts about the past are
     immutable, so there is no update path and no delete API. Unique
-    ``(user, achievement_type)`` makes awarding idempotent — earning is a
+    ``(user, achievement_type)`` makes awarding idempotent  earning is a
     one-time event per type; volume context ("which course?", "how many?")
     goes in ``metadata`` instead of extra rows.
 
-    ``badge`` is display metadata (PROTECT — a referenced definition cannot
+    ``badge`` is display metadata (PROTECT  a referenced definition cannot
     vanish), nullable so an award never fails just because presentation is
     missing.
     """

@@ -2,7 +2,7 @@
 
 Never incremented: every recomputation walks the full distinct-date
 history from ``LearningActivity`` (the ledger ADR 0012 built as "the
-streak substrate"), so the stored row — including the longest streak — can
+streak substrate"), so the stored row  including the longest streak  can
 always be rebuilt from scratch and can never drift.
 """
 
@@ -21,7 +21,7 @@ from apps.progress.selectors import progress_selector
 def recalculate(*, user_id: int) -> DailyStreak:
     """Derive and store the user's streak standing.
 
-    A streak is **alive** if its newest day is today or yesterday — a
+    A streak is **alive** if its newest day is today or yesterday  a
     learner who studied through last night has until tonight to continue,
     so today's not-yet-logged day never kills a streak prematurely.
 

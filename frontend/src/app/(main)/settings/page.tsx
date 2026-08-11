@@ -1,9 +1,25 @@
 "use client";
 
 /**
- * Settings: real forms against the owning endpoints — profile PATCH,
- * preferences PATCH, notification toggles PATCH (owned by the
- * notifications domain). Reads come from the `/me/settings/` composition.
+ * Settings  "ฉันต้องการให้ระบบทำงานอย่างไร".
+ *
+ * The boundary this page defends: **nothing here edits who you are.**
+ * Display name, avatar, bio, birthday, location and favourite categories
+ * are identity, and identity is edited on `/profile`. What lives here is
+ * behaviour  how content is pitched, what reaches your inbox, who can
+ * see you, and the controls over the account itself. A profile card sits
+ * at the top as a signpost to the other surface; it is a link, never a
+ * form.
+ *
+ * Reads come from the `/me/settings/` composition (profile block used
+ * for the signpost only). Writes go to whichever domain owns the field 
+ * `/users/preferences/` for preferences, the notifications app's own
+ * endpoint for per-event toggles, `/auth/` and `/users/account/` for
+ * security. This page composes; it never re-implements.
+ *
+ * Desktop puts the section list beside the panel. Mobile shows the list
+ * first and swaps to a single panel with a back link, because a sidebar
+ * squeezed onto a phone is a sidebar nobody can read.
  */
 
 import { useState } from "react";
@@ -12,92 +28,81 @@ import { api } from "@/lib/api/client";
 import type { MySettings } from "@/lib/api/models";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { RequireAuth } from "@/lib/auth/require-auth";
-import { useAuth } from "@/lib/auth/auth-context";
-import { useFormSubmit } from "@/lib/forms/use-form";
-import { useToast } from "@/components/ui/toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { ErrorState } from "@/components/ui/error-state";
+import { Icon, type UiIconName } from "@/components/ui/icon";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
+import {
+  AccountPanel,
+  AppearancePanel,
+  LearningPanel,
+  NotificationsPanel,
+  PrivacyPanel,
+  ProfileShortcut,
+} from "./sections";
 
-const NOTIFICATION_LABELS: Record<string, string> = {
-  review_received: "มีคนรีวิวผลงานของฉัน",
-  course_enrollment: "มีผู้เรียนใหม่ในคอร์สของฉัน",
-  achievement_earned: "ได้รับเหรียญความสำเร็จ",
-  qa_answer_received: "มีคนตอบคำถามของฉัน",
-  qa_answer_accepted: "คำตอบของฉันถูกเลือก",
-};
+type SectionId =
+  | "learning"
+  | "notifications"
+  | "privacy"
+  | "appearance"
+  | "account";
+
+const SECTIONS: Array<{
+  id: SectionId;
+  label: string;
+  hint: string;
+  icon: UiIconName;
+}> = [
+  {
+    id: "learning",
+    label: "การเรียนและการทำขนม",
+    hint: "ระดับคำแนะนำ ข้อจำกัดด้านอาหาร เป้าหมายรายสัปดาห์",
+    icon: "chef-hat-2",
+  },
+  {
+    id: "notifications",
+    label: "การแจ้งเตือน",
+    hint: "อีเมลและการแจ้งเตือนในแอป",
+    icon: "bell",
+  },
+  {
+    id: "privacy",
+    label: "ความเป็นส่วนตัว",
+    hint: "ใครเห็นโปรไฟล์และข้อมูลของคุณได้บ้าง",
+    icon: "lock",
+  },
+  {
+    id: "appearance",
+    label: "การแสดงผล",
+    hint: "ธีมและภาษา",
+    icon: "sliders",
+  },
+  {
+    id: "account",
+    label: "บัญชีและความปลอดภัย",
+    hint: "รหัสผ่านและการปิดใช้งานบัญชี",
+    icon: "shield",
+  },
+];
 
 function SettingsContent() {
-  const { refresh } = useAuth();
-  const { toast } = useToast();
+  const [active, setActive] = useState<SectionId | null>(null);
   const settings = useApiQuery(
     (signal) => api.get<MySettings>("/me/settings/", { signal }),
     [],
   );
 
-  const profileForm = useFormSubmit();
-  const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
-  const [location, setLocation] = useState("");
-  const [experience, setExperience] = useState("beginner");
-  const [locale, setLocale] = useState("th");
-
-  // Seed the form once when data arrives — derived during render (the
-  // React-documented alternative to a setState effect).
-  const [seeded, setSeeded] = useState(false);
-  if (settings.data && !seeded) {
-    setSeeded(true);
-    setDisplayName(settings.data.profile.display_name);
-    setBio(settings.data.profile.bio);
-    setLocation(settings.data.profile.location);
-    setExperience(settings.data.profile.experience_level);
-    setLocale(settings.data.preferences.locale);
-  }
-
-  async function saveProfile(event: React.FormEvent) {
-    event.preventDefault();
-    const ok = await profileForm.submit(async () => {
-      await api.patch("/users/profile/update/", {
-        body: {
-          display_name: displayName,
-          bio,
-          location,
-          experience_level: experience,
-        },
-      });
-      await api.patch("/users/preferences/", { body: { locale } });
-    });
-    if (ok) {
-      toast("บันทึกโปรไฟล์แล้ว 🎀", "success");
-      settings.refetch();
-      void refresh();
-    }
-  }
-
-  async function toggleNotification(event_type: string, enabled: boolean) {
-    try {
-      await api.patch("/me/notifications/preferences/", {
-        body: { [event_type]: enabled },
-      });
-      settings.refetch();
-    } catch {
-      toast("บันทึกไม่สำเร็จ", "danger");
-    }
-  }
-
   if (settings.loading) {
     return (
-      <div className="space-y-4" aria-busy="true">
-        <Skeleton className="h-64 w-full rounded-surface" />
-        <Skeleton className="h-40 w-full rounded-surface" />
+      <div aria-busy="true" className="space-y-6">
+        <Skeleton className="h-24 w-full rounded-surface" />
+        <div className="gap-8 lg:grid lg:grid-cols-[16rem_1fr]">
+          <Skeleton className="hidden h-80 w-full rounded-surface lg:block" />
+          <Skeleton className="h-96 w-full rounded-surface" />
+        </div>
       </div>
     );
   }
@@ -105,126 +110,131 @@ function SettingsContent() {
     return <ErrorState error={settings.error} onRetry={settings.refetch} />;
   }
 
-  return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <Card className="self-start">
-        <CardHeader title="โปรไฟล์" />
-        <CardBody>
-          <form onSubmit={saveProfile} className="space-y-4" noValidate>
-            {profileForm.formError ? (
-              <p role="alert" className="rounded-control bg-danger-subtle px-3 py-2 text-sm text-danger">
-                {profileForm.formError}
-              </p>
-            ) : null}
-            <Field label="ชื่อที่แสดง" errors={profileForm.fieldErrors.display_name}>
-              {(control) => (
-                <Input
-                  {...control}
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                />
-              )}
-            </Field>
-            <Field label="แนะนำตัว" errors={profileForm.fieldErrors.bio}>
-              {(control) => (
-                <Textarea
-                  {...control}
-                  value={bio}
-                  onChange={(event) => setBio(event.target.value)}
-                  placeholder="เล่าเรื่องการอบขนมของคุณ…"
-                />
-              )}
-            </Field>
-            <Field label="ที่อยู่ (เมือง)" errors={profileForm.fieldErrors.location}>
-              {(control) => (
-                <Input
-                  {...control}
-                  value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                />
-              )}
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="ระดับประสบการณ์" errors={profileForm.fieldErrors.experience_level}>
-                {(control) => (
-                  <Select
-                    {...control}
-                    value={experience}
-                    onChange={(event) => setExperience(event.target.value)}
-                  >
-                    <option value="beginner">มือใหม่หัดอบ</option>
-                    <option value="intermediate">พออบเป็น</option>
-                    <option value="advanced">สายอบตัวจริง</option>
-                    <option value="professional">มืออาชีพ</option>
-                  </Select>
-                )}
-              </Field>
-              <Field label="ภาษา" errors={profileForm.fieldErrors.locale}>
-                {(control) => (
-                  <Select
-                    {...control}
-                    value={locale}
-                    onChange={(event) => setLocale(event.target.value)}
-                  >
-                    <option value="th">ไทย</option>
-                    <option value="en">English</option>
-                  </Select>
-                )}
-              </Field>
-            </div>
-            <Button type="submit" loading={profileForm.submitting}>
-              บันทึกโปรไฟล์
-            </Button>
-          </form>
-        </CardBody>
-      </Card>
+  const { profile, preferences, notifications } = settings.data;
+  // Desktop always has a panel open; mobile starts on the category list.
+  const current = active ?? "learning";
+  const section = SECTIONS.find((item) => item.id === current)!;
 
-      <Card className="self-start">
-        <CardHeader title="การแจ้งเตือน" />
-        <CardBody>
-          <p className="mb-4 text-sm text-fg-muted">
-            เลือกเหตุการณ์ที่อยากให้แจ้งเตือนในแอป
-          </p>
-          <ul className="space-y-2.5">
-            {Object.entries(settings.data.notifications).map(([event, enabled]) => (
-              <li key={event} className="flex items-center justify-between gap-3">
-                <span className="text-sm text-fg">
-                  {NOTIFICATION_LABELS[event] ?? event}
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={enabled}
-                  aria-label={NOTIFICATION_LABELS[event] ?? event}
-                  onClick={() => void toggleNotification(event, !enabled)}
-                  className={cn(
-                    "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-                    enabled ? "bg-accent" : "bg-edge-strong/60",
-                  )}
-                >
-                  <span
-                    aria-hidden
+  function panelFor(id: SectionId) {
+    switch (id) {
+      case "learning":
+        return <LearningPanel preferences={preferences} />;
+      case "notifications":
+        return (
+          <NotificationsPanel
+            preferences={preferences}
+            notifications={notifications}
+          />
+        );
+      case "privacy":
+        return <PrivacyPanel preferences={preferences} />;
+      case "appearance":
+        return <AppearancePanel preferences={preferences} />;
+      case "account":
+        return (
+          <AccountPanel
+            email={profile.email}
+            isEmailVerified={profile.is_email_verified}
+          />
+        );
+    }
+  }
+
+  return (
+    <>
+      <ProfileShortcut
+        displayName={profile.display_name}
+        username={profile.username}
+      />
+
+      <div className="gap-8 lg:grid lg:grid-cols-[16rem_1fr] lg:items-start">
+        {/* Navigation. On mobile this is the whole screen until a
+            category is chosen; on desktop it is always beside the panel. */}
+        <nav
+          aria-label="หมวดการตั้งค่า"
+          className={cn("lg:block", active ? "hidden" : "block")}
+        >
+          <ul className="space-y-1.5 lg:space-y-1">
+            {SECTIONS.map((item) => {
+              const selected = item.id === current;
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => setActive(item.id)}
+                    aria-current={selected ? "page" : undefined}
                     className={cn(
-                      "absolute top-0.5 size-5 rounded-full bg-surface shadow-raised transition-[left]",
-                      enabled ? "left-5.5" : "left-0.5",
+                      "flex w-full items-center gap-3 rounded-surface px-4 py-3.5 text-left transition-colors",
+                      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                      // The desktop sidebar marks the open panel; on
+                      // mobile nothing is "current" while the list shows.
+                      selected
+                        ? "bg-surface shadow-raised lg:bg-accent-subtle"
+                        : "hover:bg-surface",
                     )}
-                  />
-                </button>
-              </li>
-            ))}
+                  >
+                    <Icon
+                      name={`ui/${item.icon}`}
+                      className={cn(
+                        "size-5 shrink-0",
+                        selected && "lg:text-accent",
+                      )}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          "block text-sm font-medium",
+                          selected ? "text-fg lg:text-accent" : "text-fg",
+                        )}
+                      >
+                        {item.label}
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-fg-muted lg:hidden">
+                        {item.hint}
+                      </span>
+                    </span>
+                    <Icon
+                      name="ui/chevron-right"
+                      className="size-4 shrink-0 text-fg-subtle lg:hidden"
+                    />
+                  </button>
+                </li>
+              );
+            })}
           </ul>
-        </CardBody>
-      </Card>
-    </div>
+        </nav>
+
+        {/* Panel. Hidden on mobile until a category is chosen. */}
+        <div className={cn("lg:block", active ? "block" : "hidden")}>
+          <button
+            type="button"
+            onClick={() => setActive(null)}
+            className="mb-4 flex items-center gap-1.5 rounded-control text-sm text-accent hover:text-accent-hover focus-visible:outline-2 focus-visible:outline-focus lg:hidden"
+          >
+            <Icon name="ui/arrow-left" className="size-4" />
+            หมวดการตั้งค่าทั้งหมด
+          </button>
+
+          <h2 className="font-display mb-1 text-lg font-medium text-fg">
+            {section.label}
+          </h2>
+          <p className="mb-6 text-sm text-fg-muted">{section.hint}</p>
+
+          {panelFor(current)}
+        </div>
+      </div>
+    </>
   );
 }
 
 export default function SettingsPage() {
   return (
     <PageContainer>
+      <PageHeader
+        title="ตั้งค่า"
+        description="ปรับ KawaiiBake ให้เหมาะกับวิธีการเรียนและการทำขนมของคุณ"
+      />
       <RequireAuth>
-        <PageHeader title="ตั้งค่า" description="โปรไฟล์ ภาษา และการแจ้งเตือนของคุณ" />
         <SettingsContent />
       </RequireAuth>
     </PageContainer>

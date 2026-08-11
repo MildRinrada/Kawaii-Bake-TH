@@ -54,7 +54,7 @@ def confirm_password_reset(*, uidb64: str, token: str, new_password: str) -> Use
     """Complete a password reset.
 
     Setting the password rotates the session-auth hash, so every existing
-    session for this user dies on its next request — and the reset token itself
+    session for this user dies on its next request  and the reset token itself
     stops validating, because Django's generator hashes the password.
 
     Args:

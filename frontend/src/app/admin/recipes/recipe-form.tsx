@@ -12,7 +12,7 @@
  *   existing rows and sends them back, so editing one line cannot wipe
  *   the rest.
  * - `cover_image` is a file field, and DRF cannot parse nested object
- *   lists out of a multipart body — so the image goes in its own small
+ *   lists out of a multipart body  so the image goes in its own small
  *   multipart PATCH after the JSON write, exactly like the avatar.
  * - `slug` is frozen once published, except for staff. The field is
  *   offered with that warning rather than hidden.
@@ -52,7 +52,7 @@ const VISIBILITIES = [
 
 /** `UnitEnum` plus the blank choice the serializer accepts. */
 const UNITS = [
-  { value: "", label: "— ไม่ระบุ —" },
+  { value: "", label: " ไม่ระบุ " },
   { value: "g", label: "กรัม (g)" },
   { value: "kg", label: "กิโลกรัม (kg)" },
   { value: "ml", label: "มิลลิลิตร (ml)" },
@@ -102,6 +102,8 @@ export type FormPanel = ComponentType<{
   title?: string;
   description?: string;
   actions?: ReactNode;
+  /** Marks the section's content as mandatory (red asterisk). */
+  required?: boolean;
   children: ReactNode;
 }>;
 
@@ -137,9 +139,17 @@ export function RecipeForm({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [difficulty, setDifficulty] = useState(initial?.difficulty ?? "easy");
   const [visibility, setVisibility] = useState(initial?.visibility ?? "public");
-  const [prep, setPrep] = useState(String(initial?.prep_minutes ?? 0));
-  const [cook, setCook] = useState(String(initial?.cook_minutes ?? 0));
-  const [servings, setServings] = useState(String(initial?.servings ?? 1));
+  // Empty string = "not specified": the fields are optional, submit maps
+  // blank to 0/1 and read surfaces render "-" instead of a fake zero.
+  const [prep, setPrep] = useState(
+    initial?.prep_minutes ? String(initial.prep_minutes) : "",
+  );
+  const [cook, setCook] = useState(
+    initial?.cook_minutes ? String(initial.cook_minutes) : "",
+  );
+  const [servings, setServings] = useState(
+    initial?.servings && initial.servings !== 1 ? String(initial.servings) : "",
+  );
   const [picked, setPicked] = useState<string[]>(
     initial?.categories.map((item) => item.slug) ?? [],
   );
@@ -151,7 +161,7 @@ export function RecipeForm({
 
   // When creation succeeds but the cover upload fails, the recipe already
   // exists. Remembering its slug turns the retry into an update instead of
-  // a second POST — otherwise every retry leaves another orphan draft.
+  // a second POST  otherwise every retry leaves another orphan draft.
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
 
   /**
@@ -166,7 +176,7 @@ export function RecipeForm({
     const name = file.name.toLowerCase();
     if (/\.(heic|heif)$/.test(name)) {
       setCoverProblem(
-        "ไฟล์ .HEIC/.HEIF จาก iPhone ยังอัปโหลดไม่ได้ — ให้แปลงเป็น JPG หรือ PNG ก่อน (ในแอปรูปภาพ: แชร์ → บันทึกเป็น JPEG)",
+        "ไฟล์ .HEIC/.HEIF จาก iPhone ยังอัปโหลดไม่ได้  ให้แปลงเป็น JPG หรือ PNG ก่อน (ในแอปรูปภาพ: แชร์ → บันทึกเป็น JPEG)",
       );
       return;
     }
@@ -261,8 +271,27 @@ export function RecipeForm({
     },
   ];
 
+  const [gateError, setGateError] = useState<string | null>(null);
+
   async function save(event: React.FormEvent) {
     event.preventDefault();
+
+    // The friendly pre-flight: name everything missing in one message
+    // instead of letting the server report the first failure it meets.
+    const missing: string[] = [];
+    if (title.trim().length < 3) missing.push("ชื่อสูตร (อย่างน้อย 3 ตัวอักษร)");
+    if (!description.trim()) missing.push("รายละเอียด");
+    if (cleanIngredients.length === 0) missing.push("วัตถุดิบอย่างน้อย 1 รายการ");
+    if (cleanSteps.length === 0) missing.push("ขั้นตอนอย่างน้อย 1 ขั้น");
+    if (cover === null && !initial?.cover_image_url) missing.push("รูปหน้าปก");
+    if (missing.length > 0) {
+      setGateError(
+        `อีกนิดเดียว! ยังขาด ${missing.join(" · ")} - เติมให้ครบแล้วกดบันทึกอีกครั้งนะ`,
+      );
+      return;
+    }
+    setGateError(null);
+
     const body: Record<string, unknown> = {
       title: title.trim(),
       summary: summary.trim(),
@@ -278,7 +307,7 @@ export function RecipeForm({
     };
 
     // `useFormSubmit` already renders the form-level and per-field errors,
-    // so there is no extra toast here — a generic "save failed" beside a
+    // so there is no extra toast here  a generic "save failed" beside a
     // precise inline message is noise, and reading `form.fieldErrors`
     // right after `submit()` would see the previous render's state anyway.
     await form.submit(async () => {
@@ -367,7 +396,7 @@ export function RecipeForm({
                   errors={form.fieldErrors.slug}
                   hint={
                     initial.status === "published"
-                      ? "สูตรนี้เผยแพร่แล้ว — ปกติ slug จะแก้ไม่ได้ แต่สิทธิ์ staff แก้ได้ (ลิงก์เดิมจะเสีย)"
+                      ? "สูตรนี้เผยแพร่แล้ว  ปกติ slug จะแก้ไม่ได้ แต่สิทธิ์ staff แก้ได้ (ลิงก์เดิมจะเสีย)"
                       : "ใช้เป็น URL ของสูตร"
                   }
                 >
@@ -394,7 +423,7 @@ export function RecipeForm({
                 )}
               </Field>
 
-              <Field label="รายละเอียด" errors={form.fieldErrors.description}>
+              <Field label="รายละเอียด" required errors={form.fieldErrors.description}>
                 {(control) => (
                   <Textarea
                     {...control}
@@ -410,7 +439,7 @@ export function RecipeForm({
           {/* ---- Ingredients ---- */}
           <Panel
             title="วัตถุดิบ"
-            description={`${cleanIngredients.length}/${MAX_INGREDIENTS} รายการ — การบันทึกจะแทนที่รายการเดิมทั้งชุด`}
+            description={`${cleanIngredients.length}/${MAX_INGREDIENTS} รายการ  การบันทึกจะแทนที่รายการเดิมทั้งชุด`}
             actions={
               <Button
                 type="button"
@@ -512,8 +541,9 @@ export function RecipeForm({
 
           {/* ---- Steps ---- */}
           <Panel
+            required
             title="ขั้นตอน"
-            description={`${cleanSteps.length}/${MAX_STEPS} ขั้น — ลำดับตามที่แสดงด้านล่าง`}
+            description={`${cleanSteps.length}/${MAX_STEPS} ขั้น  ลำดับตามที่แสดงด้านล่าง`}
             actions={
               <Button
                 type="button"
@@ -608,13 +638,13 @@ export function RecipeForm({
               {editing ? (
                 <p className="text-fg-muted">
                   สถานะปัจจุบัน:{" "}
-                  <span className="font-medium text-fg">{initial.status}</span> —
+                  <span className="font-medium text-fg">{initial.status}</span> 
                   เปลี่ยนสถานะได้จากหน้ารายการสูตร
                 </p>
               ) : (
                 <p className="text-fg-muted">
                   สูตรใหม่จะถูกสร้างเป็น <strong>ฉบับร่าง</strong> เสมอ
-                  และผู้เขียนคือบัญชีที่กำลังใช้งานอยู่ — เผยแพร่ได้ในขั้นถัดไป
+                  และผู้เขียนคือบัญชีที่กำลังใช้งานอยู่  เผยแพร่ได้ในขั้นถัดไป
                 </p>
               )}
               <div>
@@ -638,7 +668,7 @@ export function RecipeForm({
             </div>
           </Panel>
 
-          <Panel title="รูปหน้าปก">
+          <Panel title="รูปหน้าปก" required>
             <div className="space-y-2 px-4 py-4">
               {coverPreview || initial?.cover_image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element -- admin preview from the API origin or a local blob
@@ -728,7 +758,7 @@ export function RecipeForm({
               ) : null}
               {createdSlug && !editing ? (
                 <p className="rounded bg-warning-subtle px-2 py-1.5 text-xs text-warning">
-                  สร้างสูตรไว้แล้ว — การกดบันทึกอีกครั้งจะอัปเดตสูตรเดิม
+                  สร้างสูตรไว้แล้ว  การกดบันทึกอีกครั้งจะอัปเดตสูตรเดิม
                   ไม่สร้างซ้ำ
                 </p>
               ) : null}
@@ -773,6 +803,7 @@ export function RecipeForm({
                     <Input
                       {...control}
                       inputMode="numeric"
+                      placeholder="-"
                       value={prep}
                       onChange={(event) => setPrep(event.target.value)}
                     />
@@ -783,6 +814,7 @@ export function RecipeForm({
                     <Input
                       {...control}
                       inputMode="numeric"
+                      placeholder="-"
                       value={cook}
                       onChange={(event) => setCook(event.target.value)}
                     />
@@ -793,6 +825,7 @@ export function RecipeForm({
                     <Input
                       {...control}
                       inputMode="numeric"
+                      placeholder="-"
                       value={servings}
                       onChange={(event) => setServings(event.target.value)}
                     />
@@ -835,6 +868,15 @@ export function RecipeForm({
         </div>
       </div>
 
+      {gateError ? (
+        <p
+          role="alert"
+          className="rounded-control bg-danger-subtle px-3.5 py-2.5 text-sm text-danger"
+        >
+          {gateError}
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-edge pt-4">
         {editing && showDelete ? (
           <Button
@@ -845,7 +887,7 @@ export function RecipeForm({
             onClick={() =>
               confirm.ask({
                 title: "ลบสูตรนี้ถาวร?",
-                body: `“${initial.title}” จะถูกลบออกจากฐานข้อมูลพร้อมไฟล์รูปทั้งหมด กู้คืนไม่ได้ — ถ้าต้องการแค่ซ่อน ให้ใช้ “เก็บเข้าคลัง” จากหน้ารายการแทน`,
+                body: `“${initial.title}” จะถูกลบออกจากฐานข้อมูลพร้อมไฟล์รูปทั้งหมด กู้คืนไม่ได้  ถ้าต้องการแค่ซ่อน ให้ใช้ “เก็บเข้าคลัง” จากหน้ารายการแทน`,
                 confirmLabel: "ลบถาวร",
                 danger: true,
                 action: removeRecipe,

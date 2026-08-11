@@ -8,7 +8,9 @@ from apps.users.repositories import user_repository
 from apps.users.selectors import user_selector
 
 
-def create_account(*, email: str, username: str, password: str) -> User:
+def create_account(
+    *, email: str, username: str, password: str, **account_fields: object
+) -> User:
     """Create a user account with its profile and preference rows.
 
     This is the public write API other apps use; ``apps.authentication`` calls
@@ -18,11 +20,15 @@ def create_account(*, email: str, username: str, password: str) -> User:
         email: The account email address.
         username: The public handle.
         password: The raw password.
+        **account_fields: Additional ``User`` column values collected at
+            registration (legal name, consent timestamp).
 
     Returns:
         The created user.
     """
-    return user_repository.create_user(email=email, username=username, password=password)
+    return user_repository.create_user(
+        email=email, username=username, password=password, **account_fields
+    )
 
 
 def set_password(*, user: User, raw_password: str) -> None:

@@ -92,7 +92,7 @@ class LessonCounterTests(TestCase):
 
 
 class LessonCrudTests(TestCase):
-    """Individual lesson CRUD — never collection-replace."""
+    """Individual lesson CRUD  never collection-replace."""
 
     def setUp(self) -> None:
         self.client = APIClient()

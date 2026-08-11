@@ -27,8 +27,8 @@ FIELD_CEILINGS: dict[str, Decimal] = {
 def validate_nutrition(values: Mapping[str, Any]) -> None:
     """Validate nutrition figures.
 
-    Phase 2 performs no arithmetic on these numbers — they are stored and echoed
-    back verbatim — so validation is limited to plausibility.
+    Phase 2 performs no arithmetic on these numbers  they are stored and echoed
+    back verbatim  so validation is limited to plausibility.
 
     Args:
         values: Submitted nutrition fields; absent keys are ignored.

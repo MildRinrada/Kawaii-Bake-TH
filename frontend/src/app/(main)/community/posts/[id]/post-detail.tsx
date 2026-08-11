@@ -4,7 +4,7 @@
  * One community post.
  *
  * Reads `GET /gallery/{id}/`, which serves the same public shape to
- * everyone — visibility is enforced server-side, so an unpublished post
+ * everyone  visibility is enforced server-side, so an unpublished post
  * simply 404s for anyone but its author and staff.
  *
  * Owner controls (edit caption/visibility, delete, remove a photo) are
@@ -13,7 +13,7 @@
  * anyone else regardless, and staff moderation lives in the admin area.
  *
  * There is no comment thread or bookmark button here because the gallery
- * app has neither — its model docstring states interactions are a future
+ * app has neither  its model docstring states interactions are a future
  * phase. Inventing them would mean inventing a backend.
  */
 
@@ -186,7 +186,7 @@ export function PostDetailScreen({ id }: { id: string }) {
                 </time>
                 {data.status === "unpublished" ? (
                   <span className="ml-2 rounded bg-surface-sunken px-1.5 py-0.5 text-fg-muted">
-                    ซ่อนอยู่ — เห็นเฉพาะคุณ
+                    ซ่อนอยู่  เห็นเฉพาะคุณ
                   </span>
                 ) : null}
               </p>
@@ -271,7 +271,7 @@ export function PostDetailScreen({ id }: { id: string }) {
           ) : null}
         </Card>
 
-        {/* Interactions the backend does not have yet — stated, not faked. */}
+        {/* Interactions the backend does not have yet  stated, not faked. */}
         <p className="mt-3 text-center text-xs text-fg-subtle">
           ระบบคอมเมนต์และบันทึกโพสต์ยังไม่เปิดใช้งานในเวอร์ชันนี้
         </p>
@@ -313,7 +313,7 @@ export function PostDetailScreen({ id }: { id: string }) {
                 ลบโพสต์นี้?
               </h2>
               <p className="mt-2 text-sm text-fg-muted">
-                โพสต์และรูปทั้งหมดจะถูกลบถาวร —{" "}
+                โพสต์และรูปทั้งหมดจะถูกลบถาวร {" "}
                 <strong>สูตรที่แนบไว้จะไม่ถูกลบ</strong> ยังอยู่ครบเหมือนเดิม
               </p>
               <div className="mt-4 flex justify-end gap-2">

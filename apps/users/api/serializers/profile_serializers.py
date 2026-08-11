@@ -25,7 +25,7 @@ class PublicProfileSerializer(AvatarUrlMixin):
     """Serialises a :class:`~apps.users.selectors.profile_selector.PublicProfileDTO`.
 
     The DTO has already had the owner's privacy settings applied, so this class
-    contains no conditional logic — hidden fields simply arrive as ``None``.
+    contains no conditional logic  hidden fields simply arrive as ``None``.
     """
 
     username = serializers.CharField(read_only=True)
@@ -47,15 +47,22 @@ class OwnProfileSerializer(AvatarUrlMixin, CoverUrlMixin):
     ``/users/preferences/`` so that this payload can never leak them.
 
     ``cover_url`` is on this shape only. The public profile has no consumer
-    for it yet, and an unread field is surface with no test behind it — the
+    for it yet, and an unread field is surface with no test behind it  the
     ``PublicProfileDTO`` gains one the day a public profile page renders it.
     """
 
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
+    # The legal name is owner-only PII, same class as ``email``: it backs
+    # certificate printing and never appears on the public profile shape.
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
     is_email_verified = serializers.BooleanField(
         source="user.is_email_verified", read_only=True
     )
+    # The caller's *own* staff flag (ADR 0022): lets the shell render the
+    # back-office shortcut. Grants nothing - every admin view re-authorises.
+    is_staff = serializers.BooleanField(source="user.is_staff", read_only=True)
     joined_at = serializers.DateTimeField(source="user.created_at", read_only=True)
 
     display_name = serializers.CharField(read_only=True)
@@ -78,7 +85,7 @@ class ProfileUpdateSerializer(StrictSerializer):
     """Validates a profile PATCH payload.
 
     Every field is optional. Absence means "leave unchanged"; an explicit
-    ``null`` on a nullable field means "clear it" — without that distinction a
+    ``null`` on a nullable field means "clear it"  without that distinction a
     user could never remove their birthday.
 
     Identity and permission fields are absent by construction, so they cannot

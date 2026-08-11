@@ -1,8 +1,8 @@
 """Business logic for ingredient lines.
 
 Ingredients are normally written as part of a recipe create or update. These
-functions exist so the collection can also be replaced on its own — by a future
-dedicated endpoint, an import command, or the AI ingredient assistant — without
+functions exist so the collection can also be replaced on its own  by a future
+dedicated endpoint, an import command, or the AI ingredient assistant  without
 that caller reaching into the repository.
 """
 

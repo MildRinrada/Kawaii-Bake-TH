@@ -9,7 +9,7 @@ class ThreadStatus(models.TextChoices):
     """Lifecycle of a question thread.
 
     ``DELETED`` is soft: the row (and every answer under it) survives as
-    history, but no API surface — list, detail, search, answers — ever
+    history, but no API surface  list, detail, search, answers  ever
     returns it. ``HIDDEN`` is staff moderation; the author still sees
     their own hidden thread, mirroring reviews.
     """
@@ -26,7 +26,7 @@ class ThreadTargetKind(models.TextChoices):
     COURSE = "course", "Course"
 
 
-# The states staff moderation may set — DELETED is never assignable.
+# The states staff moderation may set  DELETED is never assignable.
 THREAD_MODERATION_CHOICES = [
     (ThreadStatus.ACTIVE.value, "Active"),
     (ThreadStatus.HIDDEN.value, "Hidden"),

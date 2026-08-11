@@ -19,7 +19,7 @@ def create_course(*, instructor_id: int, slug_base: str, **fields: Any) -> Cours
 
     Attempt-and-catch rather than check-then-insert: the check races under
     concurrency. Each attempt is its own ``atomic`` block, which is a SAVEPOINT
-    inside the service's outer transaction — on PostgreSQL, catching
+    inside the service's outer transaction  on PostgreSQL, catching
     ``IntegrityError`` without one poisons the whole transaction.
 
     Args:

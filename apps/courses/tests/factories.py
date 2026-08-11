@@ -1,6 +1,6 @@
 """Test data builders for the course domain.
 
-Thai fixtures from the first commit, as in Phase 2 — the slug machinery fails
+Thai fixtures from the first commit, as in Phase 2  the slug machinery fails
 silently on Thai with English-only test data.
 """
 

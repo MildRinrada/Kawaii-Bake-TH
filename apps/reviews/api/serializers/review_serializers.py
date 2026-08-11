@@ -51,7 +51,7 @@ class ReviewCreateSerializer(StrictSerializer):
 class ReviewUpdateSerializer(StrictSerializer):
     """Validates a partial review update.
 
-    ``status`` is moderation — accepted here for shape, enforced staff-only
+    ``status`` is moderation  accepted here for shape, enforced staff-only
     in the service. ``deleted`` is never settable through PATCH; deletion has
     its own verb.
     """

@@ -41,6 +41,19 @@ class ProfileNotVisibleError(DomainError):
     message = "User not found."
 
 
+class ProtectedAccountError(DomainError):
+    """Raised when a staff edit would touch an account it must not.
+
+    Two cases: an operator changing their own access flags (locking
+    yourself out of the back office should require another operator), and
+    anyone changing a superuser's flags through the API.
+    """
+
+    code = "protected_account"
+    status_code = 403
+    message = "This account's access flags cannot be changed here."
+
+
 class InvalidProfileDataError(DomainError):
     """Raised when profile input violates a domain rule."""
 

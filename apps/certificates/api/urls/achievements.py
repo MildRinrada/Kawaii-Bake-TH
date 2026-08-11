@@ -3,7 +3,7 @@
 Deliberately separate from ``/api/v1/me/achievements/``: this route says
 what there *is* to earn, that one says what the caller *has* earned. The
 split keeps the badge definition (system-owned presentation) apart from
-the achievement fact (per-user, append-only) — see ADR 0024.
+the achievement fact (per-user, append-only)  see ADR 0024.
 """
 
 from __future__ import annotations

@@ -63,7 +63,7 @@ class StrictSerializer(serializers.Serializer):
     """Serializer that rejects keys it does not declare.
 
     DRF silently discards unknown keys, so a client typo such as
-    ``favourite_categories`` would return ``200 OK`` while changing nothing —
+    ``favourite_categories`` would return ``200 OK`` while changing nothing 
     an expensive debugging session for the frontend. Failing loudly is kinder.
     """
 
@@ -86,3 +86,17 @@ class StrictSerializer(serializers.Serializer):
                     {key: ["Unrecognised field."] for key in sorted(unknown)}
                 )
         return super().to_internal_value(data)
+
+
+class PaginatedFilterSerializer(StrictSerializer):
+    """Base for strict query-parameter validation on a paginated list.
+
+    A strict serializer rejects any key it does not declare - which is
+    the point, so a typo'd filter is a 400 rather than a silently
+    unfiltered page. That makes it the serializer's job to know about the
+    paginator's own parameters too: without these two fields, page 2 of
+    any list would be rejected as an unknown filter.
+    """
+
+    page = serializers.IntegerField(min_value=1, required=False)
+    page_size = serializers.IntegerField(min_value=1, max_value=200, required=False)

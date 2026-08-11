@@ -26,11 +26,22 @@ function LoginForm() {
     if (ok) router.replace(searchParams.get("next") ?? "/");
   }
 
+  // One-time flag set by the email-verification screen.
+  const justVerified = searchParams.get("verified") === "1";
+
   return (
     <Card>
       <CardHeader title="เข้าสู่ระบบ" />
       <CardBody>
         <form onSubmit={onSubmit} noValidate className="space-y-4">
+          {justVerified ? (
+            <p
+              role="status"
+              className="rounded-control bg-success-subtle px-3 py-2 text-sm text-success"
+            >
+              ยืนยันอีเมลเรียบร้อยแล้ว - เข้าสู่ระบบเพื่อเริ่มใช้งานได้เลย
+            </p>
+          ) : null}
           {formError ? (
             <p role="alert" className="rounded-control bg-danger-subtle px-3 py-2 text-sm text-danger">
               {formError}

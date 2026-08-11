@@ -23,7 +23,7 @@ class RecipeIngredient(TimeStampedModel):
 
     When the catalogue arrives, this table becomes the through table unchanged:
     a nullable ``ingredient`` FK is added and backfilled by grouping on
-    ``normalized_name``. No row moves and no endpoint shape changes — quantity
+    ``normalized_name``. No row moves and no endpoint shape changes  quantity
     and unit are properties of the *line*, not of the ingredient, so they
     already live in the right place.
 

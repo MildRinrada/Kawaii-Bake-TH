@@ -7,7 +7,7 @@ from django.db import models
 from django.db.models.functions import Lower
 
 from apps.core.models.base import TimeStampedModel
-from apps.users.constants import USERNAME_MAX_LENGTH
+from apps.users.constants import NAME_PART_MAX_LENGTH, USERNAME_MAX_LENGTH
 from apps.users.managers import UserManager
 from apps.users.validators.user_validator import validate_username
 
@@ -15,7 +15,7 @@ from apps.users.validators.user_validator import validate_username
 class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     """An account holder.
 
-    Only credentials and authentication state live here — everything read on
+    Only credentials and authentication state live here  everything read on
     the auth hot path stays off a join. Presentation data belongs to
     :class:`~apps.users.models.profile.Profile` and private configuration to
     :class:`~apps.users.models.preference.UserPreference`.
@@ -40,6 +40,21 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         validators=[validate_username],
         help_text="Public handle used in profile URLs.",
     )
+
+    # The account holder's legal name, collected at registration because
+    # certificates print it (a credential naming "mildbakes" is worthless).
+    # PII in the same class as ``email``: served only to the owner, never
+    # on any public payload  the profile's ``display_name`` remains the
+    # only name other users see. ``blank=True`` because pre-existing
+    # accounts registered before the requirement; the registration
+    # serializer is the gate that makes it mandatory for new ones.
+    first_name = models.CharField(max_length=NAME_PART_MAX_LENGTH, blank=True)
+    last_name = models.CharField(max_length=NAME_PART_MAX_LENGTH, blank=True)
+
+    # PDPA evidence: when the holder accepted the terms/privacy documents
+    # during registration. Null only for accounts that predate consent
+    # collection.
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
 
     is_active = models.BooleanField(
         default=True,
@@ -85,8 +100,9 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         return self.username
 
     def get_full_name(self) -> str:
-        """Return the user's display name, falling back to the handle."""
-        return self.username
+        """Return the legal name when known, falling back to the handle."""
+        full = f"{self.first_name} {self.last_name}".strip()
+        return full or self.username
 
     def get_short_name(self) -> str:
         """Return the user's short name."""

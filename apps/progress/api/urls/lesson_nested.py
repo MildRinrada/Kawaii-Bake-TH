@@ -1,4 +1,4 @@
-"""Completion routes nested under ``/api/v1/lessons/`` — mounted by config."""
+"""Completion routes nested under ``/api/v1/lessons/``  mounted by config."""
 
 from __future__ import annotations
 

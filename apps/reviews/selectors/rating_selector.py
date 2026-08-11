@@ -2,8 +2,8 @@
 
 Detail statistics are computed on read: one indexed aggregate query over
 ``ACTIVE`` rows. For **courses** an additional stored aggregate pair lives on
-the Course row (ADR 0021) — maintained by ``review_repository`` at the
-mutation choke point, rebuilt by ``manage.py rebuild_rating_aggregates`` — so
+the Course row (ADR 0021)  maintained by ``review_repository`` at the
+mutation choke point, rebuilt by ``manage.py rebuild_rating_aggregates``  so
 course listings carry a rating without an N+1. This selector remains the
 source of truth the stored pair is rebuilt from, and the future caching seam:
 wrap these functions with the ``infrastructure/cache`` adapter without
@@ -56,7 +56,7 @@ def for_course(*, course_id: int) -> RatingSummary:
 
 @dataclass(frozen=True)
 class RatingFact:
-    """Average and count for one target — the bulk sibling of ``RatingSummary``.
+    """Average and count for one target  the bulk sibling of ``RatingSummary``.
 
     Part of the public cross-app API (Phase 12). No star distribution: the
     recommendation scorer needs only the two aggregates, and computing eight

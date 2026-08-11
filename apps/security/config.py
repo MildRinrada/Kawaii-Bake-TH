@@ -61,7 +61,7 @@ def client_guard_mode() -> str:
 
     ``off`` ships nothing. ``detect`` observes and reports. ``deter``
     also intercepts the devtools and view-source shortcuts. Unknown
-    values fall back to ``off`` — a typo in an env var must not turn a
+    values fall back to ``off``  a typo in an env var must not turn a
     user-hostile mode on by accident.
     """
     mode = str(getattr(settings, "SECURITY_CLIENT_GUARD_MODE", GUARD_OFF)).lower()
@@ -88,7 +88,7 @@ def ingest_secret() -> str:
 
     The Next.js origin sees trap requests the Django origin never does.
     When it forwards one, the client IP it reports is only believed if
-    this secret matches — otherwise anyone could post events attributed
+    this secret matches  otherwise anyone could post events attributed
     to any address they liked. Empty (the default) disables forwarding.
     """
     return str(getattr(settings, "SECURITY_INGEST_SECRET", "") or "")

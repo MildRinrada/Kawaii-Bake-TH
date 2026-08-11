@@ -1,4 +1,4 @@
-# 0007 — Session Cookies for Phase 1, Behind a Credential Seam
+# 0007  Session Cookies for Phase 1, Behind a Credential Seam
 
 - **Status:** Accepted
 - **Date:** 2026-08-07
@@ -7,7 +7,7 @@
 
 The requirements list login and logout as "implement now" and JWT with refresh
 tokens as "prepare architecture for". A Next.js SPA is the client, which makes
-bearer tokens the conventional choice — but the project is also constrained to
+bearer tokens the conventional choice  but the project is also constrained to
 three tables, and "logout" has to mean something.
 
 ## Decision
@@ -22,10 +22,10 @@ a `CredentialIssuer` seam so switching to JWT is a one-module change.
 | Logout | Server-side, immediate, per-device | Access tokens are un-revokable; logout is a client-side lie |
 | Extra tables | none | `token_blacklist` adds two, plus a flush cron |
 | XSS | JavaScript cannot read the cookie | A token in `localStorage` means any XSS is total account takeover |
-| Cross-origin | Needs CORS + CSRF + `SameSite` planning | Simpler — the one genuine advantage |
+| Cross-origin | Needs CORS + CSRF + `SameSite` planning | Simpler  the one genuine advantage |
 
 Every session downside is a configuration problem; the JWT downsides are
-architectural. Storing a refresh token in an httpOnly cookie — the usual fix —
+architectural. Storing a refresh token in an httpOnly cookie  the usual fix 
 is reinventing sessions with extra steps.
 
 ### The seam
@@ -33,7 +33,7 @@ is reinventing sessions with extra steps.
 ```
 apps/authentication/api/credentials/
 ├── base.py            CredentialIssuer protocol + IssuedCredential
-├── session_issuer.py  Phase 1 — the ONLY module importing auth.login/logout
+├── session_issuer.py  Phase 1  the ONLY module importing auth.login/logout
 └── jwt_issuer.py      reserved
 ```
 
@@ -57,7 +57,7 @@ Two decisions make the future swap free:
   `SESSION_COOKIE_AGE`, remember-me via `set_expiry`) stay meaningful.
 - **CSRF must be handled explicitly.** DRF `csrf_exempt`s every `APIView`, and
   `SessionAuthentication` enforces CSRF only for already-authenticated
-  requests — so unauthenticated POST endpoints inherit `CsrfProtectedAPIView`.
+  requests  so unauthenticated POST endpoints inherit `CsrfProtectedAPIView`.
   There is a test asserting login fails without a token.
 - **Deployment constraint.** `SameSite=Lax` requires the frontend and API to
   share a registrable domain (`app.kawaiibake.com` + `api.kawaiibake.com`).

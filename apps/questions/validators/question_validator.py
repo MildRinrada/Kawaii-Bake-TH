@@ -3,7 +3,7 @@
 Pure functions over primitives, used from two places: validating an author's
 payload at create/update time, and re-checking **stored** rows when the
 quizzes app runs its publish gate (via the public selector API). One rule set,
-two moments — the rules must not drift, so they live here once.
+two moments  the rules must not drift, so they live here once.
 """
 
 from __future__ import annotations

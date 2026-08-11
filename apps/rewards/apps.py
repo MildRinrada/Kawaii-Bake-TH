@@ -8,7 +8,7 @@ from django.apps import AppConfig
 class RewardsConfig(AppConfig):
     """The reward economy: account, immutable ledger, earn/spend/adjust.
 
-    A pull-based consumer in the Phase 9 mould — source domains own the
+    A pull-based consumer in the Phase 9 mould  source domains own the
     facts (progress, quizzes, certificates), rewards owns only the
     economic consequence, and no producer knows this app exists. Unlike
     the XP ledger's count arithmetic, every earning here is keyed to an

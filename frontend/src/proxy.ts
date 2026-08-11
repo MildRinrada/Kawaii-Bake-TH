@@ -17,7 +17,7 @@
  *
  * Forwarding requires `SECURITY_INGEST_SECRET` (server-side only, NOT
  * `NEXT_PUBLIC_`) to match the backend's. Without it the trap still 404s
- * — it simply is not reported, and the backend answers 404 to the
+ *  it simply is not reported, and the backend answers 404 to the
  * forward attempt anyway.
  */
 
@@ -101,8 +101,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Only the trap shapes. Everything else — including every real route,
-  // static asset and image — skips this entirely, so the site pays
+  // Only the trap shapes. Everything else  including every real route,
+  // static asset and image  skips this entirely, so the site pays
   // nothing for the trap.
   matcher: [
     "/.env/:path*",

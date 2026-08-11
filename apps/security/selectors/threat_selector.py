@@ -2,7 +2,7 @@
 
 Every function here returns a lazy queryset or a plain dict; the ORM runs
 at the API edge once the paginator has sliced. Nothing here writes, and
-nothing here decides policy — the filters are exactly the facets the
+nothing here decides policy  the filters are exactly the facets the
 dashboard offers, with unknown values ignored rather than erroring, so a
 stale bookmark shows data instead of a 400.
 """
@@ -90,7 +90,7 @@ def list_profiles(
         queryset = queryset.filter(review_state=review_state)
     if blocked is not None:
         now = timezone.now()
-        # "Blocked" means the window is still open — a lapsed block reads
+        # "Blocked" means the window is still open  a lapsed block reads
         # as unblocked without anything having to sweep the table.
         condition = Q(blocked_until__gt=now)
         queryset = queryset.filter(condition) if blocked else queryset.exclude(condition)

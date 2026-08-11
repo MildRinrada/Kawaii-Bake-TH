@@ -109,7 +109,7 @@ class EnrollServiceTests(TestCase):
     def test_cannot_enroll_in_a_draft(self) -> None:
         create_course(instructor=self.instructor, slug="wip")
 
-        # Draft is invisible to strangers, so this is a 404 — not a 400 that
+        # Draft is invisible to strangers, so this is a 404  not a 400 that
         # would confirm the course exists.
         with self.assertRaises(CourseNotVisibleError):
             enrollment_service.enroll(user_id=self.student.id, slug="wip")
@@ -119,7 +119,7 @@ class EnrollServiceTests(TestCase):
         course.status = "archived"
         course.save(update_fields=["status"])
         # Archived + public is invisible to a non-enrolled stranger → 404 path;
-        # for an already-enrolled student, enroll is a no-op — so use unlisted
+        # for an already-enrolled student, enroll is a no-op  so use unlisted
         # visibility with an existing enrollment to reach the enrollable check.
         enrolled = create_user()
         enroll_user(user=enrolled, course=course)

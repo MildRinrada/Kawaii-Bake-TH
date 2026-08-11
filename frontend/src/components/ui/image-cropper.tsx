@@ -9,15 +9,15 @@
  *
  * ## The geometry
  *
- * Everything is expressed in two resolution-independent numbers —
+ * Everything is expressed in two resolution-independent numbers 
  * `zoom` (≥ 1) and `center` (the point of the *image*, normalised to
  * 0–1, that sits at the middle of the frame). From those the crop
  * rectangle is derived in the image's own pixels, and the preview is
  * positioned with **percentages of the frame**. That is the whole trick:
  * because nothing is stored in screen pixels, the component needs no
  * size state, no `ResizeObserver`, and renders identically at any width.
- * Screen pixels are read exactly once — from the live element, during a
- * drag — to convert a pointer delta into image pixels.
+ * Screen pixels are read exactly once  from the live element, during a
+ * drag  to convert a pointer delta into image pixels.
  *
  * `zoom = 1` means "the largest rectangle of the requested aspect that
  * fits inside the image", so the frame is always full: there is no zoom
@@ -27,7 +27,7 @@
  * ## What comes out
  *
  * A JPEG Blob no wider than `maxOutputWidth` **and never wider than the
- * pixels actually sampled** — zooming into a small photo cannot invent
+ * pixels actually sampled**  zooming into a small photo cannot invent
  * detail, so it does not pretend to. The canvas is painted white first:
  * JPEG has no alpha, and a transparent PNG would otherwise composite
  * onto black.
@@ -119,7 +119,7 @@ export function ImageCropper({
   const [center, setCenter] = useState({ x: 0.5, y: 0.5 });
 
   // One object URL per file. Derived rather than stored, so no effect has
-  // to write state; the effect below exists only to revoke — a leaked blob
+  // to write state; the effect below exists only to revoke  a leaked blob
   // URL pins the entire decoded image in memory for the tab's lifetime.
   const source = useMemo(
     () => (file ? URL.createObjectURL(file) : null),
@@ -252,7 +252,7 @@ export function ImageCropper({
             aria-hidden
             draggable={false}
             onLoad={(event) => {
-              // A newly loaded file starts centred at zoom 1 — inheriting
+              // A newly loaded file starts centred at zoom 1  inheriting
               // the previous picture's framing would be nonsense. Doing it
               // here rather than in an effect keeps this a plain event.
               setLoaded({
@@ -267,7 +267,7 @@ export function ImageCropper({
             style={
               natural && rect
                 ? {
-                    // Percentages of the frame — see the file docstring.
+                    // Percentages of the frame  see the file docstring.
                     width: `${(natural.width / rect.width) * 100}%`,
                     height: `${(natural.height / rect.height) * 100}%`,
                     left: `${(-rect.x / rect.width) * 100}%`,

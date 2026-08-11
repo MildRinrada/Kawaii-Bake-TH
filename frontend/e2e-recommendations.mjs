@@ -1,7 +1,7 @@
 /**
  * Recommendations page browser E2E: anonymous roadmap, personalized
  * roadmap (hero, continue learning, next steps, taste panel that
- * genuinely refetches the feed), and mobile recomposition — against
+ * genuinely refetches the feed), and mobile recomposition  against
  * the real backend.
  */
 import { chromium } from "playwright";
@@ -12,7 +12,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 async function expect(page, selector, label, timeout = 10_000) {
@@ -57,7 +57,7 @@ try {
   } else {
     await expect(page, "text=ยังไม่มีคำแนะนำตอนนี้", "empty engine output gets a real empty state, not a blank page");
   }
-  // The badge is now an icon + label, not a standalone emoji — any of the
+  // The badge is now an icon + label, not a standalone emoji  any of the
   // real LEVEL_LABELS values is enough to prove the badge rendered.
   await expect(
     page,
@@ -103,10 +103,10 @@ try {
   await page.click('button:has-text("พออบเป็น")');
   await page.click('button:has-text("บันทึกความสนใจ")');
   await expect(page, "text=ปรับคำแนะนำให้ใหม่แล้ว", "saving preferences confirms via toast");
-  await expect(page, "text=พออบเป็น", "header skill badge updates — controls really write through");
+  await expect(page, "text=พออบเป็น", "header skill badge updates  controls really write through");
   await page.screenshot({ path: `${SHOT_DIR}/18-reco-after-tune.png`, fullPage: true });
 
-  // Hero save-for-later action — the hero only exists with a ranked feed.
+  // Hero save-for-later action  the hero only exists with a ranked feed.
   if (await page.locator("text=บันทึกไว้ก่อน").count()) {
     await page.click("text=บันทึกไว้ก่อน");
     await expect(page, "text=บันทึกเข้ารายการโปรดแล้ว", "hero save action toasts");

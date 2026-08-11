@@ -5,12 +5,12 @@
  * family); the UI speaks Thai. Codes are stable identifiers so they get
  * first priority; raw DRF/Django validator strings are matched exactly,
  * then by prefix for parameterised messages. Unknown text passes through
- * untranslated — wrong Thai would be worse than English.
+ * untranslated  wrong Thai would be worse than English.
  */
 
 const CODE_MESSAGES: Record<string, string> = {
   email_already_registered:
-    "อีเมลนี้มีบัญชีอยู่แล้ว — ลองเข้าสู่ระบบ หรือใช้เมนูลืมรหัสผ่าน",
+    "อีเมลนี้มีบัญชีอยู่แล้ว  ลองเข้าสู่ระบบ หรือใช้เมนูลืมรหัสผ่าน",
   username_taken: "ชื่อผู้ใช้นี้ถูกใช้แล้ว ลองชื่ออื่นดูนะ",
   invalid_credentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
   account_disabled: "บัญชีนี้ถูกปิดการใช้งาน",
@@ -31,14 +31,14 @@ const EXACT_MESSAGES: Record<string, string> = {
     "ชื่อนี้ถูกสงวนไว้ กรุณาเลือกชื่ออื่น",
   "This username is already taken.": "ชื่อผู้ใช้นี้ถูกใช้แล้ว ลองชื่ออื่นดูนะ",
   "An account with this email address already exists.":
-    "อีเมลนี้มีบัญชีอยู่แล้ว — ลองเข้าสู่ระบบ หรือใช้เมนูลืมรหัสผ่าน",
+    "อีเมลนี้มีบัญชีอยู่แล้ว  ลองเข้าสู่ระบบ หรือใช้เมนูลืมรหัสผ่าน",
   "Username may only contain lowercase letters, numbers, hyphens and underscores, and must start and end with a letter or number.":
     "ชื่อผู้ใช้ใช้ได้เฉพาะ a-z, 0-9, ขีดกลาง (-) และขีดล่าง (_) และต้องขึ้นต้นและลงท้ายด้วยตัวอักษรหรือตัวเลข",
   // Django's ImageField message. The most common real cause is an iPhone
-  // HEIC photo, which the server's Pillow build cannot decode — so the
+  // HEIC photo, which the server's Pillow build cannot decode  so the
   // Thai version names that cause instead of restating "invalid".
   "Upload a valid image. The file you uploaded was either not an image or a corrupted image.":
-    "ไฟล์นี้ไม่ใช่รูปภาพที่ระบบเปิดได้ — ถ้าเป็นรูปจาก iPhone (.HEIC) ให้แปลงเป็น JPG หรือ PNG ก่อน",
+    "ไฟล์นี้ไม่ใช่รูปภาพที่ระบบเปิดได้  ถ้าเป็นรูปจาก iPhone (.HEIC) ให้แปลงเป็น JPG หรือ PNG ก่อน",
   "The submitted file is empty.": "ไฟล์ที่อัปโหลดว่างเปล่า",
 };
 
@@ -46,7 +46,7 @@ const EXACT_MESSAGES: Record<string, string> = {
 const PREFIX_MESSAGES: Array<[string, string]> = [
   [
     "This password is too short.",
-    "รหัสผ่านสั้นเกินไป — ต้องมีอย่างน้อย 10 ตัวอักษร",
+    "รหัสผ่านสั้นเกินไป  ต้องมีอย่างน้อย 10 ตัวอักษร",
   ],
   [
     "The password is too similar to",

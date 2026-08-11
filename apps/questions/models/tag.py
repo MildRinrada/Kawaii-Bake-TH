@@ -12,7 +12,7 @@ from apps.questions.constants import TAG_NAME_MAX_LENGTH, TAG_SLUG_MAX_LENGTH
 class QuestionTag(TimeStampedModel):
     """A shared label on questions.
 
-    Tags are created implicitly when an author first uses a name — a bank one
+    Tags are created implicitly when an author first uses a name  a bank one
     cannot filter is just a list. Matching is case-insensitive so "Bread" and
     "bread" are one tag. Tag assignments stay editable on frozen questions:
     organising the bank is not rewriting history.

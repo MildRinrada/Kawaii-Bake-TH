@@ -143,7 +143,7 @@ class PreferenceServiceTests(TestCase):
         )
         self.assertFalse(effective["review_received"])
         self.assertTrue(effective["course_enrollment"])
-        # Only the changed row exists — absent still means enabled.
+        # Only the changed row exists  absent still means enabled.
         self.assertEqual(
             NotificationPreference.objects.filter(user=self.user).count(), 1
         )

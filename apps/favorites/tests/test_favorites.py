@@ -105,7 +105,7 @@ class FavoritesListTests(TestCase):
 
         self.assertEqual(payload["count"], 1)
         self.assertEqual(payload["results"][0]["type"], "course")
-        # The row itself survives — the bookmark returns if the recipe does.
+        # The row itself survives  the bookmark returns if the recipe does.
         self.assertEqual(Favorite.objects.filter(user=self.user).count(), 2)
 
     def test_archived_course_stays_for_the_enrolled_student(self) -> None:

@@ -30,7 +30,7 @@ class AIProvider(ABC):
         """Produce the assistant's next turn.
 
         Args:
-            messages: Full prompt — the system message first, then history,
+            messages: Full prompt - the system message first, then history,
                 ending with the newest user message.
             language: ``th`` or ``en``; the reply should be in this language.
             context: Optional structured content context (already rendered

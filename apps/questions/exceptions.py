@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class QuestionNotFoundError(DomainError):
     """Raised when a question is absent, or present but not the viewer's.
 
-    404 in both cases — the bank is a private authoring surface, and a 403
+    404 in both cases  the bank is a private authoring surface, and a 403
     would confirm someone else's question id exists.
     """
 

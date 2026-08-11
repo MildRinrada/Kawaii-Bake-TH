@@ -2,7 +2,7 @@
 
 **Delivery contract (ADR 0016).** ``notify`` registers delivery with
 ``transaction.on_commit``: inside a producer's atomic block it runs only
-after that block commits; under plain autocommit it runs immediately —
+after that block commits; under plain autocommit it runs immediately 
 either way, delivery can never observe (or be part of) an uncommitted
 producer transaction, without any signal. Delivery itself is best-effort:
 every exception inside it is logged and swallowed, so a notification
@@ -21,6 +21,7 @@ from apps.notifications.constants import NotificationEventType
 from apps.notifications.exceptions import NotificationNotFoundError
 from apps.notifications.models import Notification, NotificationPreference
 from apps.notifications.selectors import notification_selector
+from apps.users.selectors import user_selector
 
 logger = logging.getLogger("kawaiibake.notifications")
 
@@ -38,14 +39,14 @@ def notify(
 
     The public entry point producers call. Returns nothing on purpose:
     delivery is asynchronous with respect to the caller's transaction and
-    best-effort — producers must not branch on it.
+    best-effort  producers must not branch on it.
 
     Args:
         user_id: Primary key of the recipient.
         event_type: A value of :class:`NotificationEventType`.
         title: Snapshot headline, rendered verbatim.
         body: Snapshot detail line.
-        actor_handle: The acting user's **public handle** — never an email.
+        actor_handle: The acting user's **public handle**  never an email.
         link: Frontend path for navigation; may go stale later.
     """
     transaction.on_commit(
@@ -215,7 +216,7 @@ def notify_achievement_earned(*, user_id: int, badge_title: str) -> None:
 
 
 def mark_read(*, notification_id: int, user_id: int) -> Notification:
-    """Stamp ``read_at`` once. Idempotent — re-reading stays successful.
+    """Stamp ``read_at`` once. Idempotent  re-reading stays successful.
 
     Args:
         notification_id: Primary key of the notification.
@@ -261,7 +262,7 @@ def set_preferences(*, user_id: int, changes: dict[str, bool]) -> dict[str, bool
 
     Args:
         user_id: Primary key of the caller.
-        changes: Mapping of event type to enabled — keys already
+        changes: Mapping of event type to enabled  keys already
             validated by the serializer.
 
     Returns:
@@ -274,3 +275,53 @@ def set_preferences(*, user_id: int, changes: dict[str, bool]) -> dict[str, bool
             defaults={"enabled": enabled},
         )
     return notification_selector.effective_preferences(user_id=user_id)
+
+
+def broadcast_announcement(
+    *, actor_id: int, title: str, body: str = "", link: str = ""
+) -> int:
+    """Deliver one announcement to every active account, at once.
+
+    The one staff-produced notification (ADR 0028). It respects the same
+    per-event opt-out as every machine-produced type, and it is a single
+    ``bulk_create`` rather than N ``notify`` calls - a platform-sized
+    audience must not schedule a platform-sized pile of on-commit
+    closures.
+
+    Args:
+        actor_id: The staff member sending the announcement.
+        title: Headline, rendered verbatim.
+        body: Detail line.
+        link: Optional frontend path.
+
+    Returns:
+        How many recipients the announcement was created for.
+    """
+    opted_out = set(
+        NotificationPreference.objects.filter(
+            event_type=NotificationEventType.ANNOUNCEMENT, enabled=False
+        ).values_list("user_id", flat=True)
+    )
+    recipients = [
+        user_id
+        for user_id in user_selector.active_user_ids()
+        if user_id not in opted_out
+    ]
+    Notification.objects.bulk_create(
+        [
+            Notification(
+                recipient_id=user_id,
+                event_type=NotificationEventType.ANNOUNCEMENT,
+                title=title,
+                body=body,
+                link=link,
+            )
+            for user_id in recipients
+        ],
+        batch_size=500,
+    )
+    logger.info(
+        "announcement broadcast",
+        extra={"actor_id": actor_id, "recipients": len(recipients)},
+    )
+    return len(recipients)

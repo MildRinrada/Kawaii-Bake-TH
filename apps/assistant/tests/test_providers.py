@@ -12,7 +12,7 @@ from ai.schemas import AIMessage
 
 
 class MockProviderTests(SimpleTestCase):
-    """The offline default — deterministic and Thai-safe."""
+    """The offline default  deterministic and Thai-safe."""
 
     def test_echoes_the_last_user_message_in_thai(self) -> None:
         provider = MockAIProvider()

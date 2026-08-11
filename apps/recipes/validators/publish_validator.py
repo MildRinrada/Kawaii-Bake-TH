@@ -1,7 +1,7 @@
 """Completeness rules that only apply when publishing.
 
 Deliberately **not** enforced on every save. Requiring steps before a title can
-be stored makes drafts useless and pushes unsaved state into the frontend — the
+be stored makes drafts useless and pushes unsaved state into the frontend  the
 same orthogonality argument the users app makes for ``is_active`` versus
 ``is_email_verified``.
 """

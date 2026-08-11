@@ -2,7 +2,7 @@
 
 The counters (count and total duration) are rebuildable caches pushed through
 a single repository choke point; this command repairs them after any mutation
-path that bypassed the API — most likely a change made in the Django admin.
+path that bypassed the API  most likely a change made in the Django admin.
 """
 
 from __future__ import annotations

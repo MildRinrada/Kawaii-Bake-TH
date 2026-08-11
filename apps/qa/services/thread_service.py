@@ -111,7 +111,7 @@ def update_thread(
 def delete_thread(
     *, thread_id: int, viewer_id: int, viewer_is_staff: bool = False
 ) -> None:
-    """Soft-delete a thread — it vanishes from every API surface.
+    """Soft-delete a thread  it vanishes from every API surface.
 
     The row and its answers survive as history (other users' words are
     not the asker's to destroy), but no endpoint returns them again.
@@ -139,7 +139,7 @@ def accept_answer(
     viewer_id: int,
     viewer_is_staff: bool = False,
 ) -> QuestionThread:
-    """Mark one answer as accepted — at most one per thread.
+    """Mark one answer as accepted  at most one per thread.
 
     A single-field UPDATE: the previous accepted answer is unset by the
     same write, because one column cannot point at two rows.

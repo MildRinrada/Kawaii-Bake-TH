@@ -1,6 +1,6 @@
 """Constants for recommendation scoring and substitution.
 
-Every scoring weight lives here, named — no magic numbers inside the
+Every scoring weight lives here, named  no magic numbers inside the
 pipeline. Changing how recommendations rank is an edit to this file plus its
 tests, reviewable as a diff of declared policy (the ``XP_RULES`` precedent
 from gamification, ADR 0015).
@@ -23,7 +23,7 @@ CANDIDATE_POOL_SIZE = 200
 POSITIVE_REVIEW_MIN_RATING = 4
 
 # ---------------------------------------------------------------------------
-# Interest weights — how strongly each kind of evidence marks a category
+# Interest weights  how strongly each kind of evidence marks a category
 # ---------------------------------------------------------------------------
 
 # The user explicitly picked the category on their profile.
@@ -87,7 +87,7 @@ EXPERIENCE_DIFFICULTY_FIT: dict[str, tuple[str, ...]] = {
 DIVERSITY_PENALTY = 1.5
 
 # ---------------------------------------------------------------------------
-# Explanation reason codes — machine-readable, rendered by the frontend
+# Explanation reason codes  machine-readable, rendered by the frontend
 # ---------------------------------------------------------------------------
 
 REASON_PROFILE_CATEGORY = "matches_your_favorite_categories"
@@ -121,7 +121,7 @@ POPULAR_MIN_FAVORITES = 3
 # Substitution
 # ---------------------------------------------------------------------------
 
-# Confidence labels — deliberately coarse. The registry stores curated
+# Confidence labels  deliberately coarse. The registry stores curated
 # kitchen wisdom, not measured equivalence; three buckets are all the
 # precision that honestly exists (ADR 0018 §12).
 CONFIDENCE_HIGH = "high"

@@ -44,7 +44,7 @@ from apps.recipes.validators import (
 # in `publish_service`, and letting `status` through to a plain `setattr` here
 # would route every publish around them.
 #
-# `visibility` IS editable, because it is a plain field with no precondition —
+# `visibility` IS editable, because it is a plain field with no precondition 
 # a recipe may be made private at any moment, in any state.
 RECIPE_EDITABLE_FIELDS = frozenset(
     {
@@ -218,7 +218,7 @@ def delete_recipe(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -
     overloading DELETE with soft-delete semantics would surprise callers.
 
     Stored files are removed explicitly, because Django deletes no files when a
-    row is deleted — every recipe deleted without this would orphan its cover
+    row is deleted  every recipe deleted without this would orphan its cover
     and gallery images in storage forever.
 
     Args:

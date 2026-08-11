@@ -11,18 +11,18 @@ from apps.core.models.base import TimeStampedModel
 class LessonProgress(TimeStampedModel):
     """One user's progress through one lesson.
 
-    Owned by the progress domain since Phase 6 (previously in ``lessons`` —
+    Owned by the progress domain since Phase 6 (previously in ``lessons`` 
     ADR 0012). Completion is a **timestamp, not a boolean**:
 
     * ``completed_at`` NULL = not completed; NOT NULL = completed. One field
       is both the flag and the "when".
-    * ``first_completed_at`` is stamped once and survives un-completing —
+    * ``first_completed_at`` is stamped once and survives un-completing 
       the durable history XP and certificates will reference (the
       ``published_at`` pattern).
     * ``last_viewed_at`` is the future watch-position/resume hook; written
       alongside completion changes in Phase 6.
 
-    Rows are never deleted by unenrollment — a re-enrolling student owns
+    Rows are never deleted by unenrollment  a re-enrolling student owns
     their history.
     """
 

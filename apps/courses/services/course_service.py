@@ -185,7 +185,7 @@ def sync_published_lesson_count(
 
     **Public cross-app write API** (ADR 0009, extended by ADR 0021): called by
     the lessons app inside the same transaction as every lesson mutation. This
-    app treats the values as opaque, rebuildable caches — it computes nothing
+    app treats the values as opaque, rebuildable caches  it computes nothing
     about lessons itself.
 
     Args:
@@ -206,7 +206,7 @@ def sync_rating_aggregate(
 
     **Public cross-app write API** (ADR 0021): called by the reviews app at its
     mutation choke point whenever a course-targeted review changes. Opaque,
-    rebuildable cache — `manage.py rebuild_rating_aggregates` reconciles.
+    rebuildable cache  `manage.py rebuild_rating_aggregates` reconciles.
 
     Args:
         course_id: Primary key of the course.

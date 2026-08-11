@@ -1,4 +1,4 @@
-"""Q&A serializers — public API."""
+"""Q&A serializers - public API."""
 
 from __future__ import annotations
 

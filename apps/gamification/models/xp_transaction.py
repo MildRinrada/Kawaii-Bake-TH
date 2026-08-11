@@ -1,4 +1,4 @@
-"""The XP ledger — append-only history."""
+"""The XP ledger  append-only history."""
 
 from __future__ import annotations
 
@@ -9,11 +9,11 @@ from apps.gamification.constants import XPReason
 
 
 class XPTransaction(models.Model):
-    """One earning event — a fact, never edited or deleted.
+    """One earning event  a fact, never edited or deleted.
 
     The append-only family (LearningActivity, AssistantMessage, AIUsageLog,
     Achievement): the ledger is the *history*, and every stored aggregate
-    (``UserLevel``) is recomputed from it — the ledger can therefore repair
+    (``UserLevel``) is recomputed from it  the ledger can therefore repair
     the aggregate, never the other way round. The repository exposes only
     an append.
     """

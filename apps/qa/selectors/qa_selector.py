@@ -78,7 +78,7 @@ def list_answers(
     """A thread's answers, oldest first, under the thread's visibility.
 
     The join through ``visible_q(prefix="thread__")`` means answers of a
-    hidden or deleted thread simply do not exist here — the same rule as
+    hidden or deleted thread simply do not exist here  the same rule as
     the thread itself, one implementation.
 
     Args:

@@ -1,4 +1,4 @@
-"""Users models — public API.
+"""Users models  public API.
 
 Phase 1 defines exactly three tables: ``User``, ``Profile`` and
 ``UserPreference``.

@@ -25,7 +25,7 @@ def _base_context() -> dict[str, str]:
     """Return context every auth email needs.
 
     Emails render without a request (and often from a Celery worker), so
-    context processors never run — site values are passed explicitly.
+    context processors never run  site values are passed explicitly.
     """
     return {
         "site_name": settings.SITE_NAME,

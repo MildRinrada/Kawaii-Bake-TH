@@ -43,7 +43,7 @@ class ServiceAPIView(APIView):
     def get_serializer_context(self) -> dict[str, object]:
         """Return the context passed to serializers.
 
-        Includes ``request`` so serializers can build absolute media URLs — the
+        Includes ``request`` so serializers can build absolute media URLs  the
         frontend runs on a different origin and cannot resolve relative paths.
         """
         return {"request": self.request}
@@ -93,7 +93,7 @@ class CsrfProtectedAPIView(ServiceAPIView):
     """Base view for **unauthenticated** state-changing endpoints.
 
     DRF wraps every ``APIView`` in ``csrf_exempt`` and only enforces CSRF from
-    within ``SessionAuthentication`` — which runs solely for already
+    within ``SessionAuthentication``  which runs solely for already
     authenticated requests. Without this decorator, ``/login/`` and
     ``/register/`` would be CSRF-exempt, enabling login-CSRF (forcing a victim
     into an attacker-controlled account).

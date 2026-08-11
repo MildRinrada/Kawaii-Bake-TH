@@ -41,7 +41,7 @@ def create_or_get(
 def delete(
     *, user_id: int, recipe_id: int | None = None, course_id: int | None = None
 ) -> int:
-    """Remove a favorite. Idempotent — absent rows delete zero.
+    """Remove a favorite. Idempotent  absent rows delete zero.
 
     Args:
         user_id: Primary key of the user.

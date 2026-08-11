@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                 ('first_seen_at', models.DateTimeField(auto_now_add=True)),
                 ('last_seen_at', models.DateTimeField(db_index=True)),
                 ('blocked_until', models.DateTimeField(blank=True, null=True)),
-                ('review_state', models.CharField(choices=[('open', 'Needs review'), ('acknowledged', 'Reviewed — watching'), ('ignored', 'Reviewed — benign')], db_index=True, default='open', max_length=14)),
+                ('review_state', models.CharField(choices=[('open', 'Needs review'), ('acknowledged', 'Reviewed  watching'), ('ignored', 'Reviewed  benign')], db_index=True, default='open', max_length=14)),
                 ('reviewed_at', models.DateTimeField(blank=True, null=True)),
                 ('note', models.CharField(blank=True, max_length=300)),
                 ('blocked_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='security_blocks_issued', to=settings.AUTH_USER_MODEL)),

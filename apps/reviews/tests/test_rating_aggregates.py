@@ -104,7 +104,7 @@ class CourseRatingAggregateTests(TestCase):
         self.assertEqual(self._aggregate(), (None, 0))
 
     def test_rebuild_command_repairs_drift(self) -> None:
-        # The factory writes at the model layer — deliberately bypassing
+        # The factory writes at the model layer  deliberately bypassing
         # the choke point, exactly the drift the command exists to repair.
         create_review(user=self.fan, course=self.course, rating=4)
         self.assertEqual(self._aggregate(), (None, 0))

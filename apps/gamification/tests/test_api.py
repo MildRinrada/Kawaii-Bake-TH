@@ -113,7 +113,7 @@ class LeaderboardApiTests(TestCase):
         self.assertEqual(body["results"][0]["public_handle"], "lbhigh")
         self.assertEqual(body["results"][0]["total_xp"], 100)
         self.assertEqual(body["results"][0]["level"], 2)
-        # Handle, level, XP — nothing else leaks.
+        # Handle, level, XP  nothing else leaks.
         self.assertEqual(
             set(body["results"][0]), {"public_handle", "level", "total_xp"}
         )
@@ -126,7 +126,7 @@ class LeaderboardApiTests(TestCase):
                 user_id=user.id, reason=XPReason.LESSON_COMPLETED
             )
 
-        # Anonymous: count + one page with the user join — no per-row query.
+        # Anonymous: count + one page with the user join  no per-row query.
         with self.assertNumQueries(2):
             response = self.client.get("/api/v1/leaderboard/")
         self.assertEqual(response.json()["count"], 8)

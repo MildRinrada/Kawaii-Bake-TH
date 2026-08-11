@@ -64,7 +64,7 @@ def recent_history(*, conversation_id: int) -> list[AIMessage]:
     """Return the provider-facing replay window, oldest-first.
 
     The last :data:`HISTORY_WINDOW` stored turns as plain ``AIMessage``
-    values — the model never crosses into the ``ai`` package. Only ``user``
+    values - the model never crosses into the ``ai`` package. Only ``user``
     and ``assistant`` roles exist in storage; the system prompt is rebuilt
     fresh by the service.
 

@@ -161,7 +161,7 @@ class FreezeTests(TestCase):
         first_stamp = Question.objects.get(pk=self.question.pk).frozen_at
         self.assertIsNotNone(first_stamp)
 
-        # Second freeze — the second student starting the same quiz.
+        # Second freeze  the second student starting the same quiz.
         question_service.freeze_questions(question_ids=[self.question.pk])
         self.assertEqual(
             Question.objects.get(pk=self.question.pk).frozen_at, first_stamp
@@ -211,7 +211,7 @@ class FreezeTests(TestCase):
         self.assertFalse(Question.objects.filter(pk=self.question.pk).exists())
 
     def test_gate_write_reports_conflict_via_rowcount(self) -> None:
-        # The repository primitive itself: 1 row before freeze, 0 after —
+        # The repository primitive itself: 1 row before freeze, 0 after 
         # the "affected rows != expected" conflict signal from the design.
         self.assertTrue(
             question_repository.acquire_edit_gate(question_id=self.question.pk)

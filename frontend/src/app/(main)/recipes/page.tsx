@@ -4,7 +4,7 @@
  * Recipe discovery: a smart baking library.
  *
  * The URL is the single source of truth for every dimension the real
- * API supports — search, categories (multi), difficulty (multi), a
+ * API supports  search, categories (multi), difficulty (multi), a
  * time cap, an ingredient term (canonically folded server-side, Thai ↔
  * English), and ordering. Suggestions, the quick-category row, the
  * mobile filter sheet and the no-results recovery all drive the same
@@ -13,7 +13,7 @@
  */
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 
@@ -37,6 +37,11 @@ import { CategoryThumb, CategoryTile } from "@/components/content/category-tile"
 import { Icon } from "@/components/ui/icon";
 import { RecipeCard } from "@/components/content/recipe-card";
 import { cn } from "@/lib/cn";
+
+/** One toast identity for favouriting, so rapid clicks rewrite a single
+    message instead of stacking one per click. */
+const FAVORITE_TOAST = "favorite";
+
 
 const PAGE_SIZE = 12;
 
@@ -256,7 +261,7 @@ function SearchBox({
 }
 
 /* ------------------------------------------------------------------ */
-/* Saveable card — heart seeded from the user's real favorites         */
+/* Saveable card  heart seeded from the user's real favorites         */
 /* ------------------------------------------------------------------ */
 
 function SaveableRecipeCard({
@@ -279,11 +284,11 @@ function SaveableRecipeCard({
       if (saved) {
         await api.delete(`/recipes/${recipe.slug}/favorite/`);
         onToggle(recipe.slug, false);
-        toast("นำออกจากรายการโปรดแล้ว");
+        toast("นำออกจากรายการโปรดแล้ว", "neutral", FAVORITE_TOAST);
       } else {
         await api.post(`/recipes/${recipe.slug}/favorite/`);
         onToggle(recipe.slug, true);
-        toast("บันทึกเข้ารายการโปรดแล้ว", "success");
+        toast("บันทึกเข้ารายการโปรดแล้ว", "success", FAVORITE_TOAST);
       }
     } catch {
       toast("ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
@@ -343,25 +348,47 @@ function RecipesContent() {
   const selectedDifficulties = difficultyParam ? difficultyParam.split(",") : [];
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  // `router.replace` does not update `searchParams` until the next render,
+  // so two quick clicks would both merge into the *same* pre-click URL and
+  // the first selection would vanish. Remembering the query string we just
+  // wrote makes the second click build on the first. The effect drops it
+  // again as soon as the URL catches up (our own write, or a Back), so a
+  // stale value can never outlive one render.
+  const pendingQuery = useRef<string | null>(null);
+  useEffect(() => {
+    pendingQuery.current = null;
+  }, [searchParams]);
+
   function setParams(updates: Record<string, string | null>) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(
+      pendingQuery.current ?? searchParams.toString(),
+    );
     for (const [key, value] of Object.entries(updates)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
     if (!("page" in updates)) params.delete("page");
     const qs = params.toString();
+    pendingQuery.current = qs;
     router.replace((qs ? `/recipes?${qs}` : "/recipes") as Route, {
       scroll: false,
     });
   }
 
-  function toggleInList(current: string[], value: string, key: string, max = 5) {
-    const next = current.includes(value)
-      ? current.filter((item) => item !== value)
-      : current.length < max
-        ? [...current, value]
-        : current;
+  function toggleInList(_current: string[], value: string, key: string, max = 5) {
+    // Recompute membership from the freshest query - including a write
+    // that has not committed to `searchParams` yet - never from the
+    // render's snapshot. Two quick clicks must both count; reading the
+    // snapshot made the second click erase the first.
+    const params = new URLSearchParams(
+      pendingQuery.current ?? searchParams.toString(),
+    );
+    const live = params.get(key)?.split(",").filter(Boolean) ?? [];
+    const next = live.includes(value)
+      ? live.filter((item) => item !== value)
+      : live.length < max
+        ? [...live, value]
+        : live;
     setParams({ [key]: next.join(",") || null });
   }
 
@@ -517,7 +544,7 @@ function RecipesContent() {
         onCategory={(slug) => toggleInList(selectedCategories, slug, "category")}
       />
 
-      {/* Quick categories — compact square photo tiles, horizontal scroll */}
+      {/* Quick categories  compact square photo tiles, horizontal scroll */}
       {categories.data && categories.data.length > 0 ? (
         <div
           className="mt-4 flex snap-x gap-2.5 overflow-x-auto pb-2"
@@ -531,6 +558,7 @@ function RecipesContent() {
               slug={category.slug}
               name={category.name}
               count={category.recipe_count}
+              imageUrl={category.image_url}
               active={selectedCategories.includes(category.slug)}
               onClick={() =>
                 toggleInList(selectedCategories, category.slug, "category")
@@ -769,7 +797,7 @@ function RecipesContent() {
         </div>
       ) : null}
 
-      {/* Anonymous nudge — save requires an account */}
+      {/* Anonymous nudge  save requires an account */}
       {status === "anonymous" && data && data.results.length > 0 ? (
         <p className="mt-8 text-center text-sm text-fg-muted">
           <Link href="/login" className="font-medium text-accent underline">

@@ -1,4 +1,4 @@
-"""Cache infrastructure — public API."""
+"""Cache infrastructure - public API."""
 
 from __future__ import annotations
 

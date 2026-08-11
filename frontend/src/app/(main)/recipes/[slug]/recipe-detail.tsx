@@ -5,7 +5,7 @@
  *
  * The workspace (scaler → unit toggle → ingredient checklist → stepped
  * instructions with timers → focus mode) is driven entirely by real
- * recipe data — quantities scale from the stored decimals, timers come
+ * recipe data  quantities scale from the stored decimals, timers come
  * from `duration_minutes` (or a duration the step text actually
  * states), substitutions come from the rule registry endpoint. Baking
  * progress, servings, units and personal notes persist per-recipe in
@@ -44,6 +44,11 @@ import { RecipeCard } from "@/components/content/recipe-card";
 import { CommunityPostCard } from "@/components/community/post-card";
 import { cn } from "@/lib/cn";
 
+/** One toast identity for favouriting, so rapid clicks rewrite a single
+    message instead of stacking one per click. */
+const FAVORITE_TOAST = "favorite";
+
+
 type RatingSummary = components["schemas"]["RatingSummary"];
 type Ingredient = components["schemas"]["RecipeIngredient"];
 type Step = components["schemas"]["RecipeStep"];
@@ -62,7 +67,7 @@ const IMPERIAL: Record<string, { unit: string; factor: number }> = {
   ml: { unit: "fl oz", factor: 1 / 29.574 },
 };
 
-/** Round to a kitchen-practical precision — no fake decimals. */
+/** Round to a kitchen-practical precision  no fake decimals. */
 function practicalRound(value: number): number {
   if (value >= 100) return Math.round(value);
   if (value >= 10) return Math.round(value * 2) / 2;
@@ -224,11 +229,11 @@ function FavoriteButton({ slug }: { slug: string }) {
       if (favorited) {
         await api.delete(`/recipes/${slug}/favorite/`);
         setFavorited(false);
-        toast("นำออกจากรายการโปรดแล้ว");
+        toast("นำออกจากรายการโปรดแล้ว", "neutral", FAVORITE_TOAST);
       } else {
         await api.post(`/recipes/${slug}/favorite/`);
         setFavorited(true);
-        toast("บันทึกเข้ารายการโปรดแล้ว", "success");
+        toast("บันทึกเข้ารายการโปรดแล้ว", "success", FAVORITE_TOAST);
       }
     } catch {
       toast("ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
@@ -263,7 +268,7 @@ function ShareButton() {
         toast("คัดลอกลิงก์แล้ว", "success");
       }
     } catch {
-      // User dismissed the share sheet — nothing to report.
+      // User dismissed the share sheet  nothing to report.
     }
   }
   return (
@@ -304,7 +309,7 @@ function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) 
       onPosted();
     } catch (err) {
       if (err instanceof ApiError && err.code === "already_reviewed") {
-        setError("คุณรีวิวสูตรนี้ไปแล้ว — แก้ไขได้จากรีวิวเดิมของคุณ");
+        setError("คุณรีวิวสูตรนี้ไปแล้ว  แก้ไขได้จากรีวิวเดิมของคุณ");
       } else if (err instanceof ApiError && err.code === "own_content") {
         setError("รีวิวสูตรของตัวเองไม่ได้นะ");
       } else {
@@ -513,7 +518,7 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
             <Skeleton className="h-20 w-full" />
           ) : !reviews.data || reviews.data.results.length === 0 ? (
             <p className="py-4 text-center text-sm text-fg-muted">
-              ยังไม่มีรีวิว — ลองทำสูตรนี้แล้วมาเล่าให้ฟังนะ
+              ยังไม่มีรีวิว  ลองทำสูตรนี้แล้วมาเล่าให้ฟังนะ
             </p>
           ) : (
             <ul className="space-y-4">
@@ -573,7 +578,7 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
  * Reads only posts explicitly attached to this recipe
  * (`GET /gallery/?recipe_id=`), capped by one shared constant rather
  * than a number sprinkled through the UI. The compose link carries the
- * recipe so the post opens with it already attached — the user is still
+ * recipe so the post opens with it already attached  the user is still
  * creating a *community post*, which the copy says out loud.
  */
 function RecipeCommunitySection({ recipe }: { recipe: RecipeDetail }) {
@@ -686,7 +691,7 @@ function Workspace({
     try {
       window.localStorage.setItem(`kb-bake-${data.slug}`, JSON.stringify(session));
     } catch {
-      // Storage full/blocked — the session simply won't survive reload.
+      // Storage full/blocked  the session simply won't survive reload.
     }
   }, [data.slug, session]);
 
@@ -706,7 +711,7 @@ function Workspace({
     return () => clearInterval(handle);
   }, [timers]);
 
-  // Announce each finished timer exactly once — tracked in a ref, so
+  // Announce each finished timer exactly once  tracked in a ref, so
   // this effect performs no state writes.
   const announcedRef = useRef<Set<number>>(new Set());
   useEffect(() => {
@@ -1144,7 +1149,7 @@ function Workspace({
                 rows={3}
               />
               <p className="mt-1.5 text-xs text-fg-subtle">
-                บันทึกไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น — แยกจากตัวสูตรจริง
+                บันทึกไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น  แยกจากตัวสูตรจริง
               </p>
             </CardBody>
           </Card>

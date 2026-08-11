@@ -1,10 +1,10 @@
-"""Grading — pure functions, no ORM, no clock, no HTTP.
+"""Grading  pure functions, no ORM, no clock, no HTTP.
 
 One grader per question type, held in a registry: a future type (short
 answer, AI evaluation, matching…) is one new entry plus its validator, with
-no change to the engine. Grading consumes only two inputs — the attempt's
+no change to the engine. Grading consumes only two inputs  the attempt's
 **snapshot** (question order and points, fixed at start) and the bank's
-**answer keys** (fixed by freezing, also at start) — so nothing an instructor
+**answer keys** (fixed by freezing, also at start)  so nothing an instructor
 does mid-attempt can change a result.
 
 No partial credit in this phase: multiple choice is exact-set match. Negative
@@ -79,7 +79,7 @@ def grade_attempt(
     """Grade a whole attempt.
 
     A skipped question (empty selection) is graded incorrect and awards
-    nothing — skipping is answering wrong, not shrinking the quiz.
+    nothing  skipping is answering wrong, not shrinking the quiz.
 
     Args:
         answers: The snapshot rows with the taker's selections.

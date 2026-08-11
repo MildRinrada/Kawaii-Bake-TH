@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class GalleryPostNotFoundError(DomainError):
     """Raised when a post is absent, or hidden from this viewer.
 
-    Unpublished-and-not-yours and nonexistent are the same 404 — the
+    Unpublished-and-not-yours and nonexistent are the same 404  the
     fail-closed rule every domain follows.
     """
 
@@ -21,7 +21,7 @@ class InvalidGalleryReferenceError(DomainError):
     """Raised when the referenced recipe/course is not publicly visible.
 
     A gallery post is public by default, so its reference must be content
-    the public could open — otherwise the post's card would leak a hidden
+    the public could open  otherwise the post's card would leak a hidden
     title.
     """
 

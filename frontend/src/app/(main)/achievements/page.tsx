@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Achievements — the badge collection.
+ * Achievements  the badge collection.
  *
  * Two endpoints, and the split between them is the whole design:
- *   - `GET /achievements/` is the badge **catalogue** — what exists to
+ *   - `GET /achievements/` is the badge **catalogue**  what exists to
  *     earn (system-owned display metadata, ADR 0024).
- *   - `GET /me/achievements/` is the **ledger** — append-only facts about
+ *   - `GET /me/achievements/` is the **ledger**  append-only facts about
  *     what this caller earned, and when.
  *
  * Locked badges are catalogue entries with no matching fact. The frontend
@@ -14,7 +14,7 @@
  * renders. No status is computed, stored or guessed here.
  *
  * No progress bar appears on a locked badge because no endpoint reports
- * partial progress toward one — the unlock condition is shown instead.
+ * partial progress toward one  the unlock condition is shown instead.
  * The skill card uses the real gamification standing, including the
  * server-stated `xp_for_next_level`, so the level curve is never
  * restated on this side.
@@ -46,7 +46,7 @@ type Badge = Schemas["Badge"];
 
 /**
  * Badge definitions carry no category field, so grouping is derived from
- * the slug — a presentation convenience that lives here and is never
+ * the slug  a presentation convenience that lives here and is never
  * pushed back into the API model. An unknown slug simply lands in
  * "อื่น ๆ" rather than inventing a bucket for it.
  */
@@ -70,13 +70,13 @@ function groupOf(slug: string): string {
   return GROUPS[slug] ?? "other";
 }
 
-/** Only routes that exist — a badge never links somewhere invented. */
+/** Only routes that exist  a badge never links somewhere invented. */
 const NEXT_STEP: Record<string, { href: Route; label: string }> = {
   course_completed: { href: "/courses", label: "ไปเรียนคอร์ส" },
   first_course: { href: "/courses", label: "เริ่มคอร์สแรก" },
   ten_courses: { href: "/courses", label: "ดูคอร์สทั้งหมด" },
   // Quizzes live inside lessons, so the course catalogue is the honest
-  // way in — there is no standalone quiz route.
+  // way in  there is no standalone quiz route.
   quiz_master: { href: "/courses", label: "ไปทำแบบทดสอบในบทเรียน" },
   recipe_author: { href: "/recipes/create", label: "เขียนสูตรของคุณ" },
 };
@@ -260,7 +260,7 @@ function BadgeCard({
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${state.badge.title_th} — ${earned ? "ปลดล็อกแล้ว" : "ยังไม่ปลดล็อก"}`}
+      aria-label={`${state.badge.title_th}  ${earned ? "ปลดล็อกแล้ว" : "ยังไม่ปลดล็อก"}`}
       className="group h-full w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <Card
@@ -342,7 +342,7 @@ function AchievementsContent() {
 
   // Join catalogue × ledger on slug. The ledger's `achievement_type` is
   // the same identity as the badge slug, and an earned achievement whose
-  // badge was deactivated still counts — it just has no catalogue row.
+  // badge was deactivated still counts  it just has no catalogue row.
   const earnedByType = new Map(
     (mine.data?.results ?? []).map((row) => [row.achievement_type, row]),
   );
@@ -484,7 +484,7 @@ function AchievementsContent() {
             {/* XP is derived from the domains' facts on demand, so an
                 account whose activity predates the ledger reads zero
                 until it is reconciled. This is the backend's own
-                idempotent rebuild — not a client-side calculation. */}
+                idempotent rebuild  not a client-side calculation. */}
             <div className="w-full sm:w-auto">
               <Button
                 size="sm"

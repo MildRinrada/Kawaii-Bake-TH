@@ -1,4 +1,4 @@
-"""Question bank models — public API."""
+"""Question bank models - public API."""
 
 from __future__ import annotations
 

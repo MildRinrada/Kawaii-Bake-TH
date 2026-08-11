@@ -1,4 +1,4 @@
-"""Who may see which courses — the single source of truth.
+"""Who may see which courses  the single source of truth.
 
 Same design as ``recipe_visibility``, with two additions this domain needs:
 
@@ -82,7 +82,7 @@ def visible_detail_q(
 
     Broader than the listing condition in two respects: an ``unlisted``
     published course is reachable by direct link, and an **archived** course
-    stays readable to a student with an active or completed enrollment — their
+    stays readable to a student with an active or completed enrollment  their
     progress must not vanish because the instructor tidied up.
 
     Args:

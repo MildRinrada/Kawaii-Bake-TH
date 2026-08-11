@@ -5,14 +5,24 @@ from __future__ import annotations
 from django.db import models
 from django.db.models.functions import Lower
 
+from apps.common.utils.files import build_upload_path
 from apps.core.models.base import TimeStampedModel
 from apps.recipe_categories.constants import (
     CATEGORY_DEFAULT_ORDERING,
     CATEGORY_DESCRIPTION_MAX_LENGTH,
     CATEGORY_ICON_MAX_LENGTH,
+    CATEGORY_IMAGE_UPLOAD_DIR,
     CATEGORY_NAME_MAX_LENGTH,
     CATEGORY_SLUG_MAX_LENGTH,
 )
+from infrastructure.storage import get_media_storage
+
+
+def category_image_upload_to(instance: RecipeCategory, filename: str) -> str:
+    """Build the storage path for a category tile photo."""
+    return build_upload_path(
+        directory=CATEGORY_IMAGE_UPLOAD_DIR, filename=filename
+    )
 
 
 class RecipeCategory(TimeStampedModel):
@@ -25,7 +35,7 @@ class RecipeCategory(TimeStampedModel):
     There is no ``parent`` field and no ``recipe_count`` column. A self-relation
     on a table of roughly twenty rows is trivial to add when hierarchy is
     actually needed, and the count is one ``annotate(Count(...))`` in the
-    selector — a stored counter would be a second source of truth able to drift.
+    selector  a stored counter would be a second source of truth able to drift.
 
     Reverse accessors reserved for future apps: ``recipes`` (taken by the
     many-to-many on ``Recipe``), ``courses``, ``favorites``.
@@ -45,6 +55,15 @@ class RecipeCategory(TimeStampedModel):
         max_length=CATEGORY_ICON_MAX_LENGTH,
         blank=True,
         help_text="Frontend icon key or emoji.",
+    )
+    # The tile photo the home page and filter boxes show. Optional: when
+    # unset the frontend falls back to its built-in artwork for known
+    # slugs, so seeding a fresh database still looks finished.
+    image = models.ImageField(
+        upload_to=category_image_upload_to,
+        storage=get_media_storage,
+        blank=True,
+        help_text="Tile photo shown on the home page and category boxes.",
     )
     display_order = models.PositiveSmallIntegerField(
         default=0, help_text="Lower values sort first."

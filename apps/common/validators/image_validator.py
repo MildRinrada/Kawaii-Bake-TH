@@ -25,7 +25,7 @@ def validate_uploaded_image(
 ) -> None:
     """Validate an uploaded image file.
 
-    Checks size, extension, and — critically — the actual decoded image format.
+    Checks size, extension, and  critically  the actual decoded image format.
     The ``content_type`` header is client-supplied and is never trusted. SVG is
     excluded by every caller's allow-list because it can carry script and would
     be stored XSS.

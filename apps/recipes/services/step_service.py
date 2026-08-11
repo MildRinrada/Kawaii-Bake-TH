@@ -30,7 +30,7 @@ def replace_steps(
     """Replace a recipe's steps wholesale.
 
     Reordering is expressed simply by submitting the array in a different
-    order — ``position`` is always derived from the array, never from the client.
+    order  ``position`` is always derived from the array, never from the client.
 
     Args:
         slug: The recipe slug.

@@ -12,7 +12,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 async function expect(page, selector, label, timeout = 10_000) {
@@ -62,7 +62,7 @@ try {
   // Real lesson counts, but not a hard-coded fraction: the learner's
   // progress moves whenever another suite completes a lesson.
   await expect(page, "text=/เรียนแล้ว \\d+ จาก \\d+ บทเรียน/", "progress card shows real lesson counts");
-  // The section hides itself when the engine returns nothing — which it
+  // The section hides itself when the engine returns nothing  which it
   // legitimately does once an account has favourited most of the small
   // published catalogue. Assert against what the API actually returns.
   const recommended = await page.evaluate(async () => {
@@ -72,7 +72,7 @@ try {
     );
     return (await response.json()).count;
   });
-  // Scoped to the section heading (`h2`) — the nav also carries a
+  // Scoped to the section heading (`h2`)  the nav also carries a
   // "แนะนำสำหรับคุณ" link to /recommendations, which a bare text locator
   // matches too.
   const sectionHeading = page.locator("h2", { hasText: "แนะนำสำหรับคุณ" });
@@ -81,7 +81,7 @@ try {
     ok("recommendation feed becomes personal");
   } else {
     // The page runs its own fetch of the same endpoint; give it a beat to
-    // resolve and render null before asserting the section is absent —
+    // resolve and render null before asserting the section is absent 
     // otherwise this races the component's in-flight request.
     await page.waitForTimeout(1000);
     if (await sectionHeading.count()) {

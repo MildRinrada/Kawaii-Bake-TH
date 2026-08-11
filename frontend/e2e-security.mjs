@@ -9,7 +9,7 @@
  * `X-Forwarded-For: 203.0.113.99` (a TEST-NET-3 address, reserved for
  * documentation and guaranteed not to be anyone). All the data this test
  * creates therefore lands on one profile, which the script deletes at the
- * end — it never touches events the real dev traffic produced.
+ * end  it never touches events the real dev traffic produced.
  *
  * Requires Django started with `SECURITY_TRUSTED_IPS=""`; the shipped
  * default trusts 127.0.0.1, which would (correctly) make every probe from
@@ -40,7 +40,7 @@ const PROBE_HEADERS = { "X-Forwarded-For": PROBE_IP };
 let passed = 0;
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 async function expect(page, selector, label, timeout = 15_000) {
   await page.waitForSelector(selector, { timeout });
@@ -104,7 +104,7 @@ try {
     });
     assert(suppressed, "deter mode suppresses the context menu for a visitor");
   } else {
-    ok(`deter checks skipped — server is in "${policy.guard_mode}" mode`);
+    ok(`deter checks skipped  server is in "${policy.guard_mode}" mode`);
   }
 
   /* ---------- A browser-reported signal is accepted and bounded ---------- */
@@ -144,7 +144,7 @@ try {
     {
       path: "/api/v1/recipes/",
       ua: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-      expect: null, // allowed crawler — must score nothing
+      expect: null, // allowed crawler  must score nothing
     },
   ];
   for (const probe of probes) {
@@ -165,8 +165,8 @@ try {
   );
   assert(trap.status() === 404, "a trap path answers an ordinary 404");
   // The property that matters is that the trap tells the scanner nothing
-  // an ordinary miss would not. Comparing whole bodies is no good — the
-  // DEBUG 404 page echoes the requested path — so compare *what the two
+  // an ordinary miss would not. Comparing whole bodies is no good  the
+  // DEBUG 404 page echoes the requested path  so compare *what the two
   // responses reveal*: no detection vocabulary may appear in one and not
   // the other.
   const trapBody = (await trap.text()).toLowerCase();
@@ -272,7 +272,7 @@ try {
   await page.click('button:has-text("บล็อก 60 นาที")');
   await expect(page, "text=/IP หนึ่งอาจเป็นผู้ใช้หลายคน/", "blocking warns that an IP is not a person");
   // Two dialogs are open at once (the detail panel and the confirmation),
-  // and both contain a button with this label — target the confirmation
+  // and both contain a button with this label  target the confirmation
   // by its own aria-label so the click is unambiguous.
   await page.click(
     `dialog[aria-label="บล็อก ${PROBE_IP} 60 นาที"] button:has-text("บล็อก 60 นาที")`,
@@ -291,7 +291,7 @@ try {
     API,
   );
   assert(blocked.is_blocked, "the block is recorded through the real endpoint");
-  assert(blocked.blocked_until !== null, "the block carries an expiry — never permanent");
+  assert(blocked.blocked_until !== null, "the block carries an expiry  never permanent");
 
   // And it is enforced on the next request from that address.
   const denied = await context.request.get(`${ORIGIN}/api/v1/recipes/`, {
@@ -313,7 +313,7 @@ try {
   });
   assert(allowed.status() === 200, "unblocking takes effect on the next request");
 
-  await page.click('button:has-text("ตรวจแล้ว — ปกติ")');
+  await page.click('button:has-text("ตรวจแล้ว  ปกติ")');
   await page.waitForTimeout(1000);
   const reviewed = await page.evaluate(
     async (api) =>

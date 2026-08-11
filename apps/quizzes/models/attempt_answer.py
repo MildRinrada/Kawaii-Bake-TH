@@ -10,7 +10,7 @@ from apps.core.models.base import TimeStampedModel
 class QuizAttemptAnswer(TimeStampedModel):
     """One question inside one attempt.
 
-    Rows are created **empty at attempt start** — that is the composition
+    Rows are created **empty at attempt start**  that is the composition
     snapshot. Position and ``points_possible`` are copied from the
     ``QuizQuestion`` rows at that moment, and grading later reads only this
     snapshot plus the (frozen) bank questions. An instructor replacing the
@@ -21,7 +21,7 @@ class QuizAttemptAnswer(TimeStampedModel):
     ``question`` is ``PROTECT``: attempt history pins bank questions forever.
     ``selected_choices`` has no ``PROTECT`` (M2M cannot), but the invariant
     holds structurally: selections only ever reference choices of **frozen**
-    questions — freezing happens in the same transaction that creates these
+    questions  freezing happens in the same transaction that creates these
     rows, before any selection exists, and frozen choices cannot be deleted.
 
     ``was_correct`` is three-valued: ``NULL`` until graded.

@@ -1,4 +1,4 @@
-"""Credential issuance — public API."""
+"""Credential issuance - public API."""
 
 from __future__ import annotations
 

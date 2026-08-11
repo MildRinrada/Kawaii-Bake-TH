@@ -16,7 +16,7 @@ from apps.lessons.constants import (
 
 
 class LessonSyllabusItemSerializer(serializers.Serializer):
-    """One lesson on the public syllabus — metadata only, never content."""
+    """One lesson on the public syllabus  metadata only, never content."""
 
     id = serializers.IntegerField(read_only=True)
     title = serializers.CharField(read_only=True)
@@ -53,7 +53,7 @@ class LessonDetailSerializer(serializers.Serializer):
         """Return the linked recipe reference, redacted for this viewer.
 
         Provided by the view via context after a viewer-aware lookup; a recipe
-        that has gone private since linking degrades to ``None`` — never a leak.
+        that has gone private since linking degrades to ``None``  never a leak.
         """
         return self.context.get("recipe_ref")
 
@@ -91,7 +91,7 @@ class LessonCreateSerializer(StrictSerializer):
 class LessonUpdateSerializer(StrictSerializer):
     """Validates a partial lesson update.
 
-    ``status`` is editable here — lessons have no completeness gate of their
+    ``status`` is editable here  lessons have no completeness gate of their
     own; publishing a lesson simply puts it on the syllabus and updates the
     course's counter through the repository choke point.
     """

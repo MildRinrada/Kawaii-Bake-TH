@@ -1,4 +1,4 @@
-# KawaiiBake — Coding Guidelines
+# KawaiiBake  Coding Guidelines
 
 ## 1. Style
 
@@ -7,7 +7,7 @@
   `UPPER_SNAKE_CASE` for constants.
 - Maximum line length: 100.
 - **Absolute imports only**: `from apps.recipes.services import ...`
-  — never relative (`from ..services import ...`).
+   never relative (`from ..services import ...`).
 
 ## 2. Typing & Documentation
 
@@ -38,11 +38,11 @@ def enroll_user(*, user_id: int, course_id: int) -> "Enrollment":
 2. **No ORM queries outside `repositories/` / `selectors/`.**
 3. **No business logic in models, views, templates, or signals.**
 4. **Services orchestrate; they do not render** (no `HttpResponse`, no `request`).
-5. **Constants** — no magic strings/numbers; use `constants.py` enums.
-6. **Exceptions** — raise domain exceptions from `exceptions.py`; views translate
+5. **Constants**  no magic strings/numbers; use `constants.py` enums.
+6. **Exceptions**  raise domain exceptions from `exceptions.py`; views translate
    them into user-facing messages.
 7. Cross-app access goes through the other app's `services/` / `selectors/`
-   public API (what their `__init__.py` re-exports) — never inner modules.
+   public API (what their `__init__.py` re-exports)  never inner modules.
 8. **Vendor SDKs** appear only in `infrastructure/` and `ai/providers/`.
 
 ## 3b. Package Rule
@@ -56,7 +56,7 @@ def enroll_user(*, user_id: int, course_id: int) -> "Enrollment":
 ## 4. Functions
 
 - Small, single-purpose, reusable.
-- No duplicated logic — extract to `utils.py`, `apps/common/`, or `apps/core/`.
+- No duplicated logic  extract to `utils.py`, `apps/common/`, or `apps/core/`.
 - Prefer pure functions in `utils.py` (no DB, no side effects).
 
 ## 5. API Layer (DRF)
@@ -69,7 +69,7 @@ length, choice membership); `validators/` validates the *domain* (uniqueness,
 reserved handles, age limits, image bytes). Domain rules run inside services so
 they hold for every caller, not only HTTP.
 
-**The view calls the service — never the serializer.** A serializer's job ends
+**The view calls the service  never the serializer.** A serializer's job ends
 at `validated_data`.
 
 **Banned**, because each executes ORM inside the HTTP layer and would dissolve
@@ -85,20 +85,20 @@ Use plain `APIView`. Reach for `GenericAPIView` only for pagination, and
 paginate a **selector's** queryset.
 
 Read and write serializers are separate classes. A write serializer must not
-declare identity or permission fields — that is the mass-assignment guard.
+declare identity or permission fields  that is the mass-assignment guard.
 
 Unauthenticated POST endpoints must inherit `CsrfProtectedAPIView`: DRF
 `csrf_exempt`s every `APIView`, and `SessionAuthentication` enforces CSRF only
 for already-authenticated requests.
 
-Privacy is applied in the **selector**, by returning a redacted DTO — never by
+Privacy is applied in the **selector**, by returning a redacted DTO  never by
 conditional logic in `to_representation`, which fails open.
 
 ### Templates
 
 The only templates in the project are email bodies, in
 `apps/<app>/templates/<app>/emails/`. They render without a request (often from
-a Celery worker), so context processors do not apply — pass every value
+a Celery worker), so context processors do not apply  pass every value
 explicitly in `TemplatedEmail.context`.
 
 ## 6. Tests
@@ -112,7 +112,7 @@ explicitly in `TemplatedEmail.context`.
 
 - Branches: `feature/<app>-<short-description>`, `fix/...`, `chore/...`.
 - Conventional commits: `feat(recipes): ...`, `fix(quizzes): ...`.
-- No secrets in the repo — environment variables only (`.env`, documented in `.env.example`).
+- No secrets in the repo  environment variables only (`.env`, documented in `.env.example`).
 
 ## 8. Migrations
 

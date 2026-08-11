@@ -8,7 +8,7 @@
  * Post image gallery.
  *
  * One image fills the card; several become a tidy grid where the first
- * photo leads. Tapping any photo opens a lightbox — a native `<dialog>`,
+ * photo leads. Tapping any photo opens a lightbox  a native `<dialog>`,
  * so Escape, focus trapping and the top layer come from the platform.
  */
 

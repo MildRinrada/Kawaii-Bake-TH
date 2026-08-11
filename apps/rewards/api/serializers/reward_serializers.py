@@ -33,7 +33,7 @@ class ReasonSerializer(serializers.Serializer):
 class RewardTransactionSerializer(serializers.Serializer):
     """One immutable ledger entry.
 
-    No internal ids and no event keys — the row is information, not an
+    No internal ids and no event keys  the row is information, not an
     addressable resource; there is nothing a client could do to it.
     """
 

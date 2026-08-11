@@ -24,3 +24,9 @@ class RecipeListFilters:
     ordering: str = Ordering.NEWEST
     scope: str = RecipeScope.PUBLIC
     ingredient: str = ""
+    # Narrow-only: intersects the visibility rule, so a public viewer
+    # asking for drafts simply gets an empty page. Exists for the staff
+    # list's Draft/Published/Archived filter.
+    status: str = ""
+    # Same contract for the visibility axis (public/unlisted/private).
+    visibility: str = ""

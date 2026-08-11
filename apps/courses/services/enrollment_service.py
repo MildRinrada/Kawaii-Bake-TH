@@ -23,7 +23,7 @@ def enroll(*, user_id: int, slug: str) -> tuple[Enrollment, bool]:
     """Enroll a user in a course. Idempotent.
 
     * no row → create ACTIVE (created=True)
-    * DROPPED → reactivate — COMPLETED if the user ever finished, else ACTIVE
+    * DROPPED → reactivate  COMPLETED if the user ever finished, else ACTIVE
     * ACTIVE / COMPLETED → no-op
 
     No 409 on re-enroll: that would punish double-clicks and client retries,
@@ -37,7 +37,7 @@ def enroll(*, user_id: int, slug: str) -> tuple[Enrollment, bool]:
         The enrollment and whether it was newly created.
 
     Raises:
-        CourseNotVisibleError: If the course is absent or hidden (404 — never
+        CourseNotVisibleError: If the course is absent or hidden (404  never
             confirms a hidden course exists).
         CourseNotEnrollableError: If the course is not published.
         OwnCourseEnrollmentError: If the instructor is enrolling in their own.
@@ -68,7 +68,7 @@ def enroll(*, user_id: int, slug: str) -> tuple[Enrollment, bool]:
     if created or reactivated:
         # A joined-or-returned student is news to the instructor; the
         # active/completed no-op is not. Best-effort, post-commit
-        # (ADR 0016) — a notification problem never fails the enrollment.
+        # (ADR 0016)  a notification problem never fails the enrollment.
         notification_service.notify_course_enrollment(
             instructor_id=course.instructor_id,
             student_handle=enrollment.user.username,
@@ -79,7 +79,7 @@ def enroll(*, user_id: int, slug: str) -> tuple[Enrollment, bool]:
 
 
 def unenroll(*, user_id: int, slug: str) -> Enrollment:
-    """Drop a course. Soft and idempotent — nothing is deleted.
+    """Drop a course. Soft and idempotent  nothing is deleted.
 
     The enrollment row and the user's lesson progress (owned by the lessons
     app) both survive, so re-enrolling restores history.

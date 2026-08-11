@@ -9,10 +9,10 @@ class ReviewsConfig(AppConfig):
     """Ratings and comments on recipes and courses.
 
     The dependent side toward both content apps: a review holds explicit
-    nullable FKs (`recipe` / `course` — exactly one set), never a
+    nullable FKs (`recipe` / `course`  exactly one set), never a
     GenericForeignKey, so the database keeps referential integrity and the
     content apps' visibility Q builders compose across the join. Statistics
-    are computed by selectors — no denormalized rating columns exist anywhere.
+    are computed by selectors  no denormalized rating columns exist anywhere.
     See ``docs/adr/0011-review-target-architecture.md``.
     """
 

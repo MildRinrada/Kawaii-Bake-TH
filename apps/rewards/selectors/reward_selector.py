@@ -28,7 +28,7 @@ def list_transactions(*, user_id: int) -> QuerySet[RewardTransaction]:
     """The user's ledger, newest first.
 
     The account's primary key **is** the user id (PK-as-FK), so owner
-    scoping is a direct column filter — no join, and another user's rows
+    scoping is a direct column filter  no join, and another user's rows
     are unreachable by construction.
 
     Args:

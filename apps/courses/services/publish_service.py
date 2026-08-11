@@ -45,7 +45,7 @@ def publish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Cour
 
     Raises:
         CourseNotVisibleError: If absent or not the caller's to change.
-        CourseNotPublishableError: If incomplete — every failure in ``details``.
+        CourseNotPublishableError: If incomplete  every failure in ``details``.
     """
     course = _require_transitionable(
         slug=slug, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff
@@ -65,7 +65,7 @@ def publish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Cour
 
 
 def unpublish(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Course:
-    """Return a course to draft — the hard kill switch.
+    """Return a course to draft  the hard kill switch.
 
     Unlike archiving, a drafted course is hidden even from enrolled students.
     ``published_at`` is retained so the slug stays frozen.
@@ -85,7 +85,7 @@ def archive(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> Cour
     """Archive a course.
 
     Archived courses leave every listing but stay **readable to actively
-    enrolled students** — their progress must not vanish because the instructor
+    enrolled students**  their progress must not vanish because the instructor
     tidied up.
     """
     course = _require_transitionable(

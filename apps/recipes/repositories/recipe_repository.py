@@ -23,7 +23,7 @@ def create_recipe(*, author_id: int, slug_base: str, **fields: Any) -> Recipe:
     Each attempt is wrapped in its own ``atomic`` block, which becomes a
     SAVEPOINT when the service has already opened a transaction. On PostgreSQL,
     catching ``IntegrityError`` inside a transaction *without* a savepoint
-    leaves the connection unusable for every subsequent query — a production
+    leaves the connection unusable for every subsequent query  a production
     failure SQLite does not reproduce.
 
     Args:

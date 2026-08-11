@@ -22,7 +22,7 @@ def build_slug_base(title: str) -> str:
     character and returns an empty string, so all Thai-titled recipes would
     silently fall back to a random slug.
 
-    Note that even with it, slugification is **lossy for Thai** — combining tone
+    Note that even with it, slugification is **lossy for Thai**  combining tone
     marks and vowel signs are dropped, exactly as accents are dropped from
     Latin text. That is fine for a URL identifier, and it is one more reason
     collisions are resolved with a random suffix rather than a counter.

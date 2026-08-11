@@ -1,4 +1,4 @@
-"""Recipe category models — public API."""
+"""Recipe category models  public API."""
 
 from __future__ import annotations
 

@@ -9,7 +9,7 @@ class LessonNotVisibleError(DomainError):
     """Raised when a lesson does not exist for this viewer.
 
     Covers: unknown id, lesson on a course the viewer may not see, and an
-    unpublished lesson seen by a non-owner. 404 in every case — the
+    unpublished lesson seen by a non-owner. 404 in every case  the
     enumeration-protection layer, identical to Phase 2.
     """
 
@@ -21,7 +21,7 @@ class LessonNotVisibleError(DomainError):
 class EnrollmentRequiredError(DomainError):
     """Raised when lesson **content** is requested without enrollment.
 
-    Deliberately 403, not 404 — the one principled carve-out from the Phase 2
+    Deliberately 403, not 404  the one principled carve-out from the Phase 2
     rule. The syllabus already makes this lesson's existence public, so a 404
     would be a lie, and the frontend needs this exact signal to render the
     "Enroll" call-to-action. Only reachable *after* the 404 visibility layer
@@ -36,7 +36,7 @@ class EnrollmentRequiredError(DomainError):
 class CourseNotVisibleError(DomainError):
     """Raised when the course addressed by a lesson operation is not visible.
 
-    This app's own error — a callee (courses) never raises for its caller
+    This app's own error  a callee (courses) never raises for its caller
     (ADR 0008/0009).
     """
 

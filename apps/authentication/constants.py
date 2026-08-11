@@ -11,7 +11,7 @@ REMEMBER_ME_SECONDS = 60 * 60 * 24 * 30
 SESSION_EXPIRE_ON_BROWSER_CLOSE = 0
 
 # --------------------------------------------------------------------------
-# Token salts — MUST differ per token type. Sharing a salt would let a
+# Token salts  MUST differ per token type. Sharing a salt would let a
 # password-reset token be replayed as an email-verification token.
 # --------------------------------------------------------------------------
 PASSWORD_RESET_SALT = "kawaiibake.authentication.password_reset"

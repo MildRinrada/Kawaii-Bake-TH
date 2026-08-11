@@ -1,4 +1,4 @@
-"""Producer-wiring tests — the three events through the real services."""
+"""Producer-wiring tests  the three events through the real services."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from apps.users.tests.factories import create_user
 
 
 class ReviewWiringTests(TestCase):
-    """A review notifies the content owner — and only the owner."""
+    """A review notifies the content owner  and only the owner."""
 
     def setUp(self) -> None:
         self.author = create_user(username="wireauthor")

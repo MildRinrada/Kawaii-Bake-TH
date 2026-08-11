@@ -1,88 +1,108 @@
 "use client";
 
 /**
- * Users.
+ * User roster management.
  *
- * There is no user-administration API in this backend: no roster, no
- * account-status endpoint, no way to deactivate somebody else
- * (`/users/account/deactivate/` acts on the caller alone). What exists
- * is `GET /users/{username}/` — a *public* profile, already filtered by
- * that user's own privacy settings — so this page is a lookup, and says
- * so.
+ * `GET /admin/users/` is the staff-only roster: search covers username /
+ * email / legal name / display name, and the status, verification and
+ * staff filters map one-to-one onto the query keys the backend actually
+ * validates - unknown keys are rejected with 400, so empty filters are
+ * omitted rather than sent blank.
  *
- * The one real staff-only write in the whole API lives here:
- * `POST /rewards/adjustments/` (`IsAdminUser`), an auditable, idempotent
- * balance correction. It is presented with a confirmation step because
- * it writes to a ledger.
+ * Per-account editing lives in the slide-over (`./user-detail`). The
+ * auditable reward adjustment (`POST /rewards/adjustments/`, the page's
+ * original write) keeps its panel below the roster - the detail footer
+ * pre-fills its username field.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { api } from "@/lib/api/client";
-import { ApiError } from "@/lib/api/errors";
-import type { PublicProfile, RewardTransaction } from "@/lib/api/models";
+import type { AdminUser, RewardTransaction } from "@/lib/api/models";
+import { usePagedList, useDebounced } from "@/lib/admin/use-paged-list";
+import { relativeThai } from "@/lib/datetime";
 import { useToast } from "@/components/ui/toast";
-import { monthYearThai } from "@/lib/datetime";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
 import {
+  AdminEmpty,
   AdminPanel,
-  DetailRow,
-  UnavailablePanel,
+  DataTable,
+  DataTableToolbar,
+  FilterBar,
+  FilterSelect,
+  Pagination,
+  SearchInput,
   useConfirm,
 } from "@/components/admin/primitives";
 import { describeAdminError } from "@/components/admin/lifecycle";
+
+import { AccountBadges, UserDetailPanel, fullName } from "./user-detail";
+
+const STATUSES = [
+  { value: "", label: "ทั้งหมด" },
+  { value: "active", label: "ใช้งาน" },
+  { value: "suspended", label: "ระงับ" },
+];
+
+const VERIFICATIONS = [
+  { value: "", label: "ทั้งหมด" },
+  { value: "true", label: "ยืนยันแล้ว" },
+  { value: "false", label: "ยังไม่ยืนยัน" },
+];
+
+const ROLES = [
+  { value: "", label: "ทั้งหมด" },
+  { value: "true", label: "สตาฟ" },
+  { value: "false", label: "สมาชิกทั่วไป" },
+];
+
+const ORDERINGS = [
+  { value: "newest", label: "ใหม่สุด" },
+  { value: "oldest", label: "เก่าสุด" },
+  { value: "username", label: "ชื่อผู้ใช้" },
+  { value: "recently_active", label: "ใช้งานล่าสุด" },
+];
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
   const confirm = useConfirm();
 
-  const [handle, setHandle] = useState("");
-  const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [lookupError, setLookupError] = useState<string | null>(null);
-  const [looking, setLooking] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounced(searchInput);
+  const [status, setStatus] = useState("");
+  const [verified, setVerified] = useState("");
+  const [staff, setStaff] = useState("");
+  const [ordering, setOrdering] = useState("newest");
+  const [selected, setSelected] = useState<number | null>(null);
 
+  const list = usePagedList<AdminUser>("/admin/users/", {
+    ordering,
+    search: search || undefined,
+    status: status || undefined,
+    verified: verified || undefined,
+    staff: staff || undefined,
+  });
+
+  // Reward adjustment - carried over from the pre-roster version of this
+  // page; still the only write that touches the reward ledger.
+  const rewardsRef = useRef<HTMLElement>(null);
   const [adjustUser, setAdjustUser] = useState("");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
-  const [lastAdjustment, setLastAdjustment] = useState<RewardTransaction | null>(
-    null,
-  );
-
-  async function lookup(event: React.FormEvent) {
-    event.preventDefault();
-    const username = handle.trim();
-    if (!username) return;
-    setLooking(true);
-    setLookupError(null);
-    setProfile(null);
-    try {
-      const found = await api.get<PublicProfile>(`/users/${username}/`);
-      setProfile(found);
-      setAdjustUser(found.username);
-    } catch (error) {
-      setProfile(null);
-      setLookupError(
-        error instanceof ApiError && error.status === 404
-          ? "ไม่พบผู้ใช้ชื่อนี้ หรือโปรไฟล์ถูกตั้งเป็นส่วนตัว"
-          : describeAdminError(error),
-      );
-    } finally {
-      setLooking(false);
-    }
-  }
+  const [lastAdjustment, setLastAdjustment] =
+    useState<RewardTransaction | null>(null);
 
   async function adjust() {
-    const parsed = Number(amount);
     try {
       const row = await api.post<RewardTransaction>("/rewards/adjustments/", {
         body: {
           username: adjustUser.trim(),
-          amount: parsed,
+          amount: Number(amount),
           reason: reason.trim(),
         },
       });
@@ -95,164 +115,248 @@ export default function AdminUsersPage() {
     }
   }
 
+  function prefillAdjust(username: string) {
+    setAdjustUser(username);
+    setSelected(null);
+    // Let the dialog finish closing before scrolling to the panel it
+    // just pointed the admin at.
+    requestAnimationFrame(() =>
+      rewardsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }
+
   const amountValid = amount.trim() !== "" && Number.isFinite(Number(amount));
+
+  if (list.error) {
+    return <ErrorState error={list.error} onRetry={list.refetch} />;
+  }
 
   return (
     <>
       <AdminPageHeader
         title="ผู้ใช้"
-        description="ค้นหาผู้ใช้ทีละคนจากโปรไฟล์สาธารณะ และปรับยอดคะแนนรางวัลด้วยสิทธิ์ staff"
+        description="รายชื่อผู้ใช้ทั้งระบบ - ค้นหา กรองสถานะบัญชี แก้ชื่อ ระงับ/เปิดใช้งาน ให้สิทธิ์สตาฟ และปรับยอดคะแนนรางวัล"
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <AdminPanel>
+        <DataTableToolbar
+          actions={
+            <span className="self-center text-xs text-fg-muted">
+              ทั้งหมด{" "}
+              <span className="font-mono tabular-nums">{list.count}</span> บัญชี
+            </span>
+          }
+        >
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="ค้นหา username อีเมล หรือชื่อ…"
+            label="ค้นหาผู้ใช้"
+          />
+          <FilterBar>
+            <FilterSelect
+              label="สถานะบัญชี"
+              value={status}
+              options={STATUSES}
+              onChange={setStatus}
+            />
+            <FilterSelect
+              label="การยืนยันอีเมล"
+              value={verified}
+              options={VERIFICATIONS}
+              onChange={setVerified}
+            />
+            <FilterSelect
+              label="สิทธิ์"
+              value={staff}
+              options={ROLES}
+              onChange={setStaff}
+            />
+            <FilterSelect
+              label="เรียงตาม"
+              value={ordering}
+              options={ORDERINGS}
+              onChange={setOrdering}
+            />
+          </FilterBar>
+        </DataTableToolbar>
+
+        <DataTable
+          caption="รายชื่อผู้ใช้ทั้งหมด"
+          loading={list.loading}
+          rows={list.rows}
+          rowKey={(row) => row.id}
+          onRowClick={(row) => setSelected(row.id)}
+          empty={
+            <AdminEmpty
+              title="ไม่พบผู้ใช้ที่ตรงกับเงื่อนไข"
+              description="ลองล้างคำค้นหรือเปลี่ยนตัวกรอง"
+            />
+          }
+          columns={[
+            {
+              key: "avatar",
+              header: "",
+              className: "w-14",
+              render: (row) => (
+                <Avatar
+                  src={row.avatar_url}
+                  name={row.display_name || row.username}
+                  size="sm"
+                />
+              ),
+            },
+            {
+              key: "user",
+              header: "ผู้ใช้",
+              render: (row) => (
+                <div className="min-w-0">
+                  <p className="line-clamp-1 font-medium">
+                    {row.display_name || row.username}
+                  </p>
+                  <p className="font-mono text-xs text-fg-subtle">
+                    @{row.username} · {row.email}
+                  </p>
+                </div>
+              ),
+            },
+            {
+              key: "legal_name",
+              header: "ชื่อจริง",
+              render: (row) => (
+                <span className="text-fg-muted">{fullName(row) ?? "-"}</span>
+              ),
+            },
+            {
+              key: "experience",
+              header: "ระดับฝีมือ",
+              render: (row) => (
+                <span className="text-xs text-fg-muted">
+                  {row.experience_level || "-"}
+                </span>
+              ),
+            },
+            {
+              key: "status",
+              header: "สถานะ",
+              render: (row) => (
+                <div className="flex flex-wrap gap-1">
+                  <AccountBadges user={row} />
+                </div>
+              ),
+            },
+            {
+              key: "joined",
+              header: "เข้าร่วมเมื่อ",
+              render: (row) => (
+                <span className="whitespace-nowrap text-xs text-fg-muted">
+                  {relativeThai(row.created_at)}
+                </span>
+              ),
+            },
+            {
+              key: "last_login",
+              header: "เข้าสู่ระบบล่าสุด",
+              render: (row) => (
+                <span className="whitespace-nowrap text-xs text-fg-muted">
+                  {row.last_login ? relativeThai(row.last_login) : "-"}
+                </span>
+              ),
+            },
+          ]}
+        />
+
+        <Pagination
+          page={list.page}
+          pageSize={list.pageSize}
+          count={list.count}
+          onPage={list.setPage}
+        />
+      </AdminPanel>
+
+      <section ref={rewardsRef} className="mt-4 scroll-mt-4">
         <AdminPanel
-          title="ค้นหาผู้ใช้"
-          description="ค้นจาก username เท่านั้น — API ไม่มีรายชื่อผู้ใช้ทั้งระบบ"
+          title="ปรับยอดคะแนนรางวัล"
+          description="POST /rewards/adjustments/ - staff เท่านั้น บันทึกลงบัญชีแบบตรวจสอบย้อนหลังได้"
         >
           <div className="px-4 py-4">
-            <form onSubmit={lookup} className="flex items-end gap-2" noValidate>
-              <Field label="username" className="flex-1">
+            <div className="grid gap-3 md:grid-cols-3">
+              <Field
+                label="username ปลายทาง"
+                hint="กดปุ่มในหน้ารายละเอียดผู้ใช้เพื่อเติมให้อัตโนมัติ"
+              >
                 {(control) => (
                   <Input
                     {...control}
-                    value={handle}
-                    placeholder="เช่น mildbakes"
-                    onChange={(event) => setHandle(event.target.value)}
+                    value={adjustUser}
+                    placeholder="ผู้ใช้ที่จะปรับยอด"
+                    onChange={(event) => setAdjustUser(event.target.value)}
                   />
                 )}
               </Field>
-              <Button type="submit" loading={looking}>
-                ค้นหา
-              </Button>
-            </form>
-
-            {lookupError ? (
-              <p role="alert" className="mt-3 text-sm text-danger">
-                {lookupError}
-              </p>
-            ) : null}
-
-            {profile ? (
-              <div className="mt-4">
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    src={profile.avatar_url}
-                    name={profile.display_name || profile.username}
+              <Field
+                label="จำนวน (ติดลบได้)"
+                hint="จำนวนเต็ม - ค่าติดลบคือการหักคืน"
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
                   />
-                  <div>
-                    <p className="font-medium text-fg">
-                      {profile.display_name || profile.username}
-                    </p>
-                    <p className="font-mono text-xs text-fg-subtle">
-                      @{profile.username}
-                    </p>
-                  </div>
+                )}
+              </Field>
+              <Field label="เหตุผล" hint="บันทึกลงประวัติถาวร">
+                {(control) => (
+                  <Input
+                    {...control}
+                    value={reason}
+                    placeholder="เช่น ชดเชยคะแนนที่หายจากบั๊ก"
+                    onChange={(event) => setReason(event.target.value)}
+                  />
+                )}
+              </Field>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button
+                disabled={!adjustUser.trim() || !amountValid || !reason.trim()}
+                onClick={() =>
+                  confirm.ask({
+                    title: "ยืนยันการปรับยอด?",
+                    body: `จะปรับยอดของ @${adjustUser.trim()} เป็นจำนวน ${amount} คะแนน พร้อมเหตุผล “${reason.trim()}” - รายการนี้ลงบัญชีถาวรและลบไม่ได้`,
+                    confirmLabel: "ยืนยันปรับยอด",
+                    danger: Number(amount) < 0,
+                    action: adjust,
+                  })
+                }
+              >
+                ปรับยอด
+              </Button>
+
+              {lastAdjustment ? (
+                <div className="rounded border border-edge bg-surface-sunken/60 px-3 py-2 text-xs">
+                  <p className="font-medium text-fg">รายการล่าสุดที่บันทึก</p>
+                  <p className="mt-1 font-mono text-fg-muted">
+                    {lastAdjustment.amount > 0 ? "+" : ""}
+                    {lastAdjustment.amount} → ยอดคงเหลือ{" "}
+                    {lastAdjustment.balance_after} · โดย{" "}
+                    {lastAdjustment.actor_handle}
+                  </p>
                 </div>
-                <dl className="mt-3">
-                  <DetailRow label="แนะนำตัว">{profile.bio || "—"}</DetailRow>
-                  <DetailRow label="ระดับฝีมือ">
-                    <Badge tone="lavender">{profile.experience_level}</Badge>
-                  </DetailRow>
-                  <DetailRow label="หมวดที่สนใจ">
-                    {profile.favorite_categories.join(", ") || "—"}
-                  </DetailRow>
-                  <DetailRow label="ที่อยู่">
-                    {profile.location ?? "ผู้ใช้ตั้งเป็นส่วนตัว"}
-                  </DetailRow>
-                  <DetailRow label="เข้าร่วมเมื่อ">
-                    {monthYearThai(profile.joined_at)}
-                  </DetailRow>
-                </dl>
-                <p className="mt-3 text-xs text-fg-muted">
-                  นี่คือโปรไฟล์สาธารณะที่ผ่านการกรองด้วยการตั้งค่าความเป็นส่วนตัวของเจ้าของแล้ว
-                  — อีเมลและข้อมูลบัญชีไม่เคยถูกส่งมาที่ client
-                </p>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
         </AdminPanel>
+      </section>
 
-        <AdminPanel
-          title="ปรับยอดคะแนนรางวัล"
-          description="POST /rewards/adjustments/ — staff เท่านั้น บันทึกลงบัญชีแบบตรวจสอบย้อนหลังได้"
-        >
-          <div className="space-y-3 px-4 py-4">
-            <Field label="username ปลายทาง">
-              {(control) => (
-                <Input
-                  {...control}
-                  value={adjustUser}
-                  placeholder="ผู้ใช้ที่จะปรับยอด"
-                  onChange={(event) => setAdjustUser(event.target.value)}
-                />
-              )}
-            </Field>
-            <Field
-              label="จำนวน (ติดลบได้)"
-              hint="จำนวนเต็ม — ค่าติดลบคือการหักคืน"
-            >
-              {(control) => (
-                <Input
-                  {...control}
-                  type="number"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                />
-              )}
-            </Field>
-            <Field label="เหตุผล" hint="บันทึกลงประวัติถาวร">
-              {(control) => (
-                <Input
-                  {...control}
-                  value={reason}
-                  placeholder="เช่น ชดเชยคะแนนที่หายจากบั๊ก"
-                  onChange={(event) => setReason(event.target.value)}
-                />
-              )}
-            </Field>
-            <Button
-              disabled={!adjustUser.trim() || !amountValid || !reason.trim()}
-              onClick={() =>
-                confirm.ask({
-                  title: "ยืนยันการปรับยอด?",
-                  body: `จะปรับยอดของ @${adjustUser.trim()} เป็นจำนวน ${amount} คะแนน พร้อมเหตุผล “${reason.trim()}” — รายการนี้ลงบัญชีถาวรและลบไม่ได้`,
-                  confirmLabel: "ยืนยันปรับยอด",
-                  danger: Number(amount) < 0,
-                  action: adjust,
-                })
-              }
-            >
-              ปรับยอด
-            </Button>
-
-            {lastAdjustment ? (
-              <div className="rounded border border-edge bg-surface-sunken/60 px-3 py-2 text-xs">
-                <p className="font-medium text-fg">รายการล่าสุดที่บันทึก</p>
-                <p className="mt-1 font-mono text-fg-muted">
-                  {lastAdjustment.amount > 0 ? "+" : ""}
-                  {lastAdjustment.amount} → ยอดคงเหลือ{" "}
-                  {lastAdjustment.balance_after} · โดย{" "}
-                  {lastAdjustment.actor_handle}
-                </p>
-              </div>
-            ) : null}
-          </div>
-        </AdminPanel>
-      </div>
-
-      <div className="mt-4">
-        <UnavailablePanel
-          title="การจัดการบัญชีผู้ใช้"
-          what="ระบบหลังบ้านยังไม่มี API สำหรับผู้ดูแลจัดการบัญชีผู้อื่น จึงไม่มีตารางรายชื่อผู้ใช้ ตัวกรองสถานะบัญชี หรือปุ่มระงับ/เปิดใช้งานในหน้านี้ — และจะไม่ใส่ปุ่มหลอกไว้"
-          missing={[
-            "GET /api/v1/users/ (รายชื่อผู้ใช้พร้อมค้นหาและแบ่งหน้า)",
-            "GET /api/v1/users/{username}/admin/ (ข้อมูลบัญชี: สถานะ, วันเข้าใช้ล่าสุด, การยืนยันอีเมล)",
-            "POST /api/v1/users/{username}/deactivate/ (ระงับบัญชีผู้อื่น)",
-            "PATCH สิทธิ์ staff / กลุ่มผู้ใช้",
-          ]}
-          workaround="ระหว่างนี้จัดการบัญชีได้ที่ Django Admin ฝั่งเซิร์ฟเวอร์เท่านั้น การค้นหาด้านบนใช้ endpoint โปรไฟล์สาธารณะซึ่งไม่ส่งอีเมลหรือข้อมูลลับใด ๆ"
-        />
-      </div>
+      <UserDetailPanel
+        userId={selected}
+        onClose={() => setSelected(null)}
+        onChanged={list.refetch}
+        onAdjustRewards={prefillAdjust}
+      />
 
       {confirm.dialog}
     </>

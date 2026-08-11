@@ -1,4 +1,4 @@
-"""Favorite routes nested under ``/api/v1/courses/`` — mounted by config."""
+"""Favorite routes nested under ``/api/v1/courses/``  mounted by config."""
 
 from __future__ import annotations
 

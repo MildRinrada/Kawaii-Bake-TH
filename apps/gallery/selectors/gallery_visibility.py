@@ -1,6 +1,6 @@
 """The single visibility rule for gallery posts.
 
-One ``Q`` builder used by list, detail and every filter — the
+One ``Q`` builder used by list, detail and every filter  the
 recipes/courses discipline: there is no second implementation to drift.
 """
 
@@ -18,7 +18,7 @@ def visible_q(
 
     Published posts are public; unpublished posts exist only for their
     author (and staff). There is no unlisted tier and no separate detail
-    rule — a two-state showcase does not need one.
+    rule  a two-state showcase does not need one.
 
     Args:
         viewer_id: Primary key of the viewer, or ``None`` when anonymous.

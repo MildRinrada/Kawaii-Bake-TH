@@ -10,7 +10,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 async function expect(page, selectorOrText, label, timeout = 10_000) {
@@ -33,7 +33,7 @@ try {
   await page.fill('input[type="email"]', "p16-learner@example.com");
   await page.fill('input[type="password"]', "Rhubarb!Tart2024");
   await page.click('button[type="submit"]');
-  await expect(page, "text=MildBakes", "login succeeds — header shows the user");
+  await expect(page, "text=MildBakes", "login succeeds  header shows the user");
 
   // recipes → detail
   await page.goto(`${BASE}/recipes`);
@@ -59,9 +59,9 @@ try {
   // Both states are asserted rather than assuming a fresh account.
   if (await page.locator('button:has-text("ลงทะเบียนเรียน")').count()) {
     await page.click('button:has-text("ลงทะเบียนเรียน")');
-    await expect(page, "text=การเรียนของฉัน", "enrollment succeeds — progress card appears");
+    await expect(page, "text=การเรียนของฉัน", "enrollment succeeds  progress card appears");
   } else {
-    await expect(page, "text=การเรียนของฉัน", "already enrolled — the progress card is shown instead");
+    await expect(page, "text=การเรียนของฉัน", "already enrolled  the progress card is shown instead");
   }
   await page.screenshot({ path: `${SHOT_DIR}/03-course-detail.png`, fullPage: true });
 
@@ -98,7 +98,7 @@ try {
   await page.goto(`${BASE}/notifications`);
   await expect(page, "text=การแจ้งเตือน", "notifications page renders");
 
-  // teacher got an enrollment notification — verify via second session
+  // teacher got an enrollment notification  verify via second session
   const teacher = await browser.newPage({ viewport: { width: 1360, height: 850 } });
   await teacher.goto(`${BASE}/login`);
   await teacher.fill('input[type="email"]', "p16-teacher@example.com");

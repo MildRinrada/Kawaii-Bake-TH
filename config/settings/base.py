@@ -105,6 +105,7 @@ LOCAL_APPS = [
     "apps.recommendation",
     "apps.rewards",
     "apps.security",
+    "apps.legal",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -121,7 +122,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.core.middleware.request_logging.RequestIDMiddleware",
     # Last in, so `request.user` and `request.request_id` are already set
-    # when it inspects a request — it records who, not just what.
+    # when it inspects a request  it records who, not just what.
     "apps.security.middleware.threat_watch.ThreatWatchMiddleware",
 ]
 
@@ -262,7 +263,7 @@ SPECTACULAR_SETTINGS = {
         "ThreadStatusEnum": "apps.qa.constants.ThreadStatus.choices",
         "ThreadModerationStatusEnum": "apps.qa.constants.THREAD_MODERATION_CHOICES",
         # PreferredLanguage and AssistantLanguage share the th/en value set
-        # on purpose (ADR 0020 §8) — name the users one explicitly.
+        # on purpose (ADR 0020 §8)  name the users one explicitly.
         "PreferredLanguageEnum": "apps.users.constants.PreferredLanguage.choices",
         "SignalKindEnum": "apps.security.constants.SignalKind.choices",
         "ThreatLevelEnum": "apps.security.constants.ThreatLevel.choices",
@@ -286,7 +287,7 @@ SECURITY_WATCH_ENABLED = env_bool("SECURITY_WATCH_ENABLED", True)
 SECURITY_BLOCKING_ENABLED = env_bool("SECURITY_BLOCKING_ENABLED", True)
 
 # Whether reaching `critical` blocks an address with no human involved.
-# Default OFF — a heuristic block is an outage for whoever shares that
+# Default OFF  a heuristic block is an outage for whoever shares that
 # address, and shared/NAT addresses are the norm on mobile networks.
 SECURITY_AUTO_BLOCK = env_bool("SECURITY_AUTO_BLOCK", False)
 SECURITY_AUTO_BLOCK_MINUTES = env_int("SECURITY_AUTO_BLOCK_MINUTES", 60)
@@ -354,7 +355,7 @@ CSRF_COOKIE_SAMESITE = "Lax"
 
 
 # --------------------------------------------------------------------------
-# Token lifetimes (stateless auth tokens — see docs/adr/0006)
+# Token lifetimes (stateless auth tokens  see docs/adr/0006)
 # --------------------------------------------------------------------------
 # Read by Django's PasswordResetTokenGenerator directly.
 PASSWORD_RESET_TIMEOUT = env_int("PASSWORD_RESET_TIMEOUT", 60 * 60)
@@ -387,7 +388,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # `infrastructure.storage.get_media_storage` resolves this alias at field-init
-# time, so swapping local disk for S3 never touches a migration — and renaming
+# time, so swapping local disk for S3 never touches a migration  and renaming
 # the alias itself needs none either, because model fields store the callable
 # rather than the resolved backend.
 MEDIA_STORAGE_ALIAS = "media"
@@ -441,7 +442,7 @@ CELERY_TIMEZONE = TIME_ZONE
 # AI assistant
 # --------------------------------------------------------------------------
 # Which backend answers, resolved by name through `ai.factory`. The default
-# is the deterministic offline mock — local development and CI need no API
+# is the deterministic offline mock  local development and CI need no API
 # key. Set AI_PROVIDER=openai plus OPENAI_API_KEY to go live; base URL is
 # overridable for OpenAI-compatible local runtimes (Ollama, vLLM).
 AI_PROVIDER = env("AI_PROVIDER", "mock")

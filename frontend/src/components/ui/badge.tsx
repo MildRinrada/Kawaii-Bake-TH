@@ -43,7 +43,7 @@ export function Badge({
   );
 }
 
-/** Deterministic flavor for a category slug — stable, coordinated colors. */
+/** Deterministic flavor for a category slug  stable, coordinated colors. */
 const FLAVOR_CYCLE: Tone[] = ["berry", "peach", "butter", "lavender", "mint"];
 
 export function flavorFor(slug: string): Tone {

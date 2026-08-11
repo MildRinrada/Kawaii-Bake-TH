@@ -1,6 +1,6 @@
 """OpenAI-compatible chat-completions provider.
 
-Uses the standard library only — the ``openai`` package is not a project
+Uses the standard library only - the ``openai`` package is not a project
 dependency yet, and this endpoint shape is also what local runtimes
 (Ollama, LM Studio, vLLM) expose, so ``base_url`` makes this the "real
 provider" adapter for all of them.
@@ -59,7 +59,7 @@ class OpenAIProvider(AIProvider):
             messages: The full prompt in order.
             language: Reply language hint (already embedded in the system
                 message; unused on the wire).
-            context: Unused — context is rendered into the system message.
+            context: Unused - context is rendered into the system message.
 
         Returns:
             The provider's completion with token usage.

@@ -43,9 +43,9 @@ export function describeAdminError(error: unknown): string {
         : error.status === 404
           ? "ไม่พบรายการนี้ หรือคุณไม่มีสิทธิ์เห็นมัน (404)"
           : error.status === 409
-            ? `ทำรายการไม่ได้เพราะสถานะขัดกัน (409) — ${error.message}`
+            ? `ทำรายการไม่ได้เพราะสถานะขัดกัน (409)  ${error.message}`
             : error.message;
-    return detailLines.length ? `${head} — ${detailLines.join(" · ")}` : head;
+    return detailLines.length ? `${head}  ${detailLines.join(" · ")}` : head;
   }
   if (error instanceof NetworkError) return "เชื่อมต่อระบบหลังบ้านไม่ได้";
   return "เกิดข้อผิดพลาดที่ไม่คาดคิด";

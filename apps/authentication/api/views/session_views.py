@@ -61,6 +61,8 @@ class RegistrationView(CsrfProtectedAPIView):
         user = registration_service.register_user(
             email=serializer.validated_data["email"],
             username=serializer.validated_data["username"],
+            first_name=serializer.validated_data["first_name"],
+            last_name=serializer.validated_data["last_name"],
             password=serializer.validated_data["password"],
             client_ip=client_ip(request),
         )
@@ -85,7 +87,7 @@ class UsernameAvailabilityView(ServiceAPIView):
     def get(self, request: Request) -> Response:
         """Report whether ``?username=`` could be registered right now.
 
-        Advisory only — the racing-sign-up case is still settled by the
+        Advisory only  the racing-sign-up case is still settled by the
         unique constraint inside registration.
         """
         serializer = UsernameAvailabilityQuerySerializer(data=request.query_params)

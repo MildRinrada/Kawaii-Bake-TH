@@ -33,7 +33,7 @@ class RecipeRef:
     """A recipe reference safe to hand across the app boundary.
 
     The mirror of ``CourseRef`` (ADR 0009): identity for FK writes, the author
-    for owner checks, and the state pair — never the model. Added in Phase 5
+    for owner checks, and the state pair  never the model. Added in Phase 5
     for the reviews/favorites target resolution.
     """
 
@@ -52,7 +52,7 @@ def get_recipe_ref(
 
     Part of the public cross-app API. Returns ``None`` when the recipe is
     absent **or** hidden from this viewer; the caller raises its own domain
-    error for that case — never this app's.
+    error for that case  never this app's.
 
     Args:
         slug: The recipe slug.
@@ -143,6 +143,14 @@ def _apply_filters(
     if filters.author_username:
         queryset = queryset.filter(author__username__iexact=filters.author_username)
 
+    if filters.status:
+        # Intersects visibility - it can only narrow what the viewer
+        # already sees, never widen it.
+        queryset = queryset.filter(status=filters.status)
+
+    if filters.visibility:
+        queryset = queryset.filter(visibility=filters.visibility)
+
     if filters.ingredient:
         # Indexed equality on the normalised column, not a leading-wildcard LIKE.
         queryset = queryset.filter(
@@ -189,7 +197,7 @@ def list_recipes(
                 return queryset.order_by(*rank, *ORDERING_MAP[Ordering.NEWEST])
 
     # A backend that cannot rank, or a relevance request with no search term,
-    # falls back to newest — never to arbitrary database order.
+    # falls back to newest  never to arbitrary database order.
     if ordering == Ordering.RELEVANCE:
         ordering = Ordering.NEWEST
     return _apply_ordering(queryset, ordering=ordering)
@@ -266,7 +274,7 @@ def list_by_ids(
 
     Exists for the future recommendation engine. Without it, that engine would
     reach for ``Recipe.objects.filter(id__in=...)`` and quietly recommend other
-    people's drafts and private recipes — this applies the same visibility rule
+    people's drafts and private recipes  this applies the same visibility rule
     as every other read path.
 
     Args:
@@ -308,7 +316,7 @@ def list_viewable_by_ids(
 ) -> QuerySet[Recipe]:
     """Fetch specific recipes under the **detail** visibility rule.
 
-    Unlike :func:`list_by_ids` (listing rule — public only), this returns
+    Unlike :func:`list_by_ids` (listing rule  public only), this returns
     everything the viewer could open directly: unlisted recipes and their own
     drafts included. Exists for embed/card fetches whose ids were already
     gathered under the detail rule (the favorites list), so the two filters
@@ -340,7 +348,7 @@ def get_viewable_by_id(
     """Fetch one recipe by id under the **detail** visibility rule.
 
     The pk-addressed mirror of :func:`get_recipe_detail`, added in Phase 7
-    for the assistant's context loading — which stores ids, not slugs, and
+    for the assistant's context loading  which stores ids, not slugs, and
     needs ingredients and steps. Hidden and absent are the same ``None``.
 
     Args:
@@ -387,7 +395,7 @@ class RecipeCandidateFact:
 def public_candidate_facts(*, limit: int) -> list[RecipeCandidateFact]:
     """Facts of the newest publicly listed recipes, for recommendation.
 
-    Applies the **anonymous public listing** rule on purpose — stricter than
+    Applies the **anonymous public listing** rule on purpose  stricter than
     any viewer-specific rule. A recommendation feed must never surface
     unlisted or private content even to viewers who could open it directly,
     so eligibility is decided by the same Q every public list uses, with no
@@ -424,7 +432,7 @@ class RecipeSignalFact:
     Part of the public cross-app API (Phase 12). Deliberately **not**
     visibility-filtered: these describe the caller's own history (their
     favorites, their reviews) and are consumed as aggregate interest
-    evidence only — never serialized. A favorited recipe that later went
+    evidence only  never serialized. A favorited recipe that later went
     private still shaped the user's taste.
     """
 

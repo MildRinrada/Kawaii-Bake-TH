@@ -2,7 +2,7 @@
 
 Pull-based like the XP ledger (ADR 0015): no producer ever calls this
 module. :func:`claim` reads **identified** facts through the owning
-domains' public selectors and settles the ledger up to them — the same
+domains' public selectors and settles the ledger up to them  the same
 boundary, upgraded from count arithmetic to per-event identity so that a
 currency survives duplicate delivery (ADR 0019).
 """
@@ -52,7 +52,7 @@ def get_summary(*, user_id: int) -> RewardSummary:
         user_id: Primary key of the user.
 
     Returns:
-        The summary — zeros when the user has never earned.
+        The summary  zeros when the user has never earned.
     """
     account = reward_selector.get_account(user_id=user_id)
     if account is None:
@@ -68,7 +68,7 @@ def _expected_events(*, user_id: int) -> dict[str, str]:
     """Every earnable event key for the user, mapped to its reason.
 
     One query per source domain, each through the owner's public
-    identified-fact selector — rewards never re-derives "completed"
+    identified-fact selector  rewards never re-derives "completed"
     itself.
     """
     expected: dict[str, str] = {}
@@ -147,7 +147,7 @@ def spend(
 ) -> RewardTransaction:
     """Debit the user's balance.
 
-    The economy primitive only — what is being bought is a future
+    The economy primitive only  what is being bought is a future
     phase's concern (ADR 0019 §11). A caller-supplied idempotency key
     makes retries safe; without one, each call is a distinct spend.
 
@@ -191,7 +191,7 @@ def adjust(
 ) -> RewardTransaction:
     """Staff correction of a user's balance, as an auditable ledger entry.
 
-    Never mutates the balance directly — the adjustment is a transaction
+    Never mutates the balance directly  the adjustment is a transaction
     like any other, with the staff member's public handle snapshotted and
     the reason required. A downward adjustment obeys the same
     insufficient-balance guard as a spend: the balance cannot go negative

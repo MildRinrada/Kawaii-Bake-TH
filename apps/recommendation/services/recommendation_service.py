@@ -2,13 +2,13 @@
 
 The pipeline (ADR 0018 §3):
 
-1. candidate generation — the source app's public-listing fact selector,
+1. candidate generation  the source app's public-listing fact selector,
    bounded by ``CANDIDATE_POOL_SIZE``;
-2. eligibility — already inside step 1 (the anonymous public listing Q),
+2. eligibility  already inside step 1 (the anonymous public listing Q),
    plus exclusion of the viewer's own and already-engaged content;
-3. feature extraction — bulk rating/favorite facts, one query each;
-4–6. scoring, ranking, diversification — ``scoring_service`` pure functions;
-7. pagination — at the API edge, over the ranked id list.
+3. feature extraction  bulk rating/favorite facts, one query each;
+4–6. scoring, ranking, diversification  ``scoring_service`` pure functions;
+7. pagination  at the API edge, over the ranked id list.
 
 This service reads through other apps' public selectors only, and writes
 nothing anywhere.
@@ -36,6 +36,7 @@ from apps.recommendation.services import scoring_service
 from apps.recommendation.services.scoring_service import (
     EMPTY_CONTEXT,
     Candidate,
+    ScoredCandidate,
     TasteContext,
 )
 from apps.reviews.selectors import rating_selector, review_selector
@@ -85,7 +86,7 @@ _NO_SIGNALS = _Signals(
 def _gather_signals(*, viewer_id: int | None) -> _Signals:
     """Collect the viewer's behavioral facts through public selectors.
 
-    Anonymous viewers get the empty bundle at zero queries — cold start is
+    Anonymous viewers get the empty bundle at zero queries  cold start is
     the same pipeline with nothing to feed it.
     """
     if viewer_id is None:
@@ -133,7 +134,7 @@ def _gather_signals(*, viewer_id: int | None) -> _Signals:
 def _build_context(*, signals: _Signals, liked_creator_ids: frozenset[int]) -> TasteContext:
     """Turn raw signals into the scoring context.
 
-    Interest in a category accumulates across every kind of evidence —
+    Interest in a category accumulates across every kind of evidence 
     a favorited bread recipe and an enrolled bread course both push
     ``bread`` up, weighted by evidence strength.
     """
@@ -196,7 +197,7 @@ def recommend_recipes(
     """Ranked recipe recommendations for a viewer.
 
     Excluded: the viewer's own recipes and everything they already
-    favorited or reviewed — the feed surfaces new content, not a mirror of
+    favorited or reviewed  the feed surfaces new content, not a mirror of
     their history (ADR 0018 §3).
 
     Args:
@@ -204,8 +205,18 @@ def recommend_recipes(
         now: Reference time for recency; injected by tests, defaulted here.
 
     Returns:
-        Ranked, diversified items — ids and reason codes only.
+        Ranked, diversified items  ids and reason codes only.
     """
+    return [
+        RecommendationItem(target_id=item.id, reasons=item.reasons)
+        for item in _recipe_pipeline(viewer_id=viewer_id, now=now)
+    ]
+
+
+def _recipe_pipeline(
+    *, viewer_id: int | None, now: datetime | None = None
+) -> list[ScoredCandidate]:
+    """The full recipe pipeline, scores still attached (internal seam)."""
     now = now or timezone.now()
     signals = _gather_signals(viewer_id=viewer_id)
     liked_creators = frozenset(
@@ -246,7 +257,7 @@ def recommend_courses(
     """Ranked course recommendations for a viewer.
 
     Excluded: the viewer's own courses and everything they already enrolled
-    in (active **or** completed — a finished course is history, not a
+    in (active **or** completed  a finished course is history, not a
     suggestion), favorited or reviewed.
 
     Args:
@@ -254,8 +265,18 @@ def recommend_courses(
         now: Reference time for recency; injected by tests, defaulted here.
 
     Returns:
-        Ranked, diversified items — ids and reason codes only.
+        Ranked, diversified items  ids and reason codes only.
     """
+    return [
+        RecommendationItem(target_id=item.id, reasons=item.reasons)
+        for item in _course_pipeline(viewer_id=viewer_id, now=now)
+    ]
+
+
+def _course_pipeline(
+    *, viewer_id: int | None, now: datetime | None = None
+) -> list[ScoredCandidate]:
+    """The full course pipeline, scores still attached (internal seam)."""
     now = now or timezone.now()
     signals = _gather_signals(viewer_id=viewer_id)
     liked_creators = frozenset(
@@ -301,8 +322,13 @@ def _score_and_rank(
     ratings: dict,
     favorite_counts: dict,
     now: datetime,
-) -> list[RecommendationItem]:
-    """Steps 4–6 of the pipeline over an already-eligible candidate list."""
+) -> list[ScoredCandidate]:
+    """Steps 4–6 of the pipeline over an already-eligible candidate list.
+
+    Returns the ordered :class:`ScoredCandidate` rows with their scores
+    still attached; the public feed functions strip the score at their
+    boundary (ADR 0018 §14), while the staff preview keeps it.
+    """
     seen: set[int] = set()
     scored = []
     for candidate in candidates:
@@ -320,8 +346,28 @@ def _score_and_rank(
                 now=now,
             )
         )
-    ordered = scoring_service.diversify(scoring_service.rank(scored))
-    return [
-        RecommendationItem(target_id=item.id, reasons=item.reasons)
-        for item in ordered
-    ]
+    return scoring_service.diversify(scoring_service.rank(scored))
+
+
+def preview_scored(
+    *, kind: str, target_user_id: int, now: datetime | None = None
+) -> list[ScoredCandidate]:
+    """The pipeline as one user would see it, scores included - staff only.
+
+    ADR 0028 amends ADR 0018 §10 for exactly this seam: the public feed
+    still never carries a score, but an operator debugging "why was this
+    recommended?" may see the ranked list with its numbers. The output
+    stays aggregate - scores and reason codes, never the target user's
+    raw history.
+
+    Args:
+        kind: ``recipes`` or ``courses``.
+        target_user_id: The user whose feed to reproduce.
+        now: Reference time for recency; defaults to the real clock.
+
+    Returns:
+        The ranked, diversified candidates with scores attached.
+    """
+    if kind == "courses":
+        return _course_pipeline(viewer_id=target_user_id, now=now)
+    return _recipe_pipeline(viewer_id=target_user_id, now=now)

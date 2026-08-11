@@ -53,7 +53,7 @@ def set_status(*, enrollment: Enrollment, status: str) -> Enrollment:
 def mark_completed(*, enrollment: Enrollment) -> Enrollment:
     """Record course completion.
 
-    ``completed_at`` is stamped exactly once and never cleared — the durable
+    ``completed_at`` is stamped exactly once and never cleared  the durable
     fact a future certificate will reference.
 
     Args:

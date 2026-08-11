@@ -1,8 +1,8 @@
-# ADR 0025 — Threat watching, and the honest limits of a client-side guard
+# ADR 0025  Threat watching, and the honest limits of a client-side guard
 
 - **Status:** Accepted
 - **Date:** 2026-08-09
-- **Supersedes:** —
+- **Supersedes:** 
 - **Related:** [0005](0005-api-only-backend.md) (API-only backend),
   [0016](0016-notifications-as-a-push-sink.md) (leaf sink apps),
   [0022](0022-admin-surface-identity-flag.md) (`is_staff` on `/auth/me/`)
@@ -34,7 +34,7 @@ quietly papered over.
 The app holds two models, one middleware and nine endpoints. It imports
 no feature domain and no feature domain imports it. The only way in is
 the middleware, which sees a request as `(ip, path, query, method, user
-agent)` — no recipes, no courses, no user profile. That is what lets a
+agent)`  no recipes, no courses, no user profile. That is what lets a
 watcher sit at the edge of every request without coupling the platform to
 it, and what lets the whole app be deleted in one commit if it ever
 becomes a liability.
@@ -43,8 +43,8 @@ becomes a liability.
 
 `detectors/request_rules.py` takes strings and returns a `Signal | None`.
 No `HttpRequest`, no ORM, no settings. Detection rules are the part of
-this app most likely to be wrong — a false positive scores a real learner
-and a false negative misses a scan — so they are the part that must be
+this app most likely to be wrong  a false positive scores a real learner
+and a false negative misses a scan  so they are the part that must be
 testable with one function call and no database. Both directions are
 asserted: Thai-language recipe searches and Googlebot are checked to
 produce *nothing*, alongside the positive cases.
@@ -57,7 +57,7 @@ times would let one packet reach *critical* on its own.
 ### 3. Scoring: exponential decay, not a rolling window
 
 A profile's score is `decayed(previous) + weight`, halving every 12
-hours. The alternative — summing events inside a fixed window — needs a
+hours. The alternative  summing events inside a fixed window  needs a
 sweep job to age rows out, and gives a cliff where an address drops from
 *critical* to *low* because one event crossed a boundary. Decay ages
 correctly with no scheduled work at all, even for a profile nobody reads
@@ -65,8 +65,8 @@ again for a month.
 
 Weights and thresholds are constants in one file so an operator can
 answer "why is this address *high*?" by reading, not by tracing. The
-calibration claim — one unambiguous probe reaches *high*, two reach
-*critical* — is asserted in `test_scoring.py` rather than left in a
+calibration claim  one unambiguous probe reaches *high*, two reach
+*critical*  is asserted in `test_scoring.py` rather than left in a
 comment.
 
 The `critical` floor is **85**, deliberately just under two honeypot hits
@@ -90,8 +90,8 @@ disagree.
 An event is evidence, and evidence that can be rewritten is worthless in
 an incident review. There is no update path, no delete endpoint, and the
 Django admin registration is read-only. An event's `severity` is the band
-its **own weight** rates — one honeypot hit stays *high* even after the
-address later reaches *critical* — so re-tuning the weights cannot
+its **own weight** rates  one honeypot hit stays *high* even after the
+address later reaches *critical*  so re-tuning the weights cannot
 retroactively rewrite what the platform observed.
 
 Operator triage (`review_state`, `blocked_until`) lives on the profile,
@@ -122,7 +122,7 @@ Cost is asserted, not assumed: `test_ordinary_browsing_adds_no_database_queries`
 measures a clean request with the watcher off and on and requires the
 same query count. A database write happens only when a rule fires.
 
-### 8. Developer tools cannot be blocked — so the guard reports instead
+### 8. Developer tools cannot be blocked  so the guard reports instead
 
 **A web page cannot prevent DevTools from opening.** It cannot detect
 them reliably either. Everything on offer is a heuristic:
@@ -138,15 +138,15 @@ And none of it applies at all to the audience that matters: an attacker
 reads the JavaScript with `curl`, from the network tab of a browser with
 scripts disabled, or from the published source map. **Anything shipped to
 the browser is public.** The guard is a speed bump against casual
-poking, and — the part with real value — a *signal source*.
+poking, and  the part with real value  a *signal source*.
 
 So the guard has three modes, set by one environment variable
 (`SECURITY_CLIENT_GUARD_MODE`, served to the browser by
 `GET /api/v1/security/client-policy/`):
 
-- `off` — nothing ships.
-- `detect` (**default**) — observe and report; never interfere.
-- `deter` — additionally intercept F12 / Ctrl+Shift+I / Ctrl+Shift+J /
+- `off`  nothing ships.
+- `detect` (**default**)  observe and report; never interfere.
+- `deter`  additionally intercept F12 / Ctrl+Shift+I / Ctrl+Shift+J /
   Ctrl+U / right-click.
 
 Signed-in visitors are exempt by default
@@ -167,12 +167,12 @@ The one public write endpoint, `POST /api/v1/security/client-signals/`:
 - takes the source address **from the connection**. There is no `ip`
   field, and `StrictSerializer` rejects the request outright if one is
   supplied rather than ignoring it.
-- is rate-limited (`SECURITY_SIGNAL_RATE`, default `30/min`) — it is
+- is rate-limited (`SECURITY_SIGNAL_RATE`, default `30/min`)  it is
   anonymous by necessity, so throttling is not optional.
 - answers `{"recorded": true|false}` and nothing else. Telling a probe
   its own score would turn the dashboard into a tuning aid.
-- carries the lowest weights in the table (1–8). Ten devtools reports —
-  the loudest a browser can be — still rank below one real probe, and
+- carries the lowest weights in the table (1–8). Ten devtools reports 
+  the loudest a browser can be  still rank below one real probe, and
   `test_client_signals_alone_cannot_reach_a_blocking_band` enforces it.
 
 ### 10. Crawler policy: allow the crawlers that should crawl
@@ -182,7 +182,7 @@ list and scored zero. A recipe platform wants to be indexed. `robots.txt`
 states the intent; it is a request, not a control, and the enforcement
 side is this app.
 
-`curl`, `requests`, `scrapy` and friends score 12 — noteworthy on a
+`curl`, `requests`, `scrapy` and friends score 12  noteworthy on a
 browser-facing page, entirely normal against an API, so low enough that
 it takes sustained repetition to matter.
 
@@ -190,7 +190,7 @@ it takes sustained repetition to matter.
 
 **Gained**
 
-- Probing is visible, aggregated per source, and banded — with filters
+- Probing is visible, aggregated per source, and banded  with filters
   by kind, severity, band, review state, address and free text.
 - Every switch is an environment variable with a safe default; nothing
   new is enforced on an existing deployment until someone opts in.
@@ -210,13 +210,13 @@ it takes sustained repetition to matter.
   off by default and blocks expire.
 - `X-Forwarded-For`'s first entry is trusted, matching the existing
   `client_ip` helper. Behind a misconfigured proxy that value is
-  attacker-controlled — the same assumption the rest of the platform
+  attacker-controlled  the same assumption the rest of the platform
   already makes, not a new one.
 
 ## Alternatives rejected
 
 **A WAF / Cloudflare / fail2ban instead of application code.** Better at
-blocking, and it should still be used in production — but it cannot see
+blocking, and it should still be used in production  but it cannot see
 `is_staff`, cannot join a signal to a KawaiiBake account, and puts the
 dashboard outside the product. This app is the layer that knows the
 application; it is complementary to an edge WAF, not a replacement.
@@ -225,7 +225,7 @@ application; it is complementary to an edge WAF, not a replacement.
 of a write per request. Rejected: the watcher must be free for the 99.9%
 of traffic that is a learner reading a recipe.
 
-**Storing only events and computing bands on read.** Honest, no drift —
+**Storing only events and computing bands on read.** Honest, no drift 
 and unusable, since filtering by band would mean aggregating the whole
 table per page load. The compromise is the stored cache plus
 `recount_threats` to prove it.

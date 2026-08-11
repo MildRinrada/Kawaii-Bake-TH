@@ -1,7 +1,7 @@
 """Review endpoints.
 
 The nested list/create/rating views are generated per target kind from one
-pair of classes — the target kind is fixed by the URL route, never by client
+pair of classes  the target kind is fixed by the URL route, never by client
 input.
 """
 

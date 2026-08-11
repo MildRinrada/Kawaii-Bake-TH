@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class ConversationNotFoundError(DomainError):
     """Raised when a conversation is absent or not the caller's.
 
-    "Not yours" and "does not exist" are the same 404 — the ownership rule
+    "Not yours" and "does not exist" are the same 404 - the ownership rule
     is enforced by the selector, so no endpoint can even address someone
     else's conversation.
     """
@@ -21,7 +21,7 @@ class ConversationNotFoundError(DomainError):
 class ContextNotFoundError(DomainError):
     """Raised when the requested context target is absent or hidden.
 
-    This app's own 404 for a recipe/lesson/course the viewer cannot see —
+    This app's own 404 for a recipe/lesson/course the viewer cannot see -
     a callee (recipes, lessons, courses) never raises for its caller
     (ADR 0008).
     """
@@ -35,7 +35,7 @@ class ContextAccessDeniedError(DomainError):
     """Raised when the context target exists but its content is gated.
 
     Mirrors the lessons two-layer rule: the syllabus already made the lesson
-    public, so 404 would be a lie — the caller needs the enrollment signal
+    public, so 404 would be a lie - the caller needs the enrollment signal
     to render the "Enroll" CTA.
     """
 
@@ -55,7 +55,7 @@ class InvalidContextError(DomainError):
 class AssistantUnavailableError(DomainError):
     """Raised when the AI provider fails or is not configured.
 
-    503, not 500: the request was valid and the state is intact — the
+    503, not 500: the request was valid and the state is intact - the
     backend is temporarily unable to answer. The user's message is already
     persisted when this is raised (see ADR 0013 on the transaction shape).
     """

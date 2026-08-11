@@ -109,7 +109,7 @@ class RecordTests(TestCase):
         self,
     ) -> None:
         # Two honeypot hits push the profile to critical, but each event
-        # stays "high" — history must not be rewritten by what came later.
+        # stays "high"  history must not be rewritten by what came later.
         threat_service.record(kind=SignalKind.HONEYPOT_PATH, ip="198.51.100.5")
         threat_service.record(kind=SignalKind.HONEYPOT_PATH, ip="198.51.100.5")
 
@@ -179,7 +179,7 @@ class ClientSignalTests(TestCase):
         self.assertFalse(SecurityEvent.objects.filter(ip="198.51.100.9").exists())
 
     def test_client_signals_alone_cannot_reach_a_blocking_band(self) -> None:
-        # Ten devtools reports — the loudest a browser can be — must not
+        # Ten devtools reports  the loudest a browser can be  must not
         # outrank a single real probe.
         for _ in range(10):
             threat_service.record_client_signal(

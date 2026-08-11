@@ -12,8 +12,8 @@ from apps.qa.constants import ANSWER_BODY_MAX_LENGTH
 class QuestionAnswer(TimeStampedModel):
     """One user's answer on a thread.
 
-    Answers are leaves — nothing references them except the thread's
-    nullable ``accepted_answer`` pointer — so author deletion is **hard**;
+    Answers are leaves  nothing references them except the thread's
+    nullable ``accepted_answer`` pointer  so author deletion is **hard**;
     ``SET_NULL`` on that pointer means deleting the accepted answer
     reverts the thread to unanswered with zero application code. Answers
     are reachable only through their thread's visibility: a hidden or
@@ -33,7 +33,7 @@ class QuestionAnswer(TimeStampedModel):
     class Meta:
         verbose_name = "answer"
         verbose_name_plural = "answers"
-        # Chronological — a discussion reads top to bottom.
+        # Chronological  a discussion reads top to bottom.
         ordering = ("created_at", "id")
         indexes = [
             models.Index(

@@ -2,7 +2,7 @@
 
 Query strings are validated exactly like request bodies. Using
 :class:`StrictSerializer` means ``?catgeory=cake`` fails with a 400 instead of
-silently returning everything — the misleading-200 bug that class exists to
+silently returning everything  the misleading-200 bug that class exists to
 prevent.
 
 Repeated parameters are **not** supported: in a ``QueryDict``,
@@ -25,6 +25,8 @@ from apps.recipes.constants import (
     Difficulty,
     Ordering,
     RecipeScope,
+    RecipeStatus,
+    RecipeVisibility,
 )
 
 # CommaSeparatedCharField / CommaSeparatedChoiceField moved to
@@ -35,7 +37,7 @@ class RecipeListQuerySerializer(StrictSerializer):
     """Validates the query string of a recipe listing.
 
     ``page`` and ``page_size`` must be declared even though the paginator reads
-    them from the request directly — otherwise the strict check would reject
+    them from the request directly  otherwise the strict check would reject
     them as unknown parameters.
 
     Note the deliberate asymmetry with recipe *writes*: an unknown category slug
@@ -58,6 +60,12 @@ class RecipeListQuerySerializer(StrictSerializer):
     max_total_minutes = serializers.IntegerField(required=False, min_value=1)
     ordering = serializers.ChoiceField(choices=Ordering.choices, required=False)
     scope = serializers.ChoiceField(choices=RecipeScope.choices, required=False)
+    status = serializers.ChoiceField(
+        choices=RecipeStatus.choices, required=False, allow_blank=True
+    )
+    visibility = serializers.ChoiceField(
+        choices=RecipeVisibility.choices, required=False, allow_blank=True
+    )
     page = serializers.IntegerField(required=False, min_value=1)
     page_size = serializers.IntegerField(required=False, min_value=1)
 

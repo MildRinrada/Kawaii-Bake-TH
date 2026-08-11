@@ -11,11 +11,11 @@ from apps.core.models.base import TimeStampedModel
 class CourseProgress(TimeStampedModel):
     """One user's completion state for one course.
 
-    Deliberately carries **no counters** — completed/total lesson counts are
+    Deliberately carries **no counters**  completed/total lesson counts are
     aggregated from ``LessonProgress`` at read time, so this row can never
     disagree with the rows it summarizes. What it stores is the one thing
     aggregation cannot recover: ``completed_at``, the moment the learner
-    first finished every required lesson — stamped once, never cleared
+    first finished every required lesson  stamped once, never cleared
     (lessons added later never un-complete a course; certificates will
     reference this).
 

@@ -2,7 +2,7 @@
 
 Works identically on PostgreSQL and SQLite, so it is the default and is fully
 exercised by the test suite. It cannot rank, and it cannot use an index for a
-leading wildcard — acceptable at current scale, and the seam exists precisely so
+leading wildcard  acceptable at current scale, and the seam exists precisely so
 this can be swapped without touching a selector.
 """
 

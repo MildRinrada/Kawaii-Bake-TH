@@ -1,6 +1,6 @@
 """The single visibility rule for question threads.
 
-One prefix-parameterised ``Q`` builder (the recipes/courses mechanism) —
+One prefix-parameterised ``Q`` builder (the recipes/courses mechanism) 
 used by the thread list, thread detail, answer endpoints (via
 ``prefix="thread__"``) and search alike. There is deliberately no
 ``can_view_thread()`` twin implementation.
@@ -22,7 +22,7 @@ def visible_q(
     """Build the thread-visibility predicate for a viewer.
 
     Active threads are public. Hidden threads remain visible to their
-    author (they must see what moderation did — the reviews rule) and to
+    author (they must see what moderation did  the reviews rule) and to
     staff. Deleted threads are visible to **no one**, author included:
     soft-deleted history exists for the database, never for the API.
 

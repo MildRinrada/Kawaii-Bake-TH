@@ -3,15 +3,15 @@
 /**
  * Recipe management.
  *
- * Reads `GET /recipes/?scope=all` — the staff-only slice that includes
+ * Reads `GET /recipes/?scope=all`  the staff-only slice that includes
  * drafts, unlisted and archived rows (a non-staff caller is silently
  * narrowed to the public set by the backend, which is why this page is
  * safe even if the client-side gate is bypassed).
  *
  * Writes are the endpoints that already exist: publish / unpublish /
- * archive and DELETE. There is no server-side `status` filter, so this
- * page offers the scope switch the API really has instead of a status
- * dropdown that would only filter the current page.
+ * archive and DELETE. The `status` and `author` filters are server-side
+ * and narrow-only - the backend intersects them with visibility, so
+ * they can never widen what a viewer sees.
  */
 
 import Link from "next/link";
@@ -67,6 +67,13 @@ const ORDERINGS = [
   { value: "popular", label: "ยอดนิยม" },
 ];
 
+const STATUSES = [
+  { value: "", label: "ทุกสถานะ" },
+  { value: "draft", label: "ฉบับร่าง" },
+  { value: "published", label: "เผยแพร่แล้ว" },
+  { value: "archived", label: "เก็บเข้าคลัง" },
+];
+
 export default function AdminRecipesPage() {
   const { toast } = useToast();
   const confirm = useConfirm();
@@ -76,6 +83,9 @@ export default function AdminRecipesPage() {
   const [difficulty, setDifficulty] = useState("");
   const [category, setCategory] = useState("");
   const [scope, setScope] = useState("all");
+  const [status, setStatus] = useState("");
+  const [authorInput, setAuthorInput] = useState("");
+  const author = useDebounced(authorInput);
   const [ordering, setOrdering] = useState("newest");
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -89,6 +99,8 @@ export default function AdminRecipesPage() {
     scope,
     ordering,
     search: search || undefined,
+    status: status || undefined,
+    author: author || undefined,
     difficulty: difficulty || undefined,
     category: category || undefined,
   });
@@ -134,7 +146,7 @@ export default function AdminRecipesPage() {
     <>
       <AdminPageHeader
         title="สูตรอาหาร"
-        description="จัดการสูตรทุกสถานะ — ฉบับร่าง เผยแพร่ ไม่แสดงในรายการ และที่เก็บเข้าคลัง"
+        description="จัดการสูตรทุกสถานะ  ฉบับร่าง เผยแพร่ ไม่แสดงในรายการ และที่เก็บเข้าคลัง"
         actions={
           <Link href="/admin/recipes/new">
             <Button size="sm">+ เพิ่มสูตรใหม่</Button>
@@ -157,12 +169,24 @@ export default function AdminRecipesPage() {
             placeholder="ค้นหาชื่อสูตร…"
             label="ค้นหาสูตร"
           />
+          <SearchInput
+            value={authorInput}
+            onChange={setAuthorInput}
+            placeholder="กรองตามผู้เขียน…"
+            label="กรองตามผู้เขียน"
+          />
           <FilterBar>
             <FilterSelect
               label="ขอบเขต"
               value={scope}
               options={SCOPES}
               onChange={setScope}
+            />
+            <FilterSelect
+              label="สถานะ"
+              value={status}
+              options={STATUSES}
+              onChange={setStatus}
             />
             <FilterSelect
               label="ระดับ"
@@ -205,6 +229,25 @@ export default function AdminRecipesPage() {
           }
           columns={[
             {
+              key: "cover",
+              header: "ภาพ",
+              className: "w-14",
+              render: (row) =>
+                row.cover_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail from the API origin
+                  <img
+                    src={row.cover_image_url}
+                    alt=""
+                    className="h-10 w-14 rounded-md object-cover"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="block h-10 w-14 rounded-md bg-berry-soft/60"
+                  />
+                ),
+            },
+            {
               key: "title",
               header: "ชื่อสูตร",
               render: (row) => (
@@ -226,7 +269,7 @@ export default function AdminRecipesPage() {
               header: "หมวด",
               render: (row) => (
                 <span className="text-xs text-fg-muted">
-                  {row.categories.map((item) => item.name).join(", ") || "—"}
+                  {row.categories.map((item) => item.name).join(", ") || ""}
                 </span>
               ),
             },
@@ -337,7 +380,7 @@ export default function AdminRecipesPage() {
                 onClick={() =>
                   confirm.ask({
                     title: "ลบสูตรนี้ถาวร?",
-                    body: `“${detail.data!.title}” จะถูกลบออกจากฐานข้อมูลอย่างถาวร กู้คืนไม่ได้ — ถ้าต้องการแค่ซ่อน ให้ใช้ “เก็บเข้าคลัง” แทน`,
+                    body: `“${detail.data!.title}” จะถูกลบออกจากฐานข้อมูลอย่างถาวร กู้คืนไม่ได้  ถ้าต้องการแค่ซ่อน ให้ใช้ “เก็บเข้าคลัง” แทน`,
                     confirmLabel: "ลบถาวร",
                     danger: true,
                     action: () =>
@@ -374,7 +417,7 @@ export default function AdminRecipesPage() {
               {detail.data.total_minutes} นาที
             </DetailRow>
             <DetailRow label="หมวดหมู่">
-              {detail.data.categories.map((item) => item.name).join(", ") || "—"}
+              {detail.data.categories.map((item) => item.name).join(", ") || ""}
             </DetailRow>
             <DetailRow label="วัตถุดิบ">
               {detail.data.ingredients.length} รายการ
@@ -384,7 +427,7 @@ export default function AdminRecipesPage() {
               {relativeThai(detail.data.created_at)}
             </DetailRow>
             <DetailRow label="สรุป">
-              <span className="text-fg-muted">{detail.data.summary || "—"}</span>
+              <span className="text-fg-muted">{detail.data.summary || ""}</span>
             </DetailRow>
           </dl>
         ) : null}

@@ -1,7 +1,7 @@
 """Business logic for awarding achievements.
 
 Awards are pulled by this app from public facts (progress counts), never
-pushed by content apps and never wired to model signals — future
+pushed by content apps and never wired to model signals  future
 achievement sources call :func:`award` or extend :func:`recalculate`.
 """
 
@@ -26,7 +26,7 @@ def award(
 ) -> tuple[Achievement, bool]:
     """Record an achievement, idempotently.
 
-    The public entry point future phases call — quiz/recipe awards will
+    The public entry point future phases call  quiz/recipe awards will
     arrive here via ``recalculate``, reading those apps' public selectors.
 
     Args:
@@ -49,7 +49,7 @@ def award(
             if achievement.badge is not None
             else str(AchievementType(achievement_type).label)
         )
-        # First earning only; best-effort, post-commit (ADR 0016) — a
+        # First earning only; best-effort, post-commit (ADR 0016)  a
         # notification problem never fails the award.
         notification_service.notify_achievement_earned(
             user_id=user_id, badge_title=badge_title
@@ -63,7 +63,7 @@ def award_course_achievements(
     """Award everything a course completion can trigger.
 
     Called by certificate issuance. Volume thresholds read progress'
-    completed-course count — the stamped facts, computed live.
+    completed-course count  the stamped facts, computed live.
 
     Args:
         user_id: Primary key of the user.

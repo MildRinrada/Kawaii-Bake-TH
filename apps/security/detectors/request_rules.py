@@ -1,6 +1,6 @@
 """Pure request inspection: (path, query, user agent) → signal or nothing.
 
-Deliberately framework-free — no ``HttpRequest``, no ORM, no settings.
+Deliberately framework-free  no ``HttpRequest``, no ORM, no settings.
 Detection rules are the part of this app most likely to be wrong, so they
 are written as functions over strings that a test can call directly with
 a hostile input and no database.

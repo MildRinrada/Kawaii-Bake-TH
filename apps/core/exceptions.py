@@ -1,7 +1,7 @@
 """Framework-free domain exception base.
 
 Services raise these. They carry their own error code and HTTP status so the
-API layer can translate them declaratively — no ``try``/``except`` in views and
+API layer can translate them declaratively  no ``try``/``except`` in views and
 no registry to keep in sync. This module must never import DRF or Django HTTP:
 services depend on it, and services stay transport-agnostic.
 """

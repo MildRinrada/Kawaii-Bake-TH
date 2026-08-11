@@ -80,10 +80,10 @@ class MyCourseProgress:
 def _require_enrolled_lesson(*, lesson_id: int, user_id: int) -> LessonRef:
     """Resolve a lesson the user may record progress on.
 
-    Layer 1 (**404**): the lesson exists for this viewer — the lessons app's
+    Layer 1 (**404**): the lesson exists for this viewer  the lessons app's
     own visibility rule, via its public ref selector. Layer 2 (**403**):
     an access-granting enrollment. Completion is a course activity, so it
-    requires enrollment even on preview lessons — reading is free, progress
+    requires enrollment even on preview lessons  reading is free, progress
     is not.
 
     Raises:
@@ -148,7 +148,7 @@ def uncomplete_lesson(*, user_id: int, lesson_id: int) -> LessonProgress:
     """Clear a lesson's completion; ``first_completed_at`` history survives.
 
     Deliberately does **not** clear course completion or downgrade the
-    enrollment — completion is a durable fact stamped once (certificates may
+    enrollment  completion is a durable fact stamped once (certificates may
     reference it), matching the never-auto-downgrade rule for added lessons.
 
     Args:
@@ -172,7 +172,7 @@ def recalculate_course_progress(*, user_id: int, course_id: int) -> bool:
     Aggregates this app's rows against the lessons app's published set (its
     public selector). When every required lesson is complete, stamps
     ``CourseProgress.completed_at`` (once, conditionally) and records the
-    fact on the courses side through ``record_course_completion`` — the
+    fact on the courses side through ``record_course_completion``  the
     Phase 3 contract, unchanged. Never un-stamps.
 
     Args:
@@ -206,7 +206,7 @@ def get_course_progress(
     """Aggregate a student's progress through one course.
 
     Resolves the course through the courses app's visibility (archived stays
-    readable to the enrolled — their rule, composed, not copied), gates on
+    readable to the enrolled  their rule, composed, not copied), gates on
     enrollment exactly like lesson content, and is the **self-healing half**
     of course completion.
 
@@ -235,7 +235,7 @@ def get_course_progress(
     )
     if enrollment is None or not enrollment.grants_access:
         # A dropped student keeps their history in the database but does not
-        # see it until they re-enroll — the same gate as lesson content.
+        # see it until they re-enroll  the same gate as lesson content.
         raise EnrollmentRequiredError
 
     lessons = lesson_selector.list_published_refs(course_id=course.id)
@@ -292,7 +292,7 @@ def get_my_progress(*, user_id: int) -> list[MyCourseProgress]:
     """The learner's progress across every enrolled course.
 
     Flat query count regardless of course count: enrolled ids, the course
-    cards, one grouped completed-count aggregate, one completion-map fetch —
+    cards, one grouped completed-count aggregate, one completion-map fetch 
     merged in Python. ``total_lessons`` reads ``published_lesson_count``,
     the counter the lessons app already maintains on Course (ADR 0009), so
     no lesson rows are counted here.

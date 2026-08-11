@@ -16,7 +16,7 @@ class PromptTemplate(models.Model):
     conversations behave. A new behaviour is a new row with a new
     ``version``; flipping ``is_active`` routes new conversations to it while
     existing ones keep resolving their stamped ``prompt_version``. Rows are
-    never edited in place once referenced — the partial unique guarantees at
+    never edited in place once referenced - the partial unique guarantees at
     most one active version per ``(name, language)``.
     """
 

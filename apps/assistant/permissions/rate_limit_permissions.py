@@ -1,6 +1,6 @@
 """Attempt throttling for assistant endpoints.
 
-Backed by ``infrastructure.cache`` counters (the auth precedent) — every AI
+Backed by ``infrastructure.cache`` counters (the auth precedent) - every AI
 call costs real money, so the send endpoint is throttled per user before the
 provider is ever reached. This is the rate-limiting hook: quota/billing will
 later enforce against :class:`AIUsageLog` aggregates in the same place.

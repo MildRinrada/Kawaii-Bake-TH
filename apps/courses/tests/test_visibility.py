@@ -1,4 +1,4 @@
-"""The course visibility matrix — the enforcement mechanism for permissions."""
+"""The course visibility matrix  the enforcement mechanism for permissions."""
 
 from __future__ import annotations
 

@@ -4,7 +4,7 @@
  * The one paginated-list hook every admin table uses.
  *
  * Filters live in component state (an admin table is a working surface,
- * not a shareable URL), and changing any of them resets to page 1 —
+ * not a shareable URL), and changing any of them resets to page 1 
  * otherwise page 4 of a narrowed result set silently renders empty.
  */
 

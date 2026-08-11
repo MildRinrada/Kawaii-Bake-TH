@@ -107,6 +107,19 @@ def username_exists(*, username: str) -> bool:
     return User.objects.filter(username__iexact=username.strip()).exists()
 
 
+def active_user_ids() -> list[int]:
+    """Primary keys of every active account.
+
+    Part of the public cross-app API: the notifications broadcast
+    enumerates its audience through this, so no other app ever queries
+    the user table itself. Ids only - no PII crosses the boundary.
+
+    Returns:
+        The active account ids.
+    """
+    return list(User.objects.filter(is_active=True).values_list("id", flat=True))
+
+
 def get_for_password_reset(*, email: str) -> User | None:
     """Fetch the user eligible to receive a password-reset email.
 

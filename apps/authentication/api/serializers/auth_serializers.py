@@ -2,7 +2,7 @@
 
 These validate the *message*: presence, type, length, shape. Domain rules
 (uniqueness, reserved handles, password strength) belong to ``validators/`` and
-run inside the services, so they hold for every caller — not just HTTP.
+run inside the services, so they hold for every caller  not just HTTP.
 """
 
 from __future__ import annotations
@@ -12,12 +12,22 @@ from typing import Any
 from rest_framework import serializers
 
 from apps.common.api.serializers import StrictSerializer
-from apps.users.constants import USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH
+from apps.users.constants import (
+    NAME_PART_MAX_LENGTH,
+    USERNAME_MAX_LENGTH,
+    USERNAME_MIN_LENGTH,
+)
 from apps.users.validators.user_validator import validate_username
 
 
 class RegistrationSerializer(StrictSerializer):
-    """Validates a sign-up payload."""
+    """Validates a sign-up payload.
+
+    The legal name is mandatory: certificates print it, and a certificate
+    naming a handle is not a credential. ``accept_terms`` must be an
+    explicit ``true``  PDPA consent is an action the user takes, never a
+    default the form ships with.
+    """
 
     email = serializers.EmailField(max_length=254)
     username = serializers.CharField(
@@ -27,8 +37,19 @@ class RegistrationSerializer(StrictSerializer):
         # translate its Django ValidationError into a clean 400.
         validators=[validate_username],
     )
+    first_name = serializers.CharField(max_length=NAME_PART_MAX_LENGTH)
+    last_name = serializers.CharField(max_length=NAME_PART_MAX_LENGTH)
     password = serializers.CharField(write_only=True, trim_whitespace=False)
     password_confirm = serializers.CharField(write_only=True, trim_whitespace=False)
+    accept_terms = serializers.BooleanField()
+
+    def validate_accept_terms(self, value: bool) -> bool:
+        """Reject a registration that does not carry explicit consent."""
+        if not value:
+            raise serializers.ValidationError(
+                "You must accept the terms of service and privacy policy."
+            )
+        return value
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         """Confirm the two password entries match.

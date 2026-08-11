@@ -1,1 +1,1 @@
-"""Assistant permissions — throttling and access checks."""
+"""Assistant permissions - throttling and access checks."""

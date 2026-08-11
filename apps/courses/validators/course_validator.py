@@ -1,4 +1,4 @@
-"""Domain validation for course core fields — runs on every write."""
+"""Domain validation for course core fields  runs on every write."""
 
 from __future__ import annotations
 

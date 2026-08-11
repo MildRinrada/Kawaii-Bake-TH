@@ -1,1 +1,1 @@
-"""Gallery services — business logic, transport-agnostic."""
+"""Gallery services  business logic, transport-agnostic."""

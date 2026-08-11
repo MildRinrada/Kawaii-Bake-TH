@@ -7,7 +7,7 @@
  * a *reason*: the ranked feed is bucketed by its reason codes (saved →
  * interests → explore), progress comes from `/me/progress/`, and the
  * "adjust my taste" panel writes the exact profile fields the engine
- * reads (favorite categories + experience level) — so the controls
+ * reads (favorite categories + experience level)  so the controls
  * genuinely change the output. Sections with nothing to say disappear
  * instead of rendering empty shells.
  */
@@ -45,6 +45,11 @@ import { Icon } from "@/components/ui/icon";
 import { MediaFrame } from "@/components/content/media-frame";
 import { RecipeCard } from "@/components/content/recipe-card";
 import { cn } from "@/lib/cn";
+
+/** One toast identity for favouriting, so rapid clicks rewrite a single
+    message instead of stacking one per click. */
+const FAVORITE_TOAST = "favorite";
+
 
 /* ------------------------------------------------------------------ */
 /* Vocabulary                                                          */
@@ -131,7 +136,7 @@ function RowItem({ children }: { children: React.ReactNode }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Taste panel — writes the fields the engine actually reads          */
+/* Taste panel  writes the fields the engine actually reads          */
 /* ------------------------------------------------------------------ */
 
 function TastePanel({
@@ -280,15 +285,20 @@ function HeroRecommendation({
   async function saveForLater() {
     try {
       await api.post(`/recipes/${recipe.slug}/favorite/`);
-      toast("บันทึกเข้ารายการโปรดแล้ว", "success");
+      toast("บันทึกเข้ารายการโปรดแล้ว", "success", FAVORITE_TOAST);
     } catch {
-      toast("บันทึกไม่สำเร็จ ลองอีกครั้งนะ", "danger");
+      toast("บันทึกไม่สำเร็จ ลองอีกครั้งนะ", "danger", FAVORITE_TOAST);
     }
   }
 
   return (
     <Card className="mt-6 overflow-hidden md:flex">
-      <div className="aspect-video w-full overflow-hidden md:aspect-auto md:w-1/2">
+      {/* Above `md` this sits beside the text as a flex item, so its height
+          would otherwise be whatever the copy happened to be  a thin strip
+          for a short title, a tower for a long one. `aspect` states the
+          intended proportion and `min-h` is the floor that holds when the
+          row stretches; `object-cover` inside absorbs the difference. */}
+      <div className="aspect-video w-full overflow-hidden md:aspect-4/3 md:min-h-80 md:w-1/2">
         <MediaFrame src={recipe.cover_image_url} seed={recipe.slug} />
       </div>
       <div className="flex flex-col justify-center gap-3 p-6 md:w-1/2 md:p-8">
@@ -664,7 +674,7 @@ export default function RecommendationsPage() {
             </Section>
           ) : null}
 
-          {/* Explore / recipes to bake now — the shortcuts stay useful
+          {/* Explore / recipes to bake now  the shortcuts stay useful
               even when the ranked feed was fully absorbed above. */}
           <Section
             title="อยากอบเลยวันนี้"
@@ -711,7 +721,7 @@ export default function RecommendationsPage() {
                 อยากได้คำแนะนำที่ตรงใจกว่านี้?
               </h2>
               <p className="mx-auto mt-1 max-w-md text-sm text-fg-muted">
-                สมัครสมาชิกแล้วบอกเราว่าชอบอบอะไร —
+                สมัครสมาชิกแล้วบอกเราว่าชอบอบอะไร 
                 สูตรและคอร์สจะถูกคัดใหม่ให้เข้ากับคุณโดยเฉพาะ
               </p>
               <div className="mt-4 flex justify-center gap-3">

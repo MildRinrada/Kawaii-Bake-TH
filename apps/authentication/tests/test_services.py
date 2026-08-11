@@ -37,6 +37,8 @@ class RegistrationServiceTests(TestCase):
 
     def test_register_creates_active_unverified_user(self) -> None:
         user = registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
             email="New.Baker@Example.com",
             username="newbaker",
             password=VALID_PASSWORD,
@@ -51,6 +53,8 @@ class RegistrationServiceTests(TestCase):
 
     def test_register_sends_verification_email(self) -> None:
         registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
             email="mail@example.com", username="mailer", password=VALID_PASSWORD
         )
 
@@ -62,6 +66,8 @@ class RegistrationServiceTests(TestCase):
 
         with self.assertRaises(EmailAlreadyRegisteredError):
             registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
                 email="TAKEN@example.com", username="other", password=VALID_PASSWORD
             )
 
@@ -70,33 +76,45 @@ class RegistrationServiceTests(TestCase):
 
         with self.assertRaises(UsernameAlreadyTakenError):
             registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
                 email="b@example.com", username="claimed", password=VALID_PASSWORD
             )
 
     def test_reserved_username_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
             registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
                 email="admin@example.com", username="admin", password=VALID_PASSWORD
             )
 
     def test_weak_password_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
             registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
                 email="weak@example.com", username="weakling", password="password"
             )
 
     def test_rate_limit_blocks_excessive_registration(self) -> None:
         with override_settings(REGISTRATION_RATE_LIMIT_ATTEMPTS=2):
             registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
                 email="r1@example.com", username="ruser1", password=VALID_PASSWORD,
                 client_ip="9.9.9.9",
             )
             registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
                 email="r2@example.com", username="ruser2", password=VALID_PASSWORD,
                 client_ip="9.9.9.9",
             )
             with self.assertRaises(RateLimitedError):
                 registration_service.register_user(
+                first_name="Test",
+                last_name="Baker",
                     email="r3@example.com", username="ruser3",
                     password=VALID_PASSWORD, client_ip="9.9.9.9",
                 )

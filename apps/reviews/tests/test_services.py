@@ -142,7 +142,7 @@ class ModerationTests(TestCase):
 
 
 class RatingStatisticsTests(TestCase):
-    """Statistics are computed over ACTIVE rows only — never stored."""
+    """Statistics are computed over ACTIVE rows only  never stored."""
 
     def setUp(self) -> None:
         self.author = create_user(username="rsauthor")

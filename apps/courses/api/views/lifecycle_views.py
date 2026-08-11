@@ -46,7 +46,7 @@ class CoursePublishView(_TransitionView):
 
 
 class CourseUnpublishView(_TransitionView):
-    """Return a course to draft — hides it even from enrolled students."""
+    """Return a course to draft  hides it even from enrolled students."""
 
     transition = "unpublish"
 
@@ -57,7 +57,7 @@ class CourseUnpublishView(_TransitionView):
 
 
 class CourseArchiveView(_TransitionView):
-    """Archive a course — enrolled students keep read access."""
+    """Archive a course  enrolled students keep read access."""
 
     transition = "archive"
 

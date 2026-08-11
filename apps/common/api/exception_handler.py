@@ -87,7 +87,7 @@ def api_exception_handler(exc: Exception, context: dict[str, Any]) -> Response:
     request = context.get("request")
     request_id: str = getattr(request, "request_id", "") if request is not None else ""
 
-    # 1. Domain errors — the common case. DRF's default handler returns None for
+    # 1. Domain errors  the common case. DRF's default handler returns None for
     #    these, which would surface as an unhandled 500.
     if isinstance(exc, DomainError):
         return _envelope(

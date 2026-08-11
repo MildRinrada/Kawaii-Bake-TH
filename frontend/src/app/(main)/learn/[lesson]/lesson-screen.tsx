@@ -4,7 +4,7 @@
  * The learning surface: lesson content, optional video embed, linked
  * recipe, and the complete/uncomplete action. The enrollment gate's 401
  * and 403 `enrollment_required` answers get designed states with a real
- * way forward — never a dead end.
+ * way forward  never a dead end.
  */
 
 import Link from "next/link";
@@ -134,7 +134,7 @@ export function LessonScreen({ lessonId }: { lessonId: string }) {
       {data.video_url ? (
         <p className="mt-4 rounded-control bg-lavender-soft px-4 py-3 text-sm text-lavender-ink">
           <Icon name="ui/camera" className="mr-1 inline-block size-4 align-[-3px]" />
-          บทเรียนนี้มีวิดีโอประกอบ —{" "}
+          บทเรียนนี้มีวิดีโอประกอบ {" "}
           <a
             href={data.video_url}
             target="_blank"

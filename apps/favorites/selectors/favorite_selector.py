@@ -19,7 +19,7 @@ def list_favorites(
     """The user's favorites, currently-visible targets only, newest first.
 
     Composes both content apps' **detail** visibility rules across the join
-    via the prefix-parameterised Q builders (ADR 0009 mechanism #2) — one
+    via the prefix-parameterised Q builders (ADR 0009 mechanism #2)  one
     rule per app, one implementation, applied here without importing a model.
     A favorited recipe that has since gone private silently leaves the list
     (and returns if it comes back); an archived course a student is enrolled
@@ -57,6 +57,92 @@ def list_favorites(
     )
 
 
+def list_all_favorites(*, kind: str = "", search: str = "") -> QuerySet[Favorite]:
+    """Every favorite across users, for the ``IsAdminUser``-gated views.
+
+    No visibility filter: staff see the platform as it is, including
+    favorites of content that has since gone private - that is exactly
+    the drift an operator investigates.
+
+    Args:
+        kind: Optional :class:`FavoriteTargetKind` narrowing.
+        search: Matches the owner's username or the target's title.
+
+    Returns:
+        A lazy queryset for pagination, newest first.
+    """
+    queryset = Favorite.objects.select_related(
+        "user", "user__profile", "recipe", "course"
+    )
+
+    if kind == FavoriteTargetKind.RECIPE:
+        queryset = queryset.filter(recipe__isnull=False)
+    elif kind == FavoriteTargetKind.COURSE:
+        queryset = queryset.filter(course__isnull=False)
+
+    cleaned = search.strip()
+    if cleaned:
+        queryset = queryset.filter(
+            Q(user__username__icontains=cleaned)
+            | Q(recipe__title__icontains=cleaned)
+            | Q(course__title__icontains=cleaned)
+        )
+
+    return queryset.order_by("-created_at", "-id")
+
+
+def top_favorited_recipes(*, limit: int = 10) -> list[dict[str, object]]:
+    """The most-favorited recipes, computed live.
+
+    Args:
+        limit: How many rows to return.
+
+    Returns:
+        Rows of ``{id, slug, title, count}``, most favorited first.
+    """
+    rows = (
+        Favorite.objects.filter(recipe__isnull=False)
+        .values("recipe_id", "recipe__slug", "recipe__title")
+        .annotate(total=Count("id"))
+        .order_by("-total", "recipe_id")[:limit]
+    )
+    return [
+        {
+            "id": row["recipe_id"],
+            "slug": row["recipe__slug"],
+            "title": row["recipe__title"],
+            "count": row["total"],
+        }
+        for row in rows
+    ]
+
+
+def top_favorited_courses(*, limit: int = 10) -> list[dict[str, object]]:
+    """The most-favorited courses, computed live.
+
+    Args:
+        limit: How many rows to return.
+
+    Returns:
+        Rows of ``{id, slug, title, count}``, most favorited first.
+    """
+    rows = (
+        Favorite.objects.filter(course__isnull=False)
+        .values("course_id", "course__slug", "course__title")
+        .annotate(total=Count("id"))
+        .order_by("-total", "course_id")[:limit]
+    )
+    return [
+        {
+            "id": row["course_id"],
+            "slug": row["course__slug"],
+            "title": row["course__title"],
+            "count": row["total"],
+        }
+        for row in rows
+    ]
+
+
 def is_favorited(
     *, user_id: int, recipe_id: int | None = None, course_id: int | None = None
 ) -> bool:
@@ -69,7 +155,7 @@ def is_favorited(
 def favorited_recipe_ids(*, user_id: int) -> list[int]:
     """Recipe ids the user has favorited.
 
-    Part of the public cross-app API (Phase 12) — a taste signal for the
+    Part of the public cross-app API (Phase 12)  a taste signal for the
     recommendation app. Ids only, no visibility filter: the caller consumes
     them as aggregate evidence about its own user, never as displayable
     content.
@@ -90,7 +176,7 @@ def favorited_recipe_ids(*, user_id: int) -> list[int]:
 def favorited_course_ids(*, user_id: int) -> list[int]:
     """Course ids the user has favorited.
 
-    Part of the public cross-app API (Phase 12) — see
+    Part of the public cross-app API (Phase 12)  see
     :func:`favorited_recipe_ids`.
 
     Args:
@@ -109,7 +195,7 @@ def favorited_course_ids(*, user_id: int) -> list[int]:
 def favorite_counts_for_recipes(*, ids: list[int]) -> dict[int, int]:
     """How many users favorited each recipe, in one query.
 
-    Part of the public cross-app API (Phase 12) — the popularity fact
+    Part of the public cross-app API (Phase 12)  the popularity fact
     behind recommendation scoring. Computed live, never stored: the
     no-counters rule (Database.md) applies to consumers too.
 
@@ -132,7 +218,7 @@ def favorite_counts_for_recipes(*, ids: list[int]) -> dict[int, int]:
 def favorite_counts_for_courses(*, ids: list[int]) -> dict[int, int]:
     """How many users favorited each course, in one query.
 
-    Part of the public cross-app API (Phase 12) — see
+    Part of the public cross-app API (Phase 12)  see
     :func:`favorite_counts_for_recipes`.
 
     Args:

@@ -5,7 +5,7 @@
  *
  * A deliberately plain, dense counterpart to the learner UI: square-ish
  * corners, tabular numerals, muted surfaces, no decorative motion. Every
- * admin page composes these — no page defines its own table or toolbar.
+ * admin page composes these  no page defines its own table or toolbar.
  */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -31,7 +31,7 @@ export function StatCard({
   value?: number | string | null;
   hint?: string;
   loading?: boolean;
-  /** Why the number cannot be shown — rendered instead of a fake zero. */
+  /** Why the number cannot be shown  rendered instead of a fake zero. */
   unavailable?: string;
 }) {
   return (
@@ -42,10 +42,10 @@ export function StatCard({
       {loading ? (
         <Skeleton className="mt-2 h-7 w-16" />
       ) : unavailable ? (
-        <p className="mt-1 text-sm text-fg-subtle">— {unavailable}</p>
+        <p className="mt-1 text-sm text-fg-subtle"> {unavailable}</p>
       ) : (
         <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-fg">
-          {value ?? "—"}
+          {value ?? ""}
         </p>
       )}
       {hint && !unavailable ? (
@@ -375,12 +375,15 @@ export function AdminPanel({
   title,
   description,
   actions,
+  required,
   children,
   className,
 }: {
   title?: string;
   description?: string;
   actions?: ReactNode;
+  /** Marks the section's content as mandatory (red asterisk). */
+  required?: boolean;
   children: ReactNode;
   className?: string;
 }) {
@@ -394,7 +397,15 @@ export function AdminPanel({
       {title ? (
         <header className="flex flex-wrap items-center gap-2 border-b border-edge px-3 py-2.5">
           <div>
-            <h2 className="text-sm font-semibold text-fg">{title}</h2>
+            <h2 className="text-sm font-semibold text-fg">
+              {title}
+              {required ? (
+                <span aria-hidden className="font-semibold text-danger">
+                  {" "}
+                  *
+                </span>
+              ) : null}
+            </h2>
             {description ? (
               <p className="text-xs text-fg-muted">{description}</p>
             ) : null}
@@ -407,7 +418,7 @@ export function AdminPanel({
   );
 }
 
-/** Slide-over detail view — a dialog, so Escape and focus come free. */
+/** Slide-over detail view  a dialog, so Escape and focus come free. */
 export function DetailPanel({
   open,
   title,
@@ -518,7 +529,7 @@ export function ConfirmDialog({
       className="m-auto w-full max-w-sm rounded-md border border-edge bg-surface-raised p-0 shadow-overlay backdrop:bg-black/40"
     >
       <div className="flex gap-3 px-4 py-4">
-        {/* Status art from `public/icons/modal/` — a destructive confirm
+        {/* Status art from `public/icons/modal/`  a destructive confirm
             looks different from a routine one before the label is read. */}
         <ArtIcon
           src={danger ? MODAL_ART.confirmDelete : MODAL_ART.warning}

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Quiz management — the same lifecycle the recipes and courses pages
+ * Quiz management  the same lifecycle the recipes and courses pages
  * use, against `/quizzes/` (`scope=all` for the staff slice).
  *
  * Attempt statistics are not shown: `/quizzes/{slug}/attempts/` returns

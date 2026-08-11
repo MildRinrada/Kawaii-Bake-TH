@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * One community post — photo-first.
+ * One community post  photo-first.
  *
  * The photo leads, the story follows, and the attached recipe sits under
  * both as a clearly-marked reference so a showcase can never be mistaken
@@ -10,14 +10,22 @@
  * The action row carries only what the backend can actually do. The
  * gallery app has no likes, comments or bookmarks (its model docstring
  * calls interactions a future phase), so this renders a share/copy-link
- * action — which needs no backend — and nothing that would 404 on click.
+ * action  which needs no backend  and nothing that would 404 on click.
+ *
+ * The author additionally gets hide/delete right on the card (with the
+ * full editor one click away on the post page), so managing your own
+ * posts never requires hunting through the feed one detail page at a
+ * time. Ownership is decided by comparing handles from `useAuth`  a
+ * cosmetic gate only; the backend re-authorises every mutation.
  */
 
 import Link from "next/link";
 import { useState } from "react";
 
+import { api } from "@/lib/api/client";
 import type { GalleryPost, RecipeListItem } from "@/lib/api/models";
 import { relativeThai } from "@/lib/datetime";
+import { useAuth } from "@/lib/auth/auth-context";
 import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
 import { Icon } from "@/components/ui/icon";
@@ -44,16 +52,66 @@ export function CommunityPostCard({
   post,
   recipeDetails,
   headingLevel = "h3",
+  onMutated,
 }: {
   post: GalleryPost;
   /** Public recipe row matching the attachment, when the feed found one. */
   recipeDetails?: RecipeListItem | null;
   headingLevel?: "h2" | "h3";
+  /** Called after the owner hides, shows or deletes the post, so the
+   *  hosting feed can refetch. Owner actions render only when set. */
+  onMutated?: () => void;
 }) {
   const Heading = headingLevel;
   const { toast } = useToast();
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [armedDelete, setArmedDelete] = useState(false);
   const badge = kindBadge(post);
+  const isOwner =
+    Boolean(onMutated) && user !== null && user.username === post.author_handle;
+
+  async function toggleHidden() {
+    setBusy(true);
+    try {
+      await api.patch(`/gallery/${post.id}/`, {
+        body: {
+          status: post.status === "unpublished" ? "published" : "unpublished",
+        },
+      });
+      toast(
+        post.status === "unpublished"
+          ? "แสดงโพสต์อีกครั้งแล้ว"
+          : "ซ่อนโพสต์แล้ว มีเพียงคุณที่เห็น",
+        "success",
+      );
+      onMutated?.();
+    } catch {
+      toast("บันทึกไม่สำเร็จ ลองอีกครั้งนะ", "danger");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removePost() {
+    // Two-step arm-then-confirm on the button itself: a modal would be
+    // heavier than the action deserves inside a feed card.
+    if (!armedDelete) {
+      setArmedDelete(true);
+      setTimeout(() => setArmedDelete(false), 4000);
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.delete(`/gallery/${post.id}/`);
+      toast("ลบโพสต์แล้ว", "success");
+      onMutated?.();
+    } catch {
+      toast("ลบไม่สำเร็จ ลองอีกครั้งนะ", "danger");
+      setBusy(false);
+    }
+  }
 
   async function copyLink() {
     const url = `${window.location.origin}/community/posts/${post.id}`;
@@ -146,6 +204,39 @@ export function CommunityPostCard({
         {post.images.length > 1 ? (
           <span className="ml-auto pr-2 text-xs text-fg-subtle">
             {post.images.length} รูป
+          </span>
+        ) : null}
+        {isOwner ? (
+          <span
+            className={`flex items-center gap-1 ${post.images.length > 1 ? "" : "ml-auto"}`}
+          >
+            <Link
+              href={`/community/posts/${post.id}`}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              <Icon name="ui/edit" className="size-4" tint />
+              แก้ไข
+            </Link>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={toggleHidden}
+              className="rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus disabled:opacity-50"
+            >
+              {post.status === "unpublished" ? "แสดงโพสต์" : "ซ่อน"}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={removePost}
+              className={`rounded-full px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus disabled:opacity-50 ${
+                armedDelete
+                  ? "bg-danger/10 font-medium text-danger"
+                  : "text-fg-muted hover:bg-surface-sunken hover:text-danger"
+              }`}
+            >
+              {armedDelete ? "ยืนยันลบ?" : "ลบ"}
+            </button>
           </span>
         ) : null}
       </div>

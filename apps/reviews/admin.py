@@ -1,4 +1,4 @@
-"""Django admin registration for reviews — the moderation surface."""
+"""Django admin registration for reviews  the moderation surface."""
 
 from __future__ import annotations
 

@@ -16,7 +16,7 @@ def build_completed_course(*, student: Any, instructor: Any, **extra: Any):
     """Create a one-lesson course and complete it through the real path.
 
     Enrollment and lesson completion go through the production services, so
-    ``CourseProgress.completed_at`` is stamped exactly as it would be live —
+    ``CourseProgress.completed_at`` is stamped exactly as it would be live 
     certificates then read that fact.
 
     Returns:

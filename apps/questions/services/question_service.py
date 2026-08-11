@@ -22,8 +22,8 @@ from apps.questions.validators import question_validator
 
 logger = logging.getLogger("kawaiibake.questions")
 
-# Frozen questions lock exactly what was asked and graded. Everything else —
-# explanation (a post-submit learning aid), difficulty (bank metadata), tags —
+# Frozen questions lock exactly what was asked and graded. Everything else 
+# explanation (a post-submit learning aid), difficulty (bank metadata), tags 
 # stays editable forever: organising the bank is not rewriting history.
 FROZEN_LOCKED_FIELDS = frozenset({"text", "question_type", "choices"})
 QUESTION_EDITABLE_FIELDS = frozenset(
@@ -161,7 +161,7 @@ def delete_question(
 def freeze_questions(*, question_ids: Sequence[int]) -> None:
     """Permanently freeze questions' content. **Idempotent.**
 
-    Public cross-app write API — the quizzes app calls this at attempt start,
+    Public cross-app write API  the quizzes app calls this at attempt start,
     inside the attempt's transaction (the counter-push mechanism of ADR 0009,
     carrying a timestamp instead of a number). The caller knows *why*; this
     app records *that*.

@@ -11,7 +11,7 @@ from apps.gamification.selectors import gamification_selector
 def top_users() -> QuerySet[UserLevel]:
     """The leaderboard queryset, highest total XP first.
 
-    Lazy — the paginator slices it at the API edge. Only users with a
+    Lazy  the paginator slices it at the API edge. Only users with a
     derived level row appear; the row exists precisely so this sort never
     sums ledgers.
 

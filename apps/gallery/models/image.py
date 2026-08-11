@@ -20,7 +20,7 @@ def gallery_image_upload_to(instance: GalleryImage, filename: str) -> str:
 class GalleryImage(TimeStampedModel):
     """One photo on a gallery post.
 
-    Ordering is ``(position, id)`` — deterministic even mid-renumber.
+    Ordering is ``(position, id)``  deterministic even mid-renumber.
     Rows never outlive their file: deletion goes through the repository,
     which removes the stored file explicitly (Django never does).
     """

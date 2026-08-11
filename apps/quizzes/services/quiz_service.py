@@ -67,7 +67,7 @@ def update_quiz(
 ) -> Quiz:
     """Apply a partial update to a quiz, including composition replacement.
 
-    ``question_ids`` replaces the whole composition in submitted order —
+    ``question_ids`` replaces the whole composition in submitted order 
     reordering **is** this operation, no separate endpoint. Safe because
     nothing references composition rows (attempts snapshot at start).
 
@@ -134,7 +134,7 @@ def update_quiz(
 def delete_quiz(*, slug: str, viewer_id: int, viewer_is_staff: bool = False) -> None:
     """Permanently delete a quiz with no attempt history.
 
-    Archiving is the only exit for a quiz that has been attempted — history
+    Archiving is the only exit for a quiz that has been attempted  history
     is permanent.
 
     Args:
@@ -179,7 +179,7 @@ def get_quiz_with_questions(
 ) -> tuple[Quiz, list[question_selector.TakerQuestionDTO], dict[int, int]]:
     """Fetch a quiz plus its questions in the taker-safe shape.
 
-    One shape for every viewer — the DTOs structurally cannot carry
+    One shape for every viewer  the DTOs structurally cannot carry
     ``is_correct``, so there is no owner variant to fail open. Owners read
     correctness through their own bank endpoints.
 
@@ -216,7 +216,7 @@ def _validate_composition(
     """Check a composition payload: size, uniqueness and usability.
 
     A usable question is one the composer owns (or staff). Unknown and
-    foreign ids are reported identically — distinguishing them would confirm
+    foreign ids are reported identically  distinguishing them would confirm
     foreign ids exist.
 
     Raises:

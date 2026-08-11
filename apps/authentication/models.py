@@ -1,7 +1,7 @@
 """The authentication app deliberately defines **no models**.
 
 Account data lives in ``apps.users``. The two flows that would normally need
-their own tables — email verification and password reset — use stateless,
+their own tables  email verification and password reset  use stateless,
 signed tokens instead:
 
 * Tokens are HMACs over user state, keyed by ``SECRET_KEY``. They self-invalidate

@@ -2,7 +2,7 @@
  * Recipe baking-workspace browser E2E against the real backend:
  * hero + jump anchor, scaler math, unit conversion, grouped checklist
  * with persistence, substitutions accordion, step timers, focus mode,
- * review form, related recipes — desktop then mobile.
+ * review form, related recipes  desktop then mobile.
  */
 import { chromium } from "playwright";
 
@@ -13,7 +13,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 async function expect(page, selector, label, timeout = 10_000) {

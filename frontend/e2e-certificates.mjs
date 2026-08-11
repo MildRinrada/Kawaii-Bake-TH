@@ -11,7 +11,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 async function expect(page, selector, label, timeout = 10_000) {
@@ -58,7 +58,7 @@ try {
     await page.click('button:has-text("ขอรับใบประกาศนียบัตร")');
     await expect(page, "text=ออกใบประกาศนียบัตรเรียบร้อย", "issuing succeeds via the real API");
   } else {
-    ok("certificate already issued by an earlier run — earned path asserted instead");
+    ok("certificate already issued by an earlier run  earned path asserted instead");
     ok("issuing is permanent, so the pending state is not re-created");
   }
   await expect(page, "text=ได้รับแล้ว", "the certificate now shows as earned");

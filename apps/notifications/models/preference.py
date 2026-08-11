@@ -11,7 +11,7 @@ from apps.notifications.constants import NotificationEventType
 class NotificationPreference(models.Model):
     """One user's explicit choice about one in-app event type.
 
-    **Absent row means enabled** — rows exist only once a user changes a
+    **Absent row means enabled**  rows exist only once a user changes a
     preference, so nothing is seeded per user and the default costs no
     storage. This table is a different axis from
     ``users.UserPreference``'s email toggles: users owns the *channel*

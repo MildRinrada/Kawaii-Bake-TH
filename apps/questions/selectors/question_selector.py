@@ -2,7 +2,7 @@
 
 Also home of the cross-app DTOs. The taker-facing shapes
 (:class:`TakerQuestionDTO`, :class:`TakerChoiceDTO`) **structurally lack**
-``is_correct`` — leak prevention by construction, the same reasoning as
+``is_correct``  leak prevention by construction, the same reasoning as
 ``PublicProfileDTO`` in the users app: a serializer cannot render a field the
 object does not have. The full answer key lives in the sibling module
 ``answer_key.py``, whose only legitimate caller is quiz scoring.
@@ -25,8 +25,8 @@ from apps.questions.validators.question_validator import choice_problems
 class QuestionRef:
     """A bank reference safe to hand across the app boundary.
 
-    What a composing app (quizzes) needs to validate a composition — identity,
-    ownership and type — and nothing that could leak an answer.
+    What a composing app (quizzes) needs to validate a composition  identity,
+    ownership and type  and nothing that could leak an answer.
     """
 
     id: int
@@ -49,7 +49,7 @@ class TakerChoiceDTO:
 class TakerQuestionDTO:
     """One question as shown to a quiz taker.
 
-    No ``is_correct``, no ``explanation`` — the explanation is revealed only
+    No ``is_correct``, no ``explanation``  the explanation is revealed only
     after an attempt is submitted, via :func:`list_explanations`.
     """
 
@@ -70,7 +70,7 @@ def list_questions(
 
     The bank is private: the default (and non-staff only) scope is the
     viewer's own questions. A non-staff ``all`` silently narrows to ``mine``
-    rather than erroring — an error would confirm more exists.
+    rather than erroring  an error would confirm more exists.
 
     Args:
         filters: Parsed, validated query parameters.
@@ -108,7 +108,7 @@ def get_own_question(
         viewer_is_staff: Whether the viewer is a staff member.
 
     Returns:
-        The question, or ``None`` when absent **or** someone else's — callers
+        The question, or ``None`` when absent **or** someone else's  callers
         must not distinguish the two to the client.
     """
     queryset = Question.objects.prefetch_related("choices", "tags")
@@ -123,7 +123,7 @@ def list_refs_by_ids(
     """Fetch bank references the viewer may compose with.
 
     Part of the public cross-app API. A question that is absent **or** not the
-    viewer's simply does not appear — same fail-closed shape as the visibility
+    viewer's simply does not appear  same fail-closed shape as the visibility
     selectors.
 
     Args:
@@ -150,7 +150,7 @@ def list_taker_questions(*, ids: list[int]) -> dict[int, TakerQuestionDTO]:
 
     Part of the public cross-app API. Deliberately **not** viewer-filtered:
     the caller (quizzes) has already decided the viewer may take the quiz, and
-    bank ownership does not gate being *asked* a question — only editing it.
+    bank ownership does not gate being *asked* a question  only editing it.
 
     Args:
         ids: Question primary keys.
@@ -182,7 +182,7 @@ def list_explanations(*, ids: list[int]) -> dict[int, str]:
     """Fetch post-submit explanations.
 
     Part of the public cross-app API. Callers must only surface these on
-    **submitted** attempts — an explanation often paraphrases the answer.
+    **submitted** attempts  an explanation often paraphrases the answer.
 
     Args:
         ids: Question primary keys.
@@ -199,7 +199,7 @@ def list_explanations(*, ids: list[int]) -> dict[int, str]:
 def answer_validation_problems(*, ids: list[int]) -> dict[int, list[str]]:
     """Re-check stored questions against the answer rules.
 
-    Part of the public cross-app API — the quizzes publish gate calls this so
+    Part of the public cross-app API  the quizzes publish gate calls this so
     "every question has valid answers" is checked by the domain that owns the
     rules, against what is actually stored.
 

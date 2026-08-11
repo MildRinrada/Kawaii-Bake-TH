@@ -38,8 +38,8 @@ class SlugHelperTests(TestCase):
 
         base = build_slug_base(THAI_TITLE)
         self.assertNotEqual(base, "")
-        # Thai script is preserved. It is lossy — `slugify` drops combining
-        # tone marks and vowel signs — which is acceptable for a URL identifier
+        # Thai script is preserved. It is lossy  `slugify` drops combining
+        # tone marks and vowel signs  which is acceptable for a URL identifier
         # (English slugs lose accents the same way) and is why collisions get a
         # random suffix.
         self.assertTrue(any("฀" <= char <= "๿" for char in base))

@@ -1,4 +1,4 @@
-"""The learning activity ledger — streak foundation."""
+"""The learning activity ledger  streak foundation."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ class LearningActivity(TimeStampedModel):
 
     Append-only and deliberately separate from progress *state*: state is
     mutable (a lesson can be un-completed) but the fact that learning
-    happened on a date is not — a streak must not retroactively break
+    happened on a date is not  a streak must not retroactively break
     because a learner tidied their checklist. The unique constraint makes
     daily recording idempotent, which is all a streak needs; XP,
     leaderboards and streak computation itself are future phases reading

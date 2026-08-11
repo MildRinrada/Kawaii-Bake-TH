@@ -29,7 +29,7 @@ class LessonCompleteView(ServiceAPIView):
         """Complete the lesson. Idempotent; may complete the course.
 
         404 when the lesson does not exist for this viewer; 403
-        ``enrollment_required`` without an access-granting enrollment —
+        ``enrollment_required`` without an access-granting enrollment 
         including on preview lessons: reading is free, progress is not.
         """
         progress, course_completed = progress_service.complete_lesson(

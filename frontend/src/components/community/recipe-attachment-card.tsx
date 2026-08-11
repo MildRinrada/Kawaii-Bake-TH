@@ -4,7 +4,7 @@
  * The recipe (or course) a post points at.
  *
  * The feed payload's `_RecipeRef` carries only `{id, slug, title}`, so the
- * rich card — cover, difficulty, category, author — needs the recipe's own
+ * rich card  cover, difficulty, category, author  needs the recipe's own
  * list row. The feed page fetches the public recipe list **once** and
  * passes matches down through `details`; this component renders the rich
  * card when it has one and a compact link chip when it does not.
@@ -45,7 +45,7 @@ export function RecipeAttachmentCard({
 
   if (!target) return null;
 
-  // Rich card — only when the recipe is genuinely public right now.
+  // Rich card  only when the recipe is genuinely public right now.
   if (recipe && details) {
     return (
       <Link

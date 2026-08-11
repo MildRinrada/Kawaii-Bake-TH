@@ -11,7 +11,7 @@ from apps.users.api.serializers.profile_serializers import OwnProfileSerializer
 
 
 class ProfileCompletionSerializer(serializers.Serializer):
-    """The derived completion snapshot — computed, never stored."""
+    """The derived completion snapshot  computed, never stored."""
 
     completed = serializers.IntegerField(read_only=True)
     total = serializers.IntegerField(read_only=True)
@@ -23,7 +23,7 @@ class MySettingsSerializer(serializers.Serializer):
     """Everything the settings screen needs, in one read.
 
     A pure composition (ADR 0020 §7): each block is serialized by (or
-    read through) its owning domain — profile and preferences by users,
+    read through) its owning domain  profile and preferences by users,
     the notification block from the notifications app's own effective-
     preferences selector. This endpoint owns nothing and writes nothing;
     every write still goes to the owner's endpoint.

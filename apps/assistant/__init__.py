@@ -1,1 +1,1 @@
-"""AI assistant domain — conversations, messages, prompts, usage."""
+"""AI assistant domain - conversations, messages, prompts, usage."""

@@ -1,6 +1,6 @@
 """Constants and the reward rule registry.
 
-Every reward amount and every user-facing reason text lives here — the
+Every reward amount and every user-facing reason text lives here  the
 ``XP_RULES`` discipline (ADR 0015): changing the economy is a reviewable
 one-file diff, and reconciliation re-derives consistently everywhere.
 
@@ -25,7 +25,7 @@ class RewardKind(models.TextChoices):
 
 
 class RewardReason(models.TextChoices):
-    """Why a balance changed. Stable codes — the ledger stores these."""
+    """Why a balance changed. Stable codes  the ledger stores these."""
 
     LESSON_COMPLETED = "lesson_completed", "Lesson completed"
     COURSE_COMPLETED = "course_completed", "Course completed"
@@ -85,7 +85,7 @@ REWARD_RULES: dict[str, int] = {
 
 EVENT_KEY_MAX_LENGTH = 100
 NOTE_MAX_LENGTH = 255
-# Guardrail on a single staff adjustment, not a business rule — one typo'd
+# Guardrail on a single staff adjustment, not a business rule  one typo'd
 # zero should not mint a fortune.
 MAX_ADJUSTMENT_MAGNITUDE = 100_000
 

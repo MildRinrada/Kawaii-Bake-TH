@@ -6,7 +6,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { ClientGuard } from "@/lib/security/client-guard";
 
 // Thai-first typography: Mitr (rounded, friendly) for display text,
-// Noto Sans Thai for body — both cover Thai + Latin natively so mixed
+// Noto Sans Thai for body  both cover Thai + Latin natively so mixed
 // text never falls back mid-sentence.
 const display = Mitr({
   variable: "--font-display",
@@ -18,7 +18,7 @@ const body = Noto_Sans_Thai({
   weight: ["400", "500", "600", "700"],
   subsets: ["thai", "latin"],
 });
-// The certificate's signature line only — KawaiiBake's own wordmark is
+// The certificate's signature line only  KawaiiBake's own wordmark is
 // Latin, so a script face works there without needing Thai cursive
 // support, which does not really exist as a legible face.
 const signature = Dancing_Script({
@@ -32,13 +32,13 @@ export const metadata: Metadata = {
     default: "KawaiiBake",
     template: "%s · KawaiiBake",
   },
-  description: "แพลตฟอร์มเรียนทำเบเกอรี่ — สูตร คอร์ส แบบทดสอบ และผู้ช่วย AI",
+  description: "แพลตฟอร์มเรียนทำเบเกอรี่  สูตร คอร์ส แบบทดสอบ และผู้ช่วย AI",
 };
 
 /**
  * Root layout: providers only, no visual chrome.
  *
- * `lang="th"` — the platform is Thai-first. The font is the neutral
+ * `lang="th"`  the platform is Thai-first. The font is the neutral
  * system stack from tokens.css; the design phase decides typography by
  * editing tokens, not this file.
  */

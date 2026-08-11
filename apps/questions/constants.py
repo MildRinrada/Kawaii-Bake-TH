@@ -12,7 +12,7 @@ class QuestionType(models.TextChoices):
     ordinary answer choices, not a special mechanism, so grading stays one code
     path. Future types (short answer, AI evaluation, matching, ordering,
     fill-in-the-blank) extend this enum plus one grader and one validator each
-    — types that need no choices simply have no ``AnswerChoice`` rows.
+     types that need no choices simply have no ``AnswerChoice`` rows.
     """
 
     SINGLE_CHOICE = "single_choice", "Single choice"
@@ -21,7 +21,7 @@ class QuestionType(models.TextChoices):
 
 
 class QuestionDifficulty(models.TextChoices):
-    """How hard a question is — bank filtering and future adaptive quizzes."""
+    """How hard a question is  bank filtering and future adaptive quizzes."""
 
     EASY = "easy", "Easy"
     MEDIUM = "medium", "Medium"

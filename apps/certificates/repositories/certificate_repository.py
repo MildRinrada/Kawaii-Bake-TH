@@ -1,7 +1,7 @@
 """Write operations for certificates and achievements.
 
 There is deliberately no generic update function: certificates are
-immutable records, and the single permitted mutation — revocation — is a
+immutable records, and the single permitted mutation  revocation  is a
 stamp-once conditional UPDATE.
 """
 
@@ -52,7 +52,7 @@ def issue_certificate(
     Two issuances can race for the same sequence number; the global unique
     on ``certificate_number`` decides, and the loser recomputes inside a
     savepoint (the tag-creation pattern). The **(user, course)** race is
-    the caller's to handle — an ``IntegrityError`` still escaping this
+    the caller's to handle  an ``IntegrityError`` still escaping this
     function means "someone else just issued this exact certificate".
 
     Args:
@@ -69,7 +69,7 @@ def issue_certificate(
         CertificateNumberExhaustedError: If every allocation attempt lost
             its race (practically unreachable).
         IntegrityError: If an active certificate for (user, course) already
-            exists — the caller resolves it to the existing row.
+            exists  the caller resolves it to the existing row.
     """
     now = timezone.now()
     for _attempt in range(NUMBER_ALLOCATION_ATTEMPTS):
@@ -95,18 +95,24 @@ def issue_certificate(
     raise CertificateNumberExhaustedError
 
 
-def revoke(*, certificate: Certificate) -> bool:
+def revoke(
+    *, certificate: Certificate, actor_id: int | None = None, reason: str = ""
+) -> bool:
     """Stamp ``revoked_at`` once. Idempotent; nothing else ever changes.
 
     Args:
         certificate: The certificate to revoke.
+        actor_id: The staff member responsible, recorded with the stamp.
+        reason: Why the credential was withdrawn.
 
     Returns:
         ``True`` if this call performed the revocation.
     """
     updated = Certificate.objects.filter(
         pk=certificate.pk, revoked_at__isnull=True
-    ).update(revoked_at=timezone.now())
+    ).update(
+        revoked_at=timezone.now(), revoked_by_id=actor_id, revoked_reason=reason
+    )
     return bool(updated)
 
 
@@ -119,7 +125,7 @@ def award_achievement(
     """Record an achievement fact, idempotently.
 
     ``get_or_create`` against the (user, type) unique: the first call
-    earns, every later call returns the original row untouched — awarded_at
+    earns, every later call returns the original row untouched  awarded_at
     and metadata are never rewritten (append-only).
 
     Args:

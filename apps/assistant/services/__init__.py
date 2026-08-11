@@ -1,1 +1,1 @@
-"""Assistant services — business logic, transport-agnostic."""
+"""Assistant services  business logic, transport-agnostic."""

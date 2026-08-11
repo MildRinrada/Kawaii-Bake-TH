@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class FavoriteTargetNotFoundError(DomainError):
     """Raised when the favorited recipe/course is absent or hidden.
 
-    This app's own 404 — hidden content cannot be favorited, and unfavoriting
+    This app's own 404  hidden content cannot be favorited, and unfavoriting
     something that has since gone private fails closed the same way.
     """
 

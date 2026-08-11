@@ -22,14 +22,14 @@ class Review(TimeStampedModel):
     **Explicit nullable FKs, not a GenericForeignKey** (ADR 0011): a check
     constraint guarantees exactly one target is set, the database keeps real
     referential integrity with CASCADE, and the content apps' prefix-
-    parameterised visibility ``Q`` builders compose across the join — none of
+    parameterised visibility ``Q`` builders compose across the join  none of
     which contenttypes can offer. Adding a future reviewable type is one
     nullable column plus two constraints.
 
     Duplicate prevention is a partial unique per target **on active rows
     only**: soft-deleting a review frees the slot for a fresh one, while the
     deleted row keeps history. Ratings are aggregated from ``ACTIVE`` rows at
-    read time — there are deliberately no ``rating_average``/``review_count``
+    read time  there are deliberately no ``rating_average``/``review_count``
     columns anywhere (see Database.md, "Counters deliberately not added").
     """
 

@@ -59,6 +59,7 @@ class CourseListCreateView(PaginatedServiceAPIView):
             instructor_username=validated.get("instructor", "") or "",
             ordering=validated.get("ordering", CourseListFilters.ordering),
             scope=validated.get("scope", CourseScope.PUBLIC),
+            status=validated.get("status", "") or "",
         )
         if filters.scope == CourseScope.MINE and not request.user.is_authenticated:
             raise NotAuthenticated

@@ -7,7 +7,7 @@ import { inputClassName } from "@/components/ui/input";
 
 /**
  * Password field with a show/hide toggle. Seeing what you typed is what
- * lets the form ask for the password only once — the toggle replaces a
+ * lets the form ask for the password only once  the toggle replaces a
  * confirm field.
  */
 export const PasswordInput = forwardRef<

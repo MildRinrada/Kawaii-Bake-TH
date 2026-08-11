@@ -65,7 +65,37 @@ urlpatterns = [
     # the `admin/` prefix, where every view declares IsAdminUser itself.
     path(f"{API_V1}security/", include("apps.security.api.urls")),
     path(f"{API_V1}admin/security/", include("apps.security.api.urls.admin")),
-    # OpenAPI schema — the Next.js client generates TypeScript types from this.
+    # The back-office surfaces (ADR 0027). Same convention as security:
+    # the `admin/` prefix is naming only - every view behind it declares
+    # IsAdminUser itself.
+    path(
+        f"{API_V1}admin/recipe-categories/",
+        include("apps.recipe_categories.api.urls.admin"),
+    ),
+    path(f"{API_V1}admin/users/", include("apps.users.api.urls.admin")),
+    path(
+        f"{API_V1}admin/achievements/",
+        include("apps.certificates.api.urls.admin"),
+    ),
+    path(f"{API_V1}admin/reviews/", include("apps.reviews.api.urls.admin")),
+    path(f"{API_V1}admin/favorites/", include("apps.favorites.api.urls.admin")),
+    path(f"{API_V1}admin/progress/", include("apps.progress.api.urls.admin")),
+    path(
+        f"{API_V1}admin/certificates/",
+        include("apps.certificates.api.urls.admin_certificates"),
+    ),
+    path(
+        f"{API_V1}admin/notifications/",
+        include("apps.notifications.api.urls.admin"),
+    ),
+    path(
+        f"{API_V1}admin/recommendations/",
+        include("apps.recommendation.api.urls.admin"),
+    ),
+    # Legal documents: public read (a visitor must be able to read what
+    # they are consenting to), staff-only write inside the same views.
+    path(f"{API_V1}legal/", include("apps.legal.api.urls")),
+    # OpenAPI schema  the Next.js client generates TypeScript types from this.
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/docs/",

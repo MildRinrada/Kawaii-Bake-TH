@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The community feed — KawaiiBake's photo-first baking space.
+ * The community feed  KawaiiBake's photo-first baking space.
  *
  * Everything on this page is backed by `GET /gallery/`, whose real
  * filters are `recipe_id`, `course_id`, `author` and `category` (the
@@ -12,7 +12,7 @@
  * sort (the feed is newest-first, full stop), likes, comments and
  * bookmarks. Each is reported rather than mocked.
  *
- * The composer expands in place — writing a post never leaves the feed —
+ * The composer expands in place  writing a post never leaves the feed 
  * and a freshly published post is prepended immediately, so the feed
  * reflects the write without a full refetch.
  */
@@ -170,7 +170,7 @@ function InlineComposer({ onPublished }: { onPublished: (post: GalleryPost) => v
 function CommunityFeed() {
   const params = useSearchParams();
   const router = useRouter();
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
   const recipeId = params.get("recipe");
   const category = params.get("category");
@@ -267,6 +267,47 @@ function CommunityFeed() {
           />
         </div>
 
+        {/* ---- Feed scope: everyone vs. mine --------------------- */}
+        {/* "My posts" is the author filter pointed at yourself. It also
+            surfaces your hidden posts (the backend's visibility rule
+            already shows an owner their own unpublished work), so this
+            doubles as the place to manage everything you've shared. */}
+        {status === "authenticated" && user ? (
+          <div
+            role="group"
+            aria-label="ขอบเขตฟีด"
+            className="mb-4 flex w-fit rounded-full bg-surface p-1 shadow-raised"
+          >
+            {[
+              { label: "ฟีดทั้งหมด", mine: false },
+              { label: "โพสต์ของฉัน", mine: true },
+            ].map((option) => {
+              const active = option.mine
+                ? author === user.username
+                : author !== user.username;
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() =>
+                    setFilter({ author: option.mine ? user.username : null })
+                  }
+                  className={cn(
+                    "rounded-full px-4 py-1.5 text-sm transition-colors",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                    active
+                      ? "bg-accent font-medium text-fg-inverted"
+                      : "text-fg-muted hover:text-fg",
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
         {/* ---- Filters ------------------------------------------- */}
         <div className="mb-4">
           <div
@@ -294,6 +335,7 @@ function CommunityFeed() {
                 compact
                 slug={item.slug}
                 name={item.name}
+                imageUrl={item.image_url}
                 active={category === item.slug}
                 onClick={() =>
                   setFilter({ category: category === item.slug ? null : item.slug })
@@ -302,7 +344,7 @@ function CommunityFeed() {
             ))}
           </div>
           <p className="mt-1.5 text-xs text-fg-subtle">
-            เรียงจากใหม่ไปเก่า — หมวดกรองจากสูตรที่โพสต์แนบไว้
+            เรียงจากใหม่ไปเก่า - หมวดกรองจากสูตรที่โพสต์แนบไว้
           </p>
         </div>
 
@@ -379,6 +421,12 @@ function CommunityFeed() {
                           ? (recipeBySlug.get(post.recipe.slug) ?? null)
                           : null
                       }
+                      onMutated={() => {
+                        // A fresh post may be the one just deleted; drop
+                        // the optimistic list and trust the server.
+                        setFresh([]);
+                        feed.refetch();
+                      }}
                     />
                   </li>
                 ))}
@@ -482,7 +530,7 @@ function CommunityFeed() {
 }
 
 /**
- * Bakers who appear in the posts currently loaded — a real, visible fact,
+ * Bakers who appear in the posts currently loaded  a real, visible fact,
  * not a follower ranking. No follow graph exists, so nothing here claims
  * one.
  */
@@ -496,7 +544,7 @@ function RecentBakers({
   onPick: (handle: string) => void;
 }) {
   // Filtering is by handle (the API's `?author=` takes a username), but
-  // the avatar and label shown are the real display name and photo — the
+  // the avatar and label shown are the real display name and photo  the
   // handle stays the unique key underneath.
   const bakers = new Map<string, { displayName: string; avatarUrl: string | null }>();
   for (const post of posts) {

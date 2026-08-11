@@ -1,4 +1,4 @@
-# 0005 — API-Only Backend with a Next.js Frontend
+# 0005  API-Only Backend with a Next.js Frontend
 
 - **Status:** Accepted
 - **Date:** 2026-08-07
@@ -21,11 +21,11 @@ pages. Concretely:
 
 - Each feature app gains an `api/` package: `api/views/`, `api/serializers/`,
   `api/urls/`.
-- The `forms/` layer is removed, except `apps/users/forms/admin_forms.py` —
+- The `forms/` layer is removed, except `apps/users/forms/admin_forms.py` 
   a custom user model *requires* admin forms, or the admin stores plaintext
   passwords.
 - Root `templates/` and `static/`, and all per-app template and static
-  directories, are deleted — **except** `templates/<app>/emails/`.
+  directories, are deleted  **except** `templates/<app>/emails/`.
 - `TEMPLATES` stays configured with `APP_DIRS: True` and `DIRS: []`, and
   `staticfiles` stays installed. Django admin and email rendering both require
   them; removing either breaks `/admin/`.
@@ -45,5 +45,5 @@ pages. Concretely:
   is documented in `CodingGuidelines.md` and should be enforced with
   `import-linter`.
 - Email bodies remain the one server-rendered surface, and they render without a
-  request — so context processors never apply and values must be passed
+  request  so context processors never apply and values must be passed
   explicitly. This matters because emails are sent from Celery workers.

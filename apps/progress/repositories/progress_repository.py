@@ -95,7 +95,7 @@ def get_or_create_course_progress(*, user_id: int, course_id: int) -> CourseProg
 def stamp_course_completed(*, user_id: int, course_id: int) -> None:
     """Stamp course completion exactly once.
 
-    A conditional UPDATE on ``completed_at IS NULL`` — never re-stamped,
+    A conditional UPDATE on ``completed_at IS NULL``  never re-stamped,
     never cleared, safe under concurrent completing writes.
 
     Args:

@@ -1,7 +1,7 @@
 """The staff-only dashboard surface.
 
 Reads are selectors, writes are services, and the views hold neither
-querysets nor rules — the same shape as every other app. The only thing
+querysets nor rules  the same shape as every other app. The only thing
 special here is the permission class: ``IsAdminUser`` means ``is_staff``,
 the same flag the frontend reads from ``/auth/me/`` to decide whether to
 render an admin surface at all (ADR 0022).

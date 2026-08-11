@@ -16,7 +16,7 @@ class Favorite(TimeStampedModel):
     Same explicit-FK target shape as ``Review`` (ADR 0011). A favorite is a
     toggle, not a document: unfavoriting **hard-deletes** the row (the model
     deliberately has no status column), and duplicates are impossible by
-    constraint — plain uniques suffice because SQL ``NULL`` never equals
+    constraint  plain uniques suffice because SQL ``NULL`` never equals
     ``NULL``, so recipe rows cannot collide with course rows.
 
     ``created_at`` (from ``TimeStampedModel``) is the favorited-at timestamp

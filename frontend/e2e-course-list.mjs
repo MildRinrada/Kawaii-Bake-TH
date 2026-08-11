@@ -12,7 +12,7 @@ let passed = 0;
 
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 
 async function expect(page, selector, label, timeout = 10_000) {
@@ -36,7 +36,7 @@ try {
 
   // Featured curriculum preview comes from the real syllabus
   await expect(page, "text=รู้จักแป้งและยีสต์", "featured curriculum preview lists real lesson titles", 15_000).catch(async () => {
-    // featured may be the other course — accept its lesson instead
+    // featured may be the other course  accept its lesson instead
     await expect(page, "text=1.", "featured curriculum preview lists numbered lessons");
   });
 
@@ -72,6 +72,10 @@ try {
   await expect(page, "text=ไม่พบคอร์สที่ตรงกับ", "no-results state explains the miss");
   await expect(page, "text=คอร์สทั้งหมดที่เปิดสอนตอนนี้", "no-results still offers the real catalog");
   await page.click('button:has-text("ล้างตัวกรองทั้งหมด")');
+  // Wait for the reset to land and the catalog to re-render before
+  // touching the accordion - clicking a node mid-refetch hits a corpse.
+  await page.waitForURL(`${BASE}/courses`);
+  await page.waitForSelector("text=พื้นฐานการอบขนมปังสำหรับมือใหม่");
 
   // ---------- Curriculum accordion on the bread course card ----------
   await page.click('button:has-text("ดูบทเรียนในคอร์ส") >> nth=1');
@@ -109,7 +113,7 @@ try {
     ok("no course is in progress, so the continue-learning strip is correctly absent");
   }
 
-  // Learning-status facet — the count comes from the same live progress
+  // Learning-status facet  the count comes from the same live progress
   // read, so the assertion stays true as the account's courses finish.
   await page.click('button:has-text("กำลังเรียน")');
   await expect(

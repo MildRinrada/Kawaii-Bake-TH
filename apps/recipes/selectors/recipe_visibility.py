@@ -1,4 +1,4 @@
-"""Who may see which recipes — the single source of truth.
+"""Who may see which recipes  the single source of truth.
 
 Both the list and the detail path build their filter from this module. The
 obvious alternative, a ``can_view_recipe()`` boolean beside a separate list
@@ -44,7 +44,7 @@ def visible_in_list_q(
 
     Scopes are mutually exclusive rather than unioned. A
     "published-public OR mine" union would splice half-finished drafts into the
-    browse feed, and — more importantly — ``scope=mine`` pins ``author_id`` to
+    browse feed, and  more importantly  ``scope=mine`` pins ``author_id`` to
     the session user, so no combination of query parameters can widen the set
     to another author's drafts.
 

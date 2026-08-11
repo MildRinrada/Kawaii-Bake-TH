@@ -4,7 +4,7 @@ Two deliberate departures from Django's stock generator:
 
 1. **The hash excludes the password and ``last_login``.** The stock
    ``_make_hash_value`` includes both, which would invalidate a verification
-   link as soon as the user signs in — an extremely common sequence
+   link as soon as the user signs in  an extremely common sequence
    (register, sign in, *then* open the email). ``is_email_verified`` is hashed
    instead, which still makes the token single-use: it stops validating the
    instant verification succeeds.

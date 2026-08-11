@@ -1,43 +1,43 @@
 /*
- * KawaiiBake design tokens — the finalized visual identity (Phase 16).
+ * KawaiiBake design tokens  the finalized visual identity (Phase 16).
  *
- * Personality: pastel bakery — warm cream canvas, cocoa text, raspberry
+ * Personality: pastel bakery  warm cream canvas, cocoa text, raspberry
  * accent, and a five-flavor decorative family (berry / peach / butter /
  * lavender / mint) with clear semantic roles. Kawaii but grown-up:
  * saturation stays soft, contrast stays accessible, and pink is an
- * accent — never the wallpaper.
+ * accent  never the wallpaper.
  *
  * Components consume ONLY semantic names; retuning the brand stays a
  * one-file edit.
  */
 :root {
-  /* Surfaces — warm cream, never stark white page background */
+  /* Surfaces  warm cream, never stark white page background */
   --kb-canvas: #fff9f2;
   --kb-surface: #ffffff;
   --kb-surface-raised: #ffffff;
   --kb-surface-sunken: #faf0e4;
 
-  /* Borders — warm sand, soft by default */
+  /* Borders  warm sand, soft by default */
   --kb-edge: #f2e2d2;
   --kb-edge-strong: #dfc4ab;
 
-  /* Text — warm cocoa, not black */
+  /* Text  warm cocoa, not black */
   --kb-fg: #46342e;
   --kb-fg-muted: #85685c;
   --kb-fg-subtle: #bfa294;
   --kb-fg-inverted: #fff9f2;
 
-  /* Primary action — raspberry: warm, confident, AA with white text */
+  /* Primary action  raspberry: warm, confident, AA with white text */
   --kb-accent: #d14d7e;
   --kb-accent-hover: #b93b69;
   --kb-accent-subtle: #fde9f1;
 
-    /* Primary action — raspberry: warm, confident, AA with white text */
+    /* Primary action  raspberry: warm, confident, AA with white text */
   --kb-pastel-blue: #7ab8e5;
   --kb-pastel-blue-hover: #5a9fd1;
   --kb-pastel-blue-subtle: #e6f2fb;
 
-  /* The flavor family — decorative/categorical, each soft + ink pair.
+  /* The flavor family  decorative/categorical, each soft + ink pair.
      Semantic roles: berry=primary family, peach=recipes/food warmth,
      butter=highlights & rewards, lavender=learning/AI, mint=success/fresh. */
   --kb-berry-soft: #fde9f1;
@@ -59,14 +59,14 @@
   --kb-warning: #96700f;
   --kb-warning-subtle: #fdf3d1;
 
-  /* Focus ring — lavender, visibly distinct from the accent */
+  /* Focus ring  lavender, visibly distinct from the accent */
   --kb-focus: #7c63d8;
 
-  /* Shape — generous, cozy roundness; controls are pill-friendly */
+  /* Shape  generous, cozy roundness; controls are pill-friendly */
   --kb-radius-control: 0.75rem;
   --kb-radius-surface: 1.25rem;
 
-  /* Elevation — soft, warm-tinted, never harsh */
+  /* Elevation  soft, warm-tinted, never harsh */
   --kb-shadow-raised: 0 2px 6px -2px rgb(120 72 50 / 0.1),
     0 8px 24px -12px rgb(120 72 50 / 0.18);
   --kb-shadow-overlay: 0 12px 40px -8px rgb(90 50 40 / 0.28);
@@ -74,13 +74,13 @@
   /* One restrained decorative gradient, for hero/banner surfaces only */
   --kb-hero-gradient: linear-gradient(135deg, #fff3e6 0%, #fde9f1 55%, #efeafb 100%);
 
-  /* Typography — loaded via next/font in layout.tsx:
+  /* Typography  loaded via next/font in layout.tsx:
      display = Mitr (rounded, friendly, Thai-native)
      body    = Noto Sans Thai (clean, generous Thai line-height) */
   --kb-font-sans: var(--font-body), "Noto Sans Thai", ui-sans-serif,
     system-ui, sans-serif;
   --kb-font-display: var(--font-display), "Mitr", var(--kb-font-sans);
   --kb-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  /* Certificate signature line only — Latin-only, see layout.tsx. */
+  /* Certificate signature line only  Latin-only, see layout.tsx. */
   --kb-font-signature: var(--font-signature), cursive;
 }

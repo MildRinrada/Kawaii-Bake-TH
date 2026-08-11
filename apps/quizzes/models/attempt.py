@@ -18,10 +18,10 @@ class QuizAttempt(TimeStampedModel):
     row at grading time**. Deliberate: history must not change when a question
     is edited or a quiz recomposed later, so nothing here is ever recomputed
     from live data. ``max_score`` is stamped at *start* (from the composition
-    snapshot), not submit — grading never reads ``QuizQuestion`` again.
+    snapshot), not submit  grading never reads ``QuizQuestion`` again.
 
     The partial unique constraint allows exactly one open attempt per user per
-    quiz while permitting unlimited submitted history — retry limits are a
+    quiz while permitting unlimited submitted history  retry limits are a
     future count over these rows, no schema change.
 
     ``passed`` is three-valued: ``NULL`` until graded.

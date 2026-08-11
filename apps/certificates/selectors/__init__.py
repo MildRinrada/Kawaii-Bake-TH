@@ -1,1 +1,1 @@
-"""Certificates selectors — read-side queries."""
+"""Certificates selectors  read-side queries."""

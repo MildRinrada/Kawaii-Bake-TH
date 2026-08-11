@@ -1,4 +1,4 @@
-"""Certificates models — public API."""
+"""Certificates models  public API."""
 
 from __future__ import annotations
 

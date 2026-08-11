@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 const SIZES = { sm: "size-10 text-xs", md: "size-13 text-sm", lg: "size-16 text-xl" };
 
 /**
- * Avatar with a warm initial fallback — the first grapheme of the
+ * Avatar with a warm initial fallback  the first grapheme of the
  * display name on a flavor-soft dish, so Thai names render correctly.
  */
 export function Avatar({

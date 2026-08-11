@@ -19,7 +19,7 @@ class UserPreference(TimeStampedModel):
     """Settings that belong to the user but are never publicly visible.
 
     Kept in its own table so that privacy switches are physically separated
-    from the profile data they govern — a public profile serializer has no
+    from the profile data they govern  a public profile serializer has no
     access path to them.
     """
 
@@ -54,7 +54,7 @@ class UserPreference(TimeStampedModel):
     # --- Interface ---------------------------------------------------------
     theme = models.CharField(max_length=20, choices=Theme.choices, default=Theme.SYSTEM)
     # Constrained in Phase 14 from a free-text BCP-47-ish field nothing
-    # consumed to the assistant-compatible code set, Thai default —
+    # consumed to the assistant-compatible code set, Thai default 
     # the platform's one language preference (ADR 0020 §8).
     locale = models.CharField(
         max_length=10,

@@ -1,7 +1,7 @@
 """Standalone lesson routes, mounted at ``/api/v1/lessons/``.
 
 ``{id}/complete/`` lives in the progress app's urlconf (mounted under the
-same prefix by config) — completion is learner state, not lesson content.
+same prefix by config)  completion is learner state, not lesson content.
 """
 
 from __future__ import annotations

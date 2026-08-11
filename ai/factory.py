@@ -1,7 +1,7 @@
 """Provider resolution by name.
 
 The assistant app calls ``build_provider(name=settings.AI_PROVIDER, config=…)``
-— configuration is read from Django settings **there**, so this package stays
+- configuration is read from Django settings **there**, so this package stays
 framework-free. Registering a new backend is one entry in ``_BUILDERS``.
 """
 

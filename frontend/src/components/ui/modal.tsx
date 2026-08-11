@@ -5,7 +5,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 /**
- * Structural modal on the native `<dialog>` element — focus trapping,
+ * Structural modal on the native `<dialog>` element  focus trapping,
  * Escape handling and the top-layer come from the platform, not from
  * library code the design phase might replace.
  */

@@ -1,7 +1,7 @@
 """Intentionally empty.
 
-Authentication side effects — sending verification mail, stamping ``last_login``,
-resetting rate-limit counters — are explicit calls inside the services that own
+Authentication side effects  sending verification mail, stamping ``last_login``,
+resetting rate-limit counters  are explicit calls inside the services that own
 them. Implicit cross-app signal chains become undebuggable at scale, and the
 architecture requires cross-app work to go through a published service API.
 

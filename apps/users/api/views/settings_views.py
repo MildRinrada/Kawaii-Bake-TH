@@ -15,11 +15,11 @@ from apps.users.services import profile_service
 
 
 class MySettingsView(ServiceAPIView):
-    """GET /me/settings/ — one read across the caller's settings.
+    """GET /me/settings/  one read across the caller's settings.
 
     An API-edge composition in the favorites-stitching mould: the view
     reads each domain through its own public boundary and stitches the
-    blocks. Notification preferences stay owned by ``notifications`` —
+    blocks. Notification preferences stay owned by ``notifications`` 
     this endpoint cannot write anything, so ownership cannot drift
     (ADR 0020 §7).
     """

@@ -1,4 +1,4 @@
-"""Gallery serializers — public API."""
+"""Gallery serializers  public API."""
 
 from __future__ import annotations
 

@@ -55,7 +55,7 @@ class EmailVerificationTokenTests(TestCase):
 
     def test_token_survives_login_and_password_change(self) -> None:
         # The stock generator hashes the password and last_login, which would
-        # kill the link as soon as the user signs in — a very common sequence.
+        # kill the link as soon as the user signs in  a very common sequence.
         user = create_user()
         token = email_verification_token.make_token(user)
 

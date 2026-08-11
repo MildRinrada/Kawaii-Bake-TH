@@ -1,1 +1,1 @@
-"""Notifications selectors — read-side queries."""
+"""Notifications selectors - read-side queries."""

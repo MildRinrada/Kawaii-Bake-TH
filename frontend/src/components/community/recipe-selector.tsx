@@ -4,7 +4,7 @@
  * Searchable recipe picker for post attachments.
  *
  * Users never type an id. The list is the real `GET /recipes/?search=`
- * public feed — which matters for correctness, not just convenience: the
+ * public feed  which matters for correctness, not just convenience: the
  * backend only accepts a reference to a **publicly visible** recipe at
  * creation time, and the public feed is exactly that set. Offering the
  * staff-wide `scope=all` list here would let an admin pick a draft and

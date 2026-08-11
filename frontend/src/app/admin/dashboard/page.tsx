@@ -4,20 +4,24 @@
  * Platform overview.
  *
  * Every figure is a `count` read straight off a real paginated endpoint
- * (`page_size=1`, so the row payload is one item and the total is exact).
- * Metrics the API cannot answer — users, enrolments, platform-wide
- * reviews, certificates and assistant usage — are rendered as explicit
- * "no endpoint" cards rather than as zeros.
+ * (`page_size=1`, so the row payload is one item and the total is exact),
+ * or the progress-admin summary. The one metric the API still cannot
+ * answer  assistant usage  stays an explicit "no endpoint" card rather
+ * than a zero.
  */
 
 import Link from "next/link";
 
 import { api, type Paginated } from "@/lib/api/client";
 import type {
+  AdminCertificate,
+  AdminReview,
+  AdminUser,
   Category,
   CourseListItem,
   GalleryPost,
   OwnerQuestion,
+  ProgressSummary,
   QaThread,
   QuizListItem,
   RecipeListItem,
@@ -25,6 +29,7 @@ import type {
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { relativeThai } from "@/lib/datetime";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
+import { Button } from "@/components/ui/button";
 import {
   AdminEmpty,
   AdminPanel,
@@ -52,6 +57,14 @@ export default function AdminDashboardPage() {
   const gallery = useCount<GalleryPost>("/gallery/");
   const categories = useApiQuery(
     (signal) => api.get<Category[]>("/recipe-categories/", { signal }),
+    [],
+  );
+  const users = useCount<AdminUser>("/admin/users/");
+  const newUsers = useCount<AdminUser>("/admin/users/", { joined_days: 7 });
+  const reviews = useCount<AdminReview>("/admin/reviews/");
+  const certificates = useCount<AdminCertificate>("/admin/certificates/");
+  const learning = useApiQuery(
+    (signal) => api.get<ProgressSummary>("/admin/progress/summary/", { signal }),
     [],
   );
 
@@ -86,20 +99,38 @@ export default function AdminDashboardPage() {
     <>
       <AdminPageHeader
         title="แดชบอร์ด"
-        description="ตัวเลขทั้งหมดอ่านจาก API จริง — ช่องที่ระบบหลังบ้านยังไม่มี endpoint จะบอกไว้ตรง ๆ ไม่ใส่เลขปลอม"
+        description="ตัวเลขทั้งหมดอ่านจาก API จริง  ช่องที่ระบบหลังบ้านยังไม่มี endpoint จะบอกไว้ตรง ๆ ไม่ใส่เลขปลอม"
+        actions={
+          // Quick actions - only creations the backend really supports.
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/recipes/new">
+              <Button size="sm">+ สร้างสูตร</Button>
+            </Link>
+            <Link href="/admin/courses/new">
+              <Button size="sm" variant="secondary">
+                + สร้างคอร์ส
+              </Button>
+            </Link>
+            <Link href="/admin/lessons">
+              <Button size="sm" variant="secondary">
+                จัดการบทเรียน
+              </Button>
+            </Link>
+          </div>
+        }
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="สูตรทั้งหมด"
           value={allRecipes.data?.count}
-          hint={`เผยแพร่แล้ว ${publicRecipes.data?.count ?? "—"}`}
+          hint={`เผยแพร่แล้ว ${publicRecipes.data?.count ?? ""}`}
           loading={allRecipes.loading}
         />
         <StatCard
           label="คอร์สทั้งหมด"
           value={allCourses.data?.count}
-          hint={`เผยแพร่แล้ว ${publicCourses.data?.count ?? "—"}`}
+          hint={`เผยแพร่แล้ว ${publicCourses.data?.count ?? ""}`}
           loading={allCourses.loading}
         />
         <StatCard
@@ -127,16 +158,33 @@ export default function AdminDashboardPage() {
           value={categories.data?.length}
           loading={categories.loading}
         />
-        <StatCard label="ผู้ใช้ทั้งหมด" unavailable={NO_ENDPOINT} />
-        <StatCard label="การลงทะเบียนเรียน" unavailable={NO_ENDPOINT} />
-        <StatCard label="รีวิวทั้งแพลตฟอร์ม" unavailable={NO_ENDPOINT} />
-        <StatCard label="ใบประกาศที่ออกแล้ว" unavailable={NO_ENDPOINT} />
+        <StatCard
+          label="ผู้ใช้ทั้งหมด"
+          value={users.data?.count}
+          hint={`ใหม่ใน 7 วัน ${newUsers.data?.count ?? ""}`}
+          loading={users.loading}
+        />
+        <StatCard
+          label="การลงทะเบียนเรียน"
+          value={learning.data?.enrollments_total}
+          hint={`เรียนจบ ${learning.data?.enrollments_completed ?? ""}`}
+          loading={learning.loading}
+        />
+        <StatCard
+          label="รีวิวทั้งแพลตฟอร์ม"
+          value={reviews.data?.count}
+          loading={reviews.loading}
+        />
+        <StatCard
+          label="ใบประกาศที่ออกแล้ว"
+          value={certificates.data?.count}
+          loading={certificates.loading}
+        />
         <StatCard label="บทสนทนาผู้ช่วย AI" unavailable={NO_ENDPOINT} />
       </div>
 
       <p className="mt-2 text-xs text-fg-muted">
-        การ์ดที่ระบุ “ยังไม่มี API” ต้องการ endpoint รวมยอดฝั่งเซิร์ฟเวอร์
-        (ตอนนี้ข้อมูลเหล่านี้อ่านได้เฉพาะของบัญชีตัวเองเท่านั้น) — ดูรายละเอียดในแต่ละหน้า
+        การ์ดที่ระบุ “ยังไม่มี API” ต้องการ endpoint รวมยอดฝั่งเซิร์ฟเวอร์  ดูรายละเอียดในแต่ละหน้า
       </p>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-2">

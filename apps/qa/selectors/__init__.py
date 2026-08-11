@@ -1,1 +1,1 @@
-"""Q&A selectors — read-side queries."""
+"""Q&A selectors - read-side queries."""

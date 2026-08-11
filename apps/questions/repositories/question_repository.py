@@ -2,11 +2,11 @@
 
 Home of the two write primitives the freeze design rests on:
 
-* :func:`freeze` — the idempotent, monotonic conditional UPDATE.
-* :func:`acquire_edit_gate` — the optimistic gate every content mutation must
+* :func:`freeze`  the idempotent, monotonic conditional UPDATE.
+* :func:`acquire_edit_gate`  the optimistic gate every content mutation must
   pass first. Its UPDATE both checks ``frozen_at IS NULL`` **and** takes the
   row's write lock, so a concurrent freeze (from a quiz attempt starting) is
-  serialized by the database itself — no ``select_for_update``, no race window.
+  serialized by the database itself  no ``select_for_update``, no race window.
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ def acquire_edit_gate(*, question_id: int) -> bool:
     """Attempt the frozen-state gate for a content mutation.
 
     Returns:
-        ``True`` when the question exists and is not frozen — the row's write
+        ``True`` when the question exists and is not frozen  the row's write
         lock is now held until the surrounding transaction ends. ``False``
         when frozen or absent; the caller distinguishes those two.
     """
@@ -103,7 +103,7 @@ def delete_question(*, question: Question) -> None:
     """Delete a question and its choices.
 
     Raises:
-        django.db.models.ProtectedError: If a quiz still references it — the
+        django.db.models.ProtectedError: If a quiz still references it  the
             service maps this to the ``question_in_use`` domain error.
     """
     question.delete()
@@ -112,7 +112,7 @@ def delete_question(*, question: Question) -> None:
 def freeze(*, question_ids: Sequence[int]) -> int:
     """Freeze questions that are not yet frozen. Idempotent and monotonic.
 
-    Affecting fewer rows than requested is **success**, not conflict — it
+    Affecting fewer rows than requested is **success**, not conflict  it
     means another attempt froze some of them first, which is the desired end
     state. There is no unfreeze.
 
@@ -175,7 +175,7 @@ def _resolve_tag(*, name: str) -> int:
             racer = QuestionTag.objects.filter(name__iexact=name).first()
             if racer is not None:
                 return racer.pk
-            # Distinct name, same slug — retry once with a random suffix.
+            # Distinct name, same slug  retry once with a random suffix.
             suffix = secrets.token_hex(TAG_SLUG_SUFFIX_BYTES)
             candidate = f"{base or 'tag'}-{suffix}"
     raise IntegrityError(f"Could not allocate a slug for tag {name!r}.")

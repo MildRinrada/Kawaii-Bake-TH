@@ -4,7 +4,7 @@ The XP values live **here**, not on models: they are rules, and a rule
 change plus recalculation must re-derive consistently everywhere.
 
 Everything is pull-based. Nothing in progress, certificates, quizzes or
-reviews ever calls this module — recalculation reads their public fact
+reviews ever calls this module  recalculation reads their public fact
 counts and reconciles the ledger up to them, appending only the
 difference. Facts are monotonic (append-only ledgers, stamp-once
 timestamps, distinct-entity counts), so reconciliation never needs to
@@ -28,7 +28,7 @@ from apps.reviews.selectors import review_selector
 
 logger = logging.getLogger("kawaiibake.gamification")
 
-# The XP rules — service-owned, per the standing "rules are code" call.
+# The XP rules  service-owned, per the standing "rules are code" call.
 XP_RULES: dict[str, int] = {
     XPReason.LESSON_COMPLETED: 10,
     XPReason.COURSE_COMPLETED: 100,

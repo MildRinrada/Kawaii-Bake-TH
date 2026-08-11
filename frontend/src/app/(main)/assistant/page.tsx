@@ -2,7 +2,7 @@
 
 /**
  * The Thai-first AI assistant: conversation list + chat pane (stacked on
- * mobile, side-by-side on desktop). Real conversations, real replies —
+ * mobile, side-by-side on desktop). Real conversations, real replies 
  * the mock provider answers offline in development.
  */
 
@@ -162,7 +162,7 @@ function AssistantContent() {
               <EmptyState
                 icon={<LottieLoop src="/lottie/Anima Bot.lottie" className="size-22" />}
                 title="เริ่มคุยกับผู้ช่วยได้เลย"
-                description="สร้างบทสนทนาใหม่ แล้วถามได้ทุกเรื่อง — แป้ง เนย เตาอบ เทคนิค"
+                description="สร้างบทสนทนาใหม่ แล้วถามได้ทุกเรื่อง  แป้ง เนย เตาอบ เทคนิค"
                 action={
                   <Button onClick={() => void newConversation()}>
                     เริ่มบทสนทนาแรก

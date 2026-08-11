@@ -8,7 +8,7 @@ from django.apps import AppConfig
 class QaConfig(AppConfig):
     """Community questions and answers on recipes and courses.
 
-    Deliberately **not** ``apps/questions`` — that app is the quiz
+    Deliberately **not** ``apps/questions``  that app is the quiz
     question bank (assessment items with answer keys); this one is open
     discussion between users. The two share nothing but the English word.
     Threads soft-delete (answers are other people's labor; deleting your

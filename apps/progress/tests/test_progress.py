@@ -1,7 +1,7 @@
 """Lesson completion, course derivation and the activity ledger.
 
 Ported from ``apps/lessons/tests/test_progress.py`` when the domain moved
-(Phase 6) — every Phase 3 behaviour assertion is preserved, updated only for
+(Phase 6)  every Phase 3 behaviour assertion is preserved, updated only for
 the new field semantics (``completed_at`` nullable flag,
 ``first_completed_at`` history).
 """
@@ -104,7 +104,7 @@ class CompleteLessonTests(TestCase):
             user=self.student, course=self.course
         ).completed_at
 
-        # Un-complete and re-complete — the stamp must not move.
+        # Un-complete and re-complete  the stamp must not move.
         progress_service.uncomplete_lesson(
             lesson_id=self.lesson_a.pk, user_id=self.student.id
         )
@@ -186,7 +186,7 @@ class CompleteLessonTests(TestCase):
             lesson_id=self.lesson_b.pk, user_id=self.student.id
         )
 
-        # Two completions on one day are one fact — the streak dedupe.
+        # Two completions on one day are one fact  the streak dedupe.
         facts = LearningActivity.objects.filter(
             user=self.student, activity_type=ActivityType.LESSON_COMPLETED
         )
@@ -206,7 +206,7 @@ class CompleteLessonTests(TestCase):
 
 
 class CourseProgressEndpointTests(TestCase):
-    """GET /courses/{slug}/progress/ — now served by the progress app."""
+    """GET /courses/{slug}/progress/  now served by the progress app."""
 
     def setUp(self) -> None:
         self.client = APIClient()
@@ -311,7 +311,7 @@ class CourseProgressEndpointTests(TestCase):
 
 
 class MyProgressTests(TestCase):
-    """GET /me/progress/ — flat query count, correct aggregates."""
+    """GET /me/progress/  flat query count, correct aggregates."""
 
     def setUp(self) -> None:
         self.client = APIClient()
@@ -361,7 +361,7 @@ class MyProgressTests(TestCase):
         self.client.force_login(self.student)
         with self.assertNumQueries(7):
             # session + user + enrolled ids + courses (+ categories prefetch)
-            # + completed counts + completion map — flat in course count.
+            # + completed counts + completion map  flat in course count.
             response = self.client.get("/api/v1/me/progress/")
         self.assertEqual(len(response.json()["courses"]), 3)
 

@@ -37,7 +37,7 @@ class Recipe(TimeStampedModel):
 
     ``published_at`` is deliberately separate from ``status``:
 
-    * it is the correct sort key for "newest" — a recipe drafted in January and
+    * it is the correct sort key for "newest"  a recipe drafted in January and
       published in June must sort as June;
     * it is the gate that freezes the slug, so unpublish then republish does not
       unfreeze it;
@@ -45,7 +45,7 @@ class Recipe(TimeStampedModel):
 
     The many-to-many to categories is declared **here**, on the dependent side,
     so ``recipe_categories`` never references this app and stays shippable on
-    its own. The lazy string reference creates no Python import edge — the same
+    its own. The lazy string reference creates no Python import edge  the same
     mechanism as ``settings.AUTH_USER_MODEL``. See
     ``docs/adr/0008-cross-app-model-references.md``.
 

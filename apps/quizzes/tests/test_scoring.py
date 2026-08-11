@@ -1,4 +1,4 @@
-"""Unit tests for the pure scoring engine — no database."""
+"""Unit tests for the pure scoring engine  no database."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ class GradeAttemptTests(SimpleTestCase):
         key = _key(1, QuestionType.MULTIPLE_CHOICE, {10, 11}, {10, 11, 12})
         cases = [
             (frozenset({10, 11}), True),
-            (frozenset({10}), False),  # missing one — no partial credit
+            (frozenset({10}), False),  # missing one  no partial credit
             (frozenset({10, 11, 12}), False),  # an incorrect one included
             (frozenset(), False),
         ]

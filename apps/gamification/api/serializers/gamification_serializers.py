@@ -1,4 +1,4 @@
-"""Serializers for gamification payloads — all read-only field maps."""
+"""Serializers for gamification payloads  all read-only field maps."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class _LevelSerializer(serializers.Serializer):
     """The caller's level standing.
 
     ``xp_for_next_level`` ships alongside ``current_xp`` so a client can
-    draw a progress bar without reimplementing the level curve — the
+    draw a progress bar without reimplementing the level curve  the
     curve is business logic and stays in `level_service` (ADR 0024).
     """
 
@@ -50,7 +50,7 @@ class GamificationSummarySerializer(serializers.Serializer):
 
 
 class LeaderboardEntrySerializer(serializers.Serializer):
-    """One public leaderboard row — handle, level, XP. Nothing else.
+    """One public leaderboard row  handle, level, XP. Nothing else.
 
     The public handle is the identity users chose to be public; email and
     ids never appear here.

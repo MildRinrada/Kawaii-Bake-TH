@@ -3,7 +3,7 @@
 Not implemented in Phase 1. The seams that make it additive already exist:
 
 * ``api/credentials/`` is the only place a session is established, and it names
-  its backend explicitly — so a second backend can be appended to
+  its backend explicitly  so a second backend can be appended to
   ``AUTHENTICATION_BACKENDS`` without touching any view.
 * Accounts without a local password use ``set_unusable_password()``;
   ``user_selector.get_for_password_reset`` already excludes them, so a

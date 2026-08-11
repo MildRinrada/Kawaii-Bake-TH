@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Security — suspicious-behaviour monitoring.
+ * Security  suspicious-behaviour monitoring.
  *
  * Two views over the same data: **sources** (one row per address, with a
  * running score and a band) and **events** (the append-only log the
@@ -12,7 +12,7 @@
  *
  * Three real staff capabilities: block for a bounded window, lift a
  * block, and mark a source reviewed. Marking reviewed changes no score
- * and deletes no evidence — the source returns to the queue by itself if
+ * and deletes no evidence  the source returns to the queue by itself if
  * it trips a detector again.
  *
  * What this page deliberately does **not** claim: that developer tools
@@ -126,7 +126,7 @@ const LEVEL_LABELS: Record<string, string> = {
   critical: "วิกฤต",
 };
 
-/* Colour AND a shape cue — severity must never be conveyed by hue alone. */
+/* Colour AND a shape cue  severity must never be conveyed by hue alone. */
 const LEVEL_STYLE: Record<string, { chip: string; bars: number }> = {
   low: { chip: "bg-surface-sunken text-fg-muted", bars: 1 },
   medium: { chip: "bg-butter-soft text-butter-ink", bars: 2 },
@@ -137,7 +137,7 @@ const LEVEL_STYLE: Record<string, { chip: string; bars: number }> = {
 /**
  * Thai names for the signal kinds.
  *
- * The API stays the source of truth for *which* kinds exist — a kind
+ * The API stays the source of truth for *which* kinds exist  a kind
  * added on the backend still appears in the filters without a frontend
  * deploy. This map only translates the ones we have words for; anything
  * unknown falls back to the API's own (English, developer-facing) label,
@@ -167,8 +167,8 @@ function kindLabel(kind: string, fallback: string): string {
 
 const REVIEW_LABELS: Record<string, string> = {
   open: "รอตรวจสอบ",
-  acknowledged: "ตรวจแล้ว — เฝ้าดู",
-  ignored: "ตรวจแล้ว — ปกติ",
+  acknowledged: "ตรวจแล้ว  เฝ้าดู",
+  ignored: "ตรวจแล้ว  ปกติ",
 };
 
 function LevelBadge({ level }: { level: string }) {
@@ -323,7 +323,7 @@ function SourcesTab({
       header: "พฤติกรรมล่าสุด",
       render: (row) => (
         <span className="text-xs text-fg-muted">
-          {row.last_kind ? kindLabel(row.last_kind, row.last_kind_label) : "—"}
+          {row.last_kind ? kindLabel(row.last_kind, row.last_kind_label) : ""}
         </span>
       ),
     },
@@ -490,7 +490,7 @@ function SourcesTab({
                   )
                 }
               >
-                ตรวจแล้ว — เฝ้าดู
+                ตรวจแล้ว  เฝ้าดู
               </Button>
               <Button
                 size="sm"
@@ -506,7 +506,7 @@ function SourcesTab({
                   )
                 }
               >
-                ตรวจแล้ว — ปกติ
+                ตรวจแล้ว  ปกติ
               </Button>
             </div>
           ) : null
@@ -523,7 +523,7 @@ function SourcesTab({
                   {current.current_score.toFixed(1)}
                 </span>{" "}
                 <span className="text-xs text-fg-muted">
-                  (สะสม {current.score.toFixed(1)} — คะแนนลดลงครึ่งหนึ่งทุก 12 ชม.)
+                  (สะสม {current.score.toFixed(1)}  คะแนนลดลงครึ่งหนึ่งทุก 12 ชม.)
                 </span>
               </DetailRow>
               <DetailRow label="พบครั้งแรก">
@@ -533,11 +533,11 @@ function SourcesTab({
                 {relativeThai(current.last_seen_at)}
               </DetailRow>
               <DetailRow label="เส้นทางล่าสุด">
-                <span className="font-mono text-xs">{current.last_path || "—"}</span>
+                <span className="font-mono text-xs">{current.last_path || ""}</span>
               </DetailRow>
               <DetailRow label="User agent">
                 <span className="font-mono text-xs">
-                  {current.last_user_agent || "— (ไม่ได้ส่งมา)"}
+                  {current.last_user_agent || " (ไม่ได้ส่งมา)"}
                 </span>
               </DetailRow>
               <DetailRow label="การบล็อก">
@@ -573,7 +573,7 @@ function SourcesTab({
                     </span>
                   </div>
                   <p className="mt-1 font-mono wrap-break-word text-fg-muted">
-                    {event.method} {event.path || "—"}
+                    {event.method} {event.path || ""}
                     {event.status_code ? ` → ${event.status_code}` : ""}
                   </p>
                   {Object.keys(event.detail).length > 0 ? (
@@ -644,7 +644,7 @@ function EventsTab({ vocabulary }: { vocabulary: Vocabulary | null }) {
       header: "เส้นทาง",
       render: (row) => (
         <span className="font-mono text-xs text-fg-muted">
-          {row.method} {row.path || "—"}
+          {row.method} {row.path || ""}
           {row.status_code ? ` → ${row.status_code}` : ""}
         </span>
       ),
@@ -657,7 +657,7 @@ function EventsTab({ vocabulary }: { vocabulary: Vocabulary | null }) {
           title={row.user_agent}
           className="line-clamp-1 max-w-64 font-mono text-xs text-fg-subtle"
         >
-          {row.user_agent || "— (ไม่ได้ส่งมา)"}
+          {row.user_agent || " (ไม่ได้ส่งมา)"}
         </span>
       ),
     },
@@ -731,7 +731,7 @@ function EventsTab({ vocabulary }: { vocabulary: Vocabulary | null }) {
             empty={
               <AdminEmpty
                 title="ยังไม่มีเหตุการณ์"
-                description="บันทึกนี้เพิ่มอย่างเดียว ลบไม่ได้ — เก็บไว้เป็นหลักฐาน"
+                description="บันทึกนี้เพิ่มอย่างเดียว ลบไม่ได้  เก็บไว้เป็นหลักฐาน"
               />
             }
           />
@@ -776,7 +776,7 @@ export default function AdminSecurityPage() {
         <Icon name="ui/info" className="mt-0.5 size-4 shrink-0" />
         <span>
           สัญญาณที่มาจากเบราว์เซอร์ (เช่น &ldquo;เปิด DevTools&rdquo;) เป็นเพียง
-          <strong className="font-medium text-fg"> ข้อมูลประกอบ</strong> —
+          <strong className="font-medium text-fg"> ข้อมูลประกอบ</strong> 
           หน้าเว็บไม่สามารถห้ามเปิด DevTools ได้จริง และสัญญาณเหล่านี้ปลอมได้
           จึงถ่วงน้ำหนักต่ำที่สุด ส่วนการสแกนและการเรียกไฟล์ลับเป็นสิ่งที่เซิร์ฟเวอร์
           เห็นเอง ปลอมไม่ได้

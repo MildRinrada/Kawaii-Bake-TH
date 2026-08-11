@@ -1,4 +1,4 @@
-"""Scoring and enforcement — the only place security state is decided."""
+"""Scoring and enforcement  the only place security state is decided."""
 
 from __future__ import annotations
 
@@ -86,7 +86,7 @@ def record(
 ) -> SecurityEvent | None:
     """Score one observation and append its evidence.
 
-    Returns ``None`` — without raising — when watching is disabled or the
+    Returns ``None``  without raising  when watching is disabled or the
     address is trusted. Callers sit on the request path, so "nothing to
     do" must be cheap and silent.
 
@@ -185,7 +185,7 @@ def record_client_signal(
 
     Args:
         kind: The reported :class:`SignalKind`.
-        ip: Source address, taken from the connection — never the body.
+        ip: Source address, taken from the connection  never the body.
         user_agent: Raw user agent.
         path: The frontend route the visitor was on.
         actor_id: Signed-in user, when there was one.
@@ -355,7 +355,7 @@ def review(
     """Record a triage decision on a profile.
 
     Marking a profile reviewed changes **no** score and deletes **no**
-    evidence — it only moves the row out of the operator's queue. If the
+    evidence  it only moves the row out of the operator's queue. If the
     address trips a detector again it returns to the queue by itself.
 
     Args:

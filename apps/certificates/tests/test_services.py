@@ -83,6 +83,24 @@ class IssuanceGateTests(TestCase):
 
         self.assertEqual(certificate.student_name, "สมชาย ใจดี")
 
+    def test_the_snapshot_prefers_the_legal_name_above_everything(self) -> None:
+        # Registration collects the legal name for exactly this line: it
+        # outranks even a display name the learner set themselves.
+        self.student.first_name = "มินตรา"
+        self.student.last_name = "อบอุ่น"
+        self.student.save(update_fields=["first_name", "last_name"])
+        self.student.profile.display_name = "MildBakes"
+        self.student.profile.save(update_fields=["display_name"])
+        course = build_completed_course(
+            student=self.student, instructor=self.instructor
+        )
+
+        certificate, _created = certificate_service.issue_if_completed(
+            user_id=self.student.id, course_slug=course.slug
+        )
+
+        self.assertEqual(certificate.student_name, "มินตรา อบอุ่น")
+
     def test_duplicate_issue_returns_the_same_certificate(self) -> None:
         course = build_completed_course(
             student=self.student, instructor=self.instructor

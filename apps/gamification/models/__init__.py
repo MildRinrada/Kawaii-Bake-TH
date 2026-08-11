@@ -1,4 +1,4 @@
-"""Gamification models — public API."""
+"""Gamification models  public API."""
 
 from __future__ import annotations
 

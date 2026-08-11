@@ -47,7 +47,7 @@ def require_course(
 ) -> CourseRef:
     """Resolve a course slug through the courses app's public API.
 
-    Raises this app's own error when hidden — a callee never raises for its
+    Raises this app's own error when hidden  a callee never raises for its
     caller (ADR 0008/0009).
 
     Args:
@@ -100,7 +100,7 @@ def _validate_recipe_link(*, recipe_id: int | None, viewer_id: int) -> None:
 def _validate_quiz_link(*, quiz_id: int | None, viewer_id: int) -> None:
     """Check the author can see the quiz they are linking.
 
-    Same shape as the recipe link: a lesson holds a **reference only** — quiz
+    Same shape as the recipe link: a lesson holds a **reference only**  quiz
     logic (attempts, scoring, gating) stays entirely in the quizzes app.
     Any quiz the author can open qualifies, including their own drafts and
     unlisted quizzes (unlisted is the intended pairing for gated lessons).
@@ -182,7 +182,7 @@ def delete_lesson(
 ) -> None:
     """Delete a lesson and renumber the survivors.
 
-    Progress rows cascade with it — deleting a lesson is an instructor's
+    Progress rows cascade with it  deleting a lesson is an instructor's
     destructive act, distinct from a student dropping a course (which deletes
     nothing).
 
@@ -204,7 +204,7 @@ def reorder_lessons(
 ) -> list[Lesson]:
     """Reorder a course's lessons to match ``ordered_ids``.
 
-    The payload must be **exactly** the course's lesson-id set — the natural
+    The payload must be **exactly** the course's lesson-id set  the natural
     output of a drag-and-drop UI, and full-array semantics mean concurrent
     reorders can never interleave into a corrupt order.
 
@@ -219,7 +219,7 @@ def reorder_lessons(
 
     Raises:
         CourseNotVisibleError: If the course is absent or not the caller's.
-        InvalidReorderError: If ids are missing, duplicated or foreign — the
+        InvalidReorderError: If ids are missing, duplicated or foreign  the
             diff is reported in ``details``.
     """
     course = _require_manageable_course(
@@ -255,10 +255,10 @@ def get_lesson_content(
 ) -> Lesson:
     """Fetch a lesson for full-content display, enforcing the two-layer gate.
 
-    Layer 1 (**404**): the lesson exists for this viewer — course visible,
+    Layer 1 (**404**): the lesson exists for this viewer  course visible,
     lesson published (or viewer owns it). Protects existence, as in Phase 2.
 
-    Layer 2 (**403/401**): the viewer may read the content — enrolled, owner,
+    Layer 2 (**403/401**): the viewer may read the content  enrolled, owner,
     staff, or the lesson is a preview. Reached only after layer 1, so it never
     confirms anything hidden; the syllabus already made this lesson public.
 

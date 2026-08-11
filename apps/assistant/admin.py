@@ -2,7 +2,7 @@
 
 Messages and usage logs are append-only domains; the admin mirrors that by
 exposing them read-only. Prompt templates are the one intentionally editable
-surface — that is how operators ship a new prompt version.
+surface - that is how operators ship a new prompt version.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ class AssistantConversationAdmin(admin.ModelAdmin):
 
 @admin.register(AssistantMessage)
 class AssistantMessageAdmin(admin.ModelAdmin):
-    """Inspect transcripts — strictly read-only."""
+    """Inspect transcripts - strictly read-only."""
 
     list_display = ("id", "conversation", "role", "provider", "created_at")
     list_filter = ("role", "provider")
@@ -64,7 +64,7 @@ class PromptTemplateAdmin(admin.ModelAdmin):
 
 @admin.register(AIUsageLog)
 class AIUsageLogAdmin(admin.ModelAdmin):
-    """Inspect the usage ledger — strictly read-only."""
+    """Inspect the usage ledger - strictly read-only."""
 
     list_display = (
         "id",

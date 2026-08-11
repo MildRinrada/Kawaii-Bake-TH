@@ -6,7 +6,7 @@
  * Everything here is backed by real endpoints: the issued ledger
  * (`/me/certificates/`), course completion facts (`/me/progress/`), and
  * issuing (`POST /courses/{slug}/certificate/`). A completed course is
- * shown as **pending** — never as an issued credential — until the
+ * shown as **pending**  never as an issued credential  until the
  * backend actually issues one. There is no server-side certificate
  * file, so the document is rendered from its stored fields and the
  * download path is the browser's print/Save-as-PDF, labelled as such.
@@ -80,11 +80,11 @@ function CertificateViewer({
       try {
         await navigator.share({
           url,
-          title: `ใบประกาศนียบัตร — ${certificate.course_title}`,
+          title: `ใบประกาศนียบัตร  ${certificate.course_title}`,
         });
         return;
       } catch {
-        // Share sheet dismissed — fall through to copying.
+        // Share sheet dismissed  fall through to copying.
       }
     }
     await copy(url, "คัดลอกลิงก์ตรวจสอบแล้ว");
@@ -276,7 +276,7 @@ function PendingCard({
           {course.completed_at
             ? ` เมื่อ ${formatThaiDate(course.completed_at)}`
             : ""}{" "}
-          — ยังไม่ได้ออกใบประกาศ
+           ยังไม่ได้ออกใบประกาศ
         </p>
         <Button
           size="sm"
@@ -394,10 +394,10 @@ function CertificatesContent() {
     <>
       <PageHeader
         title="ใบประกาศนียบัตรของฉัน"
-        description="หลักฐานการเรียนจบคอร์สใน KawaiiBake — ตรวจสอบได้จริงทุกใบ"
+        description="หลักฐานการเรียนจบคอร์สใน KawaiiBake  ตรวจสอบได้จริงทุกใบ"
       />
 
-      {/* Achievement summary — every figure from real data */}
+      {/* Achievement summary  every figure from real data */}
       {!nothingAtAll ? (
         <div className="mb-7 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-surface bg-butter-soft/40 px-5 py-4 text-sm">
           <p className="flex items-baseline gap-1.5">
@@ -423,7 +423,7 @@ function CertificatesContent() {
         </div>
       ) : null}
 
-      {/* Filters — only states this account actually has */}
+      {/* Filters  only states this account actually has */}
       {!nothingAtAll ? (
         <div
           className="mb-6 flex flex-wrap items-center gap-2"
@@ -489,7 +489,7 @@ function CertificatesContent() {
                 เรียนจบแล้ว รอออกใบประกาศ
               </h2>
               <p className="mb-4 text-sm text-fg-muted">
-                เรียนจบคอร์สแล้ว แต่ยังไม่ได้ออกใบประกาศ — กดขอรับได้เลย
+                เรียนจบคอร์สแล้ว แต่ยังไม่ได้ออกใบประกาศ  กดขอรับได้เลย
               </p>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {pending.map((course) => (

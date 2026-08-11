@@ -10,7 +10,7 @@ from __future__ import annotations
 def normalize_comment(comment: str | None) -> str:
     """Collapse a missing or whitespace-only comment to the empty string.
 
-    Rating-only reviews are legitimate — the empty string is the canonical
+    Rating-only reviews are legitimate  the empty string is the canonical
     "no comment", so listings never render whitespace ghosts.
 
     Args:

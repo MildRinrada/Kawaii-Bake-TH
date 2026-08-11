@@ -4,7 +4,7 @@
  * Tiny client-side data hook: loading / error / data, with abort on
  * unmount. Enough for structural shells; if the app later needs caches,
  * mutations and revalidation, swap in TanStack Query behind the same
- * call sites — the fetcher already is the shared API client.
+ * call sites  the fetcher already is the shared API client.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -26,7 +26,7 @@ export function useApiQuery<T>(
   });
   const [nonce, setNonce] = useState(0);
 
-  // Latest fetcher without re-running the effect on identity changes —
+  // Latest fetcher without re-running the effect on identity changes 
   // the ref is written inside an effect, never during render.
   const fetcherRef = useRef(fetcher);
   useEffect(() => {

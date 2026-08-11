@@ -1,4 +1,4 @@
-"""Review routes nested under ``/api/v1/recipes/`` — mounted by config.
+"""Review routes nested under ``/api/v1/recipes/``  mounted by config.
 
 The shared prefix is a config concern, not app coupling (the lessons
 precedent, ADR 0009). These two-segment patterns cannot collide with the

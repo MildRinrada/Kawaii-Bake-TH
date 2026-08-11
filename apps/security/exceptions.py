@@ -30,7 +30,7 @@ class RequestBlockedError(DomainError):
     """Raised when a blocked address makes a request.
 
     Carries the standard envelope so a blocked client gets the same JSON
-    shape as every other error — a bespoke response body would be one
+    shape as every other error  a bespoke response body would be one
     more thing for a scanner to fingerprint.
     """
 

@@ -18,7 +18,7 @@ def replace_ingredients(
     array anyway, reordering becomes free, and per-item updates would need
     stable child ids plus an ownership check on every one of them.
 
-    ``position`` is assigned from the array order — never taken from the client,
+    ``position`` is assigned from the array order  never taken from the client,
     which routinely sends duplicate or gapped values.
 
     Args:

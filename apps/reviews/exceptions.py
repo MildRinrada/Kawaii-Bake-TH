@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class ReviewTargetNotFoundError(DomainError):
     """Raised when the reviewed recipe/course is absent or hidden.
 
-    This app's own 404 — a callee (recipes, courses) never raises for its
+    This app's own 404  a callee (recipes, courses) never raises for its
     caller (ADR 0008).
     """
 
@@ -28,7 +28,7 @@ class ReviewNotFoundError(DomainError):
 class AlreadyReviewedError(DomainError):
     """Raised on a second active review of the same target by the same user.
 
-    Edit the existing review instead — one voice, one vote per target.
+    Edit the existing review instead  one voice, one vote per target.
     """
 
     code = "already_reviewed"

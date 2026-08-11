@@ -4,7 +4,7 @@ ADR 0006 stored favourite categories as canonical slugs precisely so this
 migration would be an exact match: the JSON column is renamed aside, the
 real many-to-many to ``recipe_categories`` is added, every stored slug is
 resolved against the (Phase 2-seeded) taxonomy and linked, and the JSON
-column is dropped. Slugs that no longer resolve are dropped silently —
+column is dropped. Slugs that no longer resolve are dropped silently 
 they pointed at nothing a user could select anyway.
 
 ``locale`` narrows from free text nothing consumed ("en-us" default) to

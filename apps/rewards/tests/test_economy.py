@@ -117,7 +117,7 @@ class EarnTests(TestCase):
         # Simulate the exact interleaving a concurrent duplicate produces:
         # the row exists (the rival won) but our caller proceeds anyway.
         # The savepoint must discard our balance update and hand back the
-        # winner's row — total effect of the race: one grant.
+        # winner's row  total effect of the race: one grant.
         account = reward_repository.get_or_create_account(user_id=self.user.id)
         RewardTransaction.objects.create(
             account=account,
@@ -204,7 +204,7 @@ class SpendTests(TestCase):
 
 
 class AdjustmentTests(TestCase):
-    """Staff corrections are ledger entries — audited, guarded, idempotent."""
+    """Staff corrections are ledger entries  audited, guarded, idempotent."""
 
     def setUp(self) -> None:
         self.user = create_user(username="rwtarget")

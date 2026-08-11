@@ -1,6 +1,6 @@
 """Read-side queries for courses.
 
-Also home of :class:`CourseRef` — the frozen reference the ``lessons`` app uses
+Also home of :class:`CourseRef`  the frozen reference the ``lessons`` app uses
 instead of touching this app's model. Part of the public cross-app API.
 """
 
@@ -24,8 +24,8 @@ from apps.recipe_categories.selectors import category_selector
 class CourseRef:
     """A course reference safe to hand across the app boundary.
 
-    Carries everything ``lessons`` needs — identity for FK writes, the
-    instructor for owner checks, and the state pair for its own decisions —
+    Carries everything ``lessons`` needs  identity for FK writes, the
+    instructor for owner checks, and the state pair for its own decisions 
     without exposing the model.
     """
 
@@ -53,7 +53,7 @@ def _annotate_enrollment(
 ) -> QuerySet[Course]:
     """Annotate each course with the viewer's enrollment state.
 
-    One ``Exists`` subquery per flavour rather than a join — no row
+    One ``Exists`` subquery per flavour rather than a join  no row
     multiplication, and the card serializer never touches the ORM.
     """
     if viewer_id is None:
@@ -95,6 +95,10 @@ def list_courses(
         )
     )
 
+    if filters.status:
+        # Intersects visibility - narrow-only, same rationale as recipes.
+        queryset = queryset.filter(status=filters.status)
+
     if filters.search:
         queryset = queryset.filter(
             Q(title__icontains=filters.search)
@@ -127,7 +131,7 @@ def get_course_detail(
         viewer_is_staff: Whether the viewer is a staff member.
 
     Returns:
-        The course, or ``None`` when absent or hidden — callers must not
+        The course, or ``None`` when absent or hidden  callers must not
         distinguish the two to the client.
     """
     queryset = (
@@ -175,7 +179,7 @@ def get_course_ref(
 
     Part of the public cross-app API (ADR 0009). Returns ``None`` when the
     course is absent **or** hidden from this viewer; the caller raises its own
-    domain error for that case — never this app's.
+    domain error for that case  never this app's.
 
     Args:
         slug: The course slug.
@@ -204,7 +208,7 @@ def list_viewable_by_ids(
 ) -> QuerySet[Course]:
     """Fetch specific courses under the **detail** visibility rule.
 
-    Part of the public cross-app API (Phase 5) — the favorites list gathers
+    Part of the public cross-app API (Phase 5)  the favorites list gathers
     ids under the detail rule (including archived-but-enrolled courses) and
     fetches the cards here, so a student's bookmarked archived course does not
     vanish. ``distinct()`` because the archived-but-enrolled branch joins
@@ -235,7 +239,7 @@ def list_viewable_by_ids(
 class CourseCandidateFact:
     """The scoring-relevant facts of one publicly listed course.
 
-    Part of the public cross-app API (Phase 12) — the courses mirror of
+    Part of the public cross-app API (Phase 12)  the courses mirror of
     ``RecipeCandidateFact``. Everything here already appears on the public
     card.
     """
@@ -250,7 +254,7 @@ class CourseCandidateFact:
 def public_candidate_facts(*, limit: int) -> list[CourseCandidateFact]:
     """Facts of the newest publicly listed courses, for recommendation.
 
-    Applies the **anonymous public listing** rule — the recommendation feed
+    Applies the **anonymous public listing** rule  the recommendation feed
     must never carry unlisted, draft or archived courses, regardless of what
     the viewer could open directly (an archived course stays readable to its
     enrolled students, but is no longer something to recommend).
@@ -285,7 +289,7 @@ class CourseSignalFact:
 
     Part of the public cross-app API (Phase 12). Not visibility-filtered:
     it describes the caller's own history (their enrollments, favorites,
-    reviews) and is consumed as aggregate interest evidence only — never
+    reviews) and is consumed as aggregate interest evidence only  never
     serialized.
     """
 

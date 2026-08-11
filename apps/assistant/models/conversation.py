@@ -13,10 +13,10 @@ from apps.core.models.base import TimeStampedModel
 class AssistantConversation(TimeStampedModel):
     """One user's chat thread with the assistant.
 
-    **Explicit nullable FKs, not a GenericForeignKey** — the same call as
+    **Explicit nullable FKs, not a GenericForeignKey** - the same call as
     reviews/favorites (ADR 0011): real referential integrity, OpenAPI-clear
     payloads, and joinable columns for future per-content analytics. The
-    check constraint allows only the FK matching ``context_type`` to be set —
+    check constraint allows only the FK matching ``context_type`` to be set -
     but does **not** require it, because targets use ``SET_NULL``: deleting a
     recipe must not delete the user's chat history, so a typed conversation
     whose target vanished degrades to context-free answers instead.
@@ -68,7 +68,7 @@ class AssistantConversation(TimeStampedModel):
     class Meta:
         verbose_name = "assistant conversation"
         verbose_name_plural = "assistant conversations"
-        # Most recently active first — `updated_at` is touched on every send.
+        # Most recently active first - `updated_at` is touched on every send.
         ordering = ("-updated_at", "-id")
         constraints = [
             models.CheckConstraint(

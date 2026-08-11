@@ -2,7 +2,7 @@
  * Frontend environment configuration.
  *
  * Everything the browser bundle needs is `NEXT_PUBLIC_*`; see
- * `.env.example`. The API base URL points at the Django `/api/v1` root —
+ * `.env.example`. The API base URL points at the Django `/api/v1` root 
  * the frontend never talks to anything else.
  */
 export const API_BASE_URL =

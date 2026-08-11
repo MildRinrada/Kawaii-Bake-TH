@@ -20,7 +20,7 @@ def update_profile(
 
     Only the supplied keys are written, so a PATCH never clobbers fields the
     client did not mention. Scalar columns and the favourite-category
-    relation commit together — an invalid update persists nothing.
+    relation commit together  an invalid update persists nothing.
 
     Args:
         profile: The profile to update.
@@ -40,7 +40,7 @@ def update_profile(
                 setattr(profile, field, value)
             profile.save(update_fields=[*changes.keys(), "updated_at"])
         if favorite_category_ids is not None:
-            # `.set()` diffs against the current rows — idempotent, and
+            # `.set()` diffs against the current rows  idempotent, and
             # duplicates are impossible through the through-table pair.
             profile.favorite_categories.set(favorite_category_ids)
     return profile

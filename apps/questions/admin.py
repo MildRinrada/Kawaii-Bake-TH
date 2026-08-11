@@ -18,7 +18,7 @@ class AnswerChoiceInline(admin.TabularInline):
 class QuestionAdmin(admin.ModelAdmin):
     """Admin for questions.
 
-    Admin edits bypass the service-layer frozen gate — an operator override,
+    Admin edits bypass the service-layer frozen gate  an operator override,
     same stance as lesson counter edits (repaired by ``recount_lessons``).
     ``frozen_at`` is read-only here so it cannot be cleared casually.
     """

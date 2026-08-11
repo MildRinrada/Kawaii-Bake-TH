@@ -8,7 +8,7 @@ from apps.core.exceptions import DomainError
 class RecipeNotFoundError(DomainError):
     """Raised when the recipe being asked about is absent or hidden.
 
-    This app's own 404 (ADR 0008) — hidden and absent are indistinguishable
+    This app's own 404 (ADR 0008)  hidden and absent are indistinguishable
     to the client, exactly as on the recipes endpoints themselves.
     """
 

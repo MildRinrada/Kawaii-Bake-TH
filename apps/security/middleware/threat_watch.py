@@ -3,7 +3,7 @@
 Two jobs, in this order:
 
 1. **Enforce** an active block, before the view runs.
-2. **Observe** — inspect the request, and after the response, look at
+2. **Observe**  inspect the request, and after the response, look at
    rate-shaped behaviour that no single request reveals.
 
 Both are wrapped so that a failure here degrades to "not watching" rather
@@ -57,8 +57,8 @@ _WINDOW_KEYS = {
 def _bump(kind: str, ip: str) -> bool:
     """Increment a sliding-window counter and report whether it just tripped.
 
-    Returns ``True`` exactly once per window — on the request that
-    crosses the threshold — so a sustained burst is one event, not one
+    Returns ``True`` exactly once per window  on the request that
+    crosses the threshold  so a sustained burst is one event, not one
     per request over the line.
 
     Args:
@@ -118,7 +118,7 @@ class ThreatWatchMiddleware:
         """Run a watcher step, swallowing and logging any failure."""
         try:
             func(*args)
-        except Exception:  # noqa: BLE001 — watching must never break serving
+        except Exception:  # noqa: BLE001  watching must never break serving
             logger.exception("security: watcher step failed")
 
     def _blocked_response(self, request: HttpRequest) -> JsonResponse:

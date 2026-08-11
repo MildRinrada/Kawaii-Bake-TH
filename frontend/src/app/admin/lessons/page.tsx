@@ -3,8 +3,8 @@
 /**
  * Lesson management, scoped to one course.
  *
- * Lessons are addressed through their course everywhere in this API —
- * there is no flat `/lessons/` listing — so the course picker is not a
+ * Lessons are addressed through their course everywhere in this API 
+ * there is no flat `/lessons/` listing  so the course picker is not a
  * convenience, it is the only shape the backend supports.
  *
  * Writes used here all exist: `PATCH /lessons/{id}/` (status, preview
@@ -127,7 +127,7 @@ export default function AdminLessonsPage() {
             value={slug}
             onChange={setSlug}
             options={[
-              { value: "", label: "— เลือกคอร์ส —" },
+              { value: "", label: " เลือกคอร์ส " },
               ...(courses.data?.results ?? []).map((item) => ({
                 value: item.slug,
                 label: `${item.title} (${item.lesson_count})`,
@@ -139,7 +139,7 @@ export default function AdminLessonsPage() {
         {!slug ? (
           <AdminEmpty
             title="ยังไม่ได้เลือกคอร์ส"
-            description="บทเรียนอยู่ภายใต้คอร์สเสมอ — เลือกคอร์สด้านบนเพื่อเริ่ม"
+            description="บทเรียนอยู่ภายใต้คอร์สเสมอ  เลือกคอร์สด้านบนเพื่อเริ่ม"
           />
         ) : lessons.error ? (
           <div className="p-4">
@@ -177,7 +177,7 @@ export default function AdminLessonsPage() {
                 header: "วิดีโอ",
                 render: (row) => (
                   <span className="text-xs text-fg-muted">
-                    {row.has_video ? "มี" : "—"}
+                    {row.has_video ? "มี" : ""}
                   </span>
                 ),
               },

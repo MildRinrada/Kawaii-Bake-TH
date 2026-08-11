@@ -23,7 +23,7 @@ from infrastructure.storage import get_media_storage
 def avatar_upload_to(instance: Profile, filename: str) -> str:
     """Build the storage path for an uploaded avatar.
 
-    The original filename is discarded entirely — interpolating user input into
+    The original filename is discarded entirely  interpolating user input into
     a storage path invites traversal and collision bugs.
 
     Args:
@@ -40,7 +40,7 @@ def avatar_upload_to(instance: Profile, filename: str) -> str:
 def cover_upload_to(instance: Profile, filename: str) -> str:
     """Build the storage path for an uploaded cover banner.
 
-    Mirrors :func:`avatar_upload_to` — the client filename is used only for
+    Mirrors :func:`avatar_upload_to`  the client filename is used only for
     its extension, never interpolated into the path.
 
     Args:
@@ -99,7 +99,7 @@ class Profile(TimeStampedModel):
     )
     # The Phase 1 docstring promised this: "becomes a many-to-many to
     # recipe_categories once that app exists" (ADR 0006). Phase 14 kept the
-    # promise — migration 0002 backfilled the JSON slugs into real relations
+    # promise  migration 0002 backfilled the JSON slugs into real relations
     # (an exact slug match, as designed). The API shape is unchanged (a list
     # of slugs); validation now runs against the live taxonomy instead of a
     # frozen enum, and a deleted category simply leaves everyone's list.

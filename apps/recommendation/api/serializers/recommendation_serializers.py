@@ -13,7 +13,7 @@ class RecommendedRecipeSerializer(serializers.Serializer):
     """One recommended recipe: the public card plus its reason codes.
 
     The card comes from the recipes app's own list serializer, batch-fetched
-    by the view (the favorites stitching pattern) — this serializer never
+    by the view (the favorites stitching pattern)  this serializer never
     touches the ORM. Reasons are aggregate evidence codes; no score and no
     raw behavior ever appear here (ADR 0018 §10).
     """
@@ -27,7 +27,7 @@ class RecommendedRecipeSerializer(serializers.Serializer):
 
 
 class RecommendedCourseSerializer(serializers.Serializer):
-    """One recommended course — the courses mirror of the recipe item."""
+    """One recommended course  the courses mirror of the recipe item."""
 
     reasons = serializers.ListField(child=serializers.CharField(), read_only=True)
     course = serializers.SerializerMethodField()
@@ -40,7 +40,7 @@ class RecommendedCourseSerializer(serializers.Serializer):
 class RecommendationListQuerySerializer(StrictSerializer):
     """Validates the query string of both recommendation feeds.
 
-    Pagination only — scores, weights and features are not client inputs,
+    Pagination only  scores, weights and features are not client inputs,
     by design.
     """
 

@@ -1,4 +1,4 @@
-"""Search infrastructure — public API."""
+"""Search infrastructure - public API."""
 
 from __future__ import annotations
 

@@ -3,8 +3,8 @@
  *
  * Session-cookie authentication (ADR 0007): every request carries
  * credentials, and mutating requests carry the CSRF token Django set as
- * a readable cookie. The client owns exactly three concerns — base URL,
- * credentials/CSRF, and the error contract — and no business logic.
+ * a readable cookie. The client owns exactly three concerns  base URL,
+ * credentials/CSRF, and the error contract  and no business logic.
  */
 
 import { API_BASE_URL } from "@/lib/config";
@@ -35,7 +35,7 @@ export interface RequestOptions {
   query?: Record<string, string | number | boolean | null | undefined>;
   /** JSON body for mutating requests. */
   body?: unknown;
-  /** Multipart body — wins over `body` when provided. */
+  /** Multipart body  wins over `body` when provided. */
   formData?: FormData;
   signal?: AbortSignal;
 }

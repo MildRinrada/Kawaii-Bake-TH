@@ -3,7 +3,7 @@
 /**
  * KawaiiBake application chrome.
  *
- * Desktop: sticky translucent cream header — wordmark, pill nav, auth
+ * Desktop: sticky translucent cream header  wordmark, pill nav, auth
  * area. Mobile: the nav collapses into a disclosure panel under a
  * hamburger. Footer is a quiet cream band. Warm, calm, zero decoration
  * that fights the content.
@@ -23,7 +23,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Dropdown } from "@/components/ui/dropdown";
 
 // Recipes and Community are the two creation destinations and both sit
-// in the top level of the nav — Community is never nested inside the
+// in the top level of the nav  Community is never nested inside the
 // recipe section, and recipe authoring is never nested inside Community.
 const NAV_ITEMS: Array<{ href: Route; label: string }> = [
   { href: "/recipes", label: "สูตรขนม" },
@@ -83,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { status, user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  // Close the mobile panel on navigation — derived during render (the
+  // Close the mobile panel on navigation  derived during render (the
   // React-documented alternative to a setState effect).
   const [menuPath, setMenuPath] = useState(pathname);
   if (menuPath !== pathname) {
@@ -148,7 +148,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     { key: "certificates", label: "ใบประกาศ", onSelect: () => router.push("/certificates") },
                     { key: "achievements", label: "ความสำเร็จ", onSelect: () => router.push("/achievements") },
                     { key: "settings", label: "ตั้งค่า", onSelect: () => router.push("/settings") },
-                    { key: "logout", label: "ออกจากระบบ", onSelect: () => void logout() },
+                    // Staff shortcut into the back office - rendering is a
+                    // convenience only; every admin surface re-authorises
+                    // server-side (ADR 0022).
+                    ...(user.is_staff
+                      ? [
+                          {
+                            key: "admin",
+                            label: "ระบบหลังบ้าน",
+                            separator: true,
+                            onSelect: () => router.push("/admin/dashboard"),
+                          },
+                        ]
+                      : []),
+                    {
+                      key: "logout",
+                      label: "ออกจากระบบ",
+                      separator: true,
+                      onSelect: () => void logout(),
+                    },
                   ]}
                 />
               </>

@@ -14,7 +14,7 @@ from __future__ import annotations
 from django.db import migrations
 
 # Frozen copy of the enum as it stood when this migration was written.
-# Migrations must not import live application code — a later edit to the enum
+# Migrations must not import live application code  a later edit to the enum
 # would silently change what this historical migration does.
 SEED_CATEGORIES: list[tuple[str, str, int]] = [
     ("bread", "Bread", 10),

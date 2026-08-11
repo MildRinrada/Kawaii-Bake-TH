@@ -16,7 +16,7 @@ class CourseStatus(models.TextChoices):
 class CourseVisibility(models.TextChoices):
     """Audience for a published course.
 
-    ``UNLISTED`` is reachable by direct link but absent from listings — useful
+    ``UNLISTED`` is reachable by direct link but absent from listings  useful
     for share-by-link beta courses.
     """
 
@@ -44,7 +44,7 @@ class CourseDifficulty(models.TextChoices):
 class EnrollmentStatus(models.TextChoices):
     """Lifecycle of one user's membership of one course.
 
-    ``DROPPED`` hides the course from "my courses" but deletes nothing — the
+    ``DROPPED`` hides the course from "my courses" but deletes nothing  the
     row and the user's lesson progress survive re-enrollment.
     """
 
@@ -64,7 +64,7 @@ class CourseOrdering(models.TextChoices):
 
 # Every entry ends with `-id`: without the tiebreaker, rows sharing a sort key
 # reshuffle between pages. `POPULAR` is a placeholder mapped to publication date
-# until enrollment counts power it — one line to change, no API change.
+# until enrollment counts power it  one line to change, no API change.
 COURSE_ORDERING_MAP: dict[str, tuple[str, ...]] = {
     CourseOrdering.NEWEST: ("-published_at", "-created_at", "-id"),
     CourseOrdering.OLDEST: ("published_at", "created_at", "-id"),

@@ -21,12 +21,12 @@ class Question(TimeStampedModel):
     attempt history points at it directly. Two consequences shape this model:
 
     * **``author`` is ownership only.** The bank's one permitted use of the
-      user relation is comparing ``author_id`` to the viewer — this app never
+      user relation is comparing ``author_id`` to the viewer  this app never
       joins into profiles, preferences or any user state beyond identity.
     * **``frozen_at`` is the lifecycle state this app owns.** ``NULL`` means
       the question is editable and deletable; a timestamp means its content
       (text, type, choices) is permanently locked for historical integrity.
-      A question knows *that* it is frozen, never *why* — callers with a
+      A question knows *that* it is frozen, never *why*  callers with a
       reason (the quizzes app, at attempt start) push the state through
       ``question_service.freeze_questions()``. A timestamp rather than a
       boolean: same stamped-once pattern as ``published_at``/``completed_at``,
@@ -54,7 +54,7 @@ class Question(TimeStampedModel):
         blank=True,
         help_text=(
             "Shown to the learner after submitting. A learning aid, not part "
-            "of what is asked or graded — editable even when frozen."
+            "of what is asked or graded  editable even when frozen."
         ),
     )
     difficulty = models.CharField(

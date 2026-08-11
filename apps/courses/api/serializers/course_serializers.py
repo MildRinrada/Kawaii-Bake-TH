@@ -35,7 +35,7 @@ class CourseListItemSerializer(ImageUrlMixin):
         source="published_duration_minutes", read_only=True
     )
     # Aggregates are stored columns maintained by the reviews app
-    # (ADR 0021) — no join, no N+1. Average is null when unreviewed.
+    # (ADR 0021)  no join, no N+1. Average is null when unreviewed.
     rating_average = serializers.SerializerMethodField()
     rating_count = serializers.IntegerField(read_only=True)
     thumbnail_url = serializers.SerializerMethodField()

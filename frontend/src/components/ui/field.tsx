@@ -38,7 +38,14 @@ export function Field({
     <div className={cn("space-y-1.5", className)}>
       <label htmlFor={id} className="block text-sm font-medium text-fg">
         {label}
-        {required ? <span aria-hidden> *</span> : null}
+        {/* Red is the convention for "required"; aria-hidden because the
+            control itself carries `required`/validation for readers. */}
+        {required ? (
+          <span aria-hidden className="font-semibold text-danger">
+            {" "}
+            *
+          </span>
+        ) : null}
       </label>
       {children({
         id,

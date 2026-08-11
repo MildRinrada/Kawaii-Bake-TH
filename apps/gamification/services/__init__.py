@@ -1,1 +1,1 @@
-"""Gamification services — business logic, transport-agnostic."""
+"""Gamification services - business logic, transport-agnostic."""

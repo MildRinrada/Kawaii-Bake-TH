@@ -20,7 +20,7 @@ export function relativeThai(iso: string): string {
   return new Date(iso).toLocaleDateString("th-TH", { dateStyle: "medium" });
 }
 
-/** "สิงหาคม 2569" — the granularity a join date deserves. */
+/** "สิงหาคม 2569"  the granularity a join date deserves. */
 export function monthYearThai(iso: string): string {
   return new Date(iso).toLocaleDateString("th-TH", {
     month: "long",

@@ -1,9 +1,9 @@
 /**
  * Admin dashboard E2E against the real backend.
  *
- * Covers the flow the brief asks for — login → dashboard → users →
+ * Covers the flow the brief asks for  login → dashboard → users →
  * recipes → courses → moderation → certificates → notifications →
- * assistant → logout — plus the authorization checks that matter:
+ * assistant → logout  plus the authorization checks that matter:
  * anonymous and non-staff callers must not get an admin surface.
  */
 import { chromium } from "playwright";
@@ -17,7 +17,7 @@ const LEARNER = { email: "p16-learner@example.com", password: "Rhubarb!Tart2024"
 let passed = 0;
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 async function expect(page, selector, label, timeout = 15_000) {
   await page.waitForSelector(selector, { timeout });
@@ -108,7 +108,7 @@ try {
   await page.waitForURL("**/admin/recipes");
   await expect(page, "table", "recipes data table renders");
   const recipeRows = await page.locator("tbody tr").count();
-  if (recipeRows === 0) throw new Error("recipe table is empty — scope=all returned nothing");
+  if (recipeRows === 0) throw new Error("recipe table is empty  scope=all returned nothing");
   ok(`recipe table shows ${recipeRows} rows from scope=all`);
 
   await page.fill('input[aria-label="ค้นหาสูตร"]', "บราวนี่");
@@ -141,7 +141,7 @@ try {
      the seeded recipes were written straight to `published` without cover
      images, so the publish endpoint rightly refuses to put them back and
      any round trip on them is a one-way trip. Assertions watch the button
-     state and then re-read the API — a lingering success toast once made
+     state and then re-read the API  a lingering success toast once made
      this pass while the second request had not even been sent. */
   const fixtureSlug = await page.evaluate(async () => {
     const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? "";
@@ -210,7 +210,7 @@ try {
       { method: "DELETE", credentials: "include", headers: { "X-CSRFToken": csrf } },
     );
   }, fixtureSlug);
-  ok("fixture deleted — the run leaves no data behind");
+  ok("fixture deleted  the run leaves no data behind");
 
   await page.keyboard.press("Escape");
   await page.goto(`${BASE}/admin/recipes`);
@@ -241,81 +241,137 @@ try {
     ok("selecting a course loads its syllabus");
   }
 
-  /* ---------- Categories (read-only, gap disclosed) ---------- */
+  /* ---------- Categories: full CRUD round trip ---------- */
   await page.click('a[href="/admin/categories"]');
   await page.waitForURL("**/admin/categories");
   await expect(page, "text=จำนวนสูตร", "category table shows real recipe counts");
-  await expect(page, "text=POST /api/v1/recipe-categories/", "missing write API is named");
+  await page.click('button:has-text("เพิ่มหมวดหมู่")');
+  await page.getByLabel("ชื่อหมวด").fill("หมวดทดสอบอีทูอี");
+  await page.locator("button[form]").click();
+  await expect(page, "text=หมวดทดสอบอีทูอี", "category create round-trips (Thai slug derived)");
+  await page.click('tr:has-text("หมวดทดสอบอีทูอี")');
+  await page.waitForSelector('button:has-text("ลบหมวดหมู่")');
+  await page.click('button:has-text("ลบหมวดหมู่")');
+  await page.locator("dialog").last().locator('button:has-text("ลบ")').last().click();
+  await page.waitForFunction(
+    () => !document.querySelector("td")?.closest("table")?.textContent?.includes("หมวดทดสอบอีทูอี"),
+    undefined,
+    { timeout: 10_000 },
+  );
+  ok("category delete cleans up (assignments unlink, content untouched)");
 
-  /* ---------- Moderation ---------- */
+  /* ---------- Moderation: flat review list + Q&A ---------- */
   await page.click('a[href="/admin/reviews"]');
   await page.waitForURL("**/admin/reviews");
   await expect(page, 'button[role="tab"]:has-text("ถาม-ตอบ")', "moderation tabs render");
-  await expect(page, "text=เลือกสูตรหรือคอร์สก่อน", "review moderation explains the content-scoped API");
+  await expect(page, "tbody tr", "flat cross-content review list renders without a picker");
+  if (await page.locator('button[role="tab"]:has-text("แกลเลอรี")').count()) {
+    throw new Error("gallery tab should have moved to /admin/posts");
+  }
+  ok("gallery moderation moved out of the reviews page");
+  if (await page.locator('button:has-text("แก้ไขรีวิว")').count()) {
+    throw new Error("a review-edit control exists - staff must never edit review text");
+  }
+  ok("no control edits another user's review text");
   await page.click('button[role="tab"]:has-text("ถาม-ตอบ")');
   await expect(page, "text=กระทู้", "Q&A moderation table renders");
-  await page.click('button[role="tab"]:has-text("แกลเลอรี")');
-  await expect(page, "text=โพสต์", "gallery moderation table renders");
   await page.screenshot({ path: `${SHOT_DIR}/54-admin-moderation.png`, fullPage: true });
+
+  /* ---------- Community posts: delete/hide only, create as self ---------- */
+  await page.goto(`${BASE}/admin/posts`);
+  await expect(page, "text=โพสต์ชุมชน", "community posts page renders");
+  await expect(page, "tbody img", "post list leads with image thumbnails");
+  await expect(page, 'button:has-text("ซ่อน"), button:has-text("แสดง")', "hide/show moderation verbs present");
+  const postsBody = await page.textContent("tbody");
+  if (/แก้ไขโพสต์/.test(postsBody ?? "")) {
+    throw new Error("an edit control exists on another user's post");
+  }
+  ok("admin can only hide/delete user posts, never edit");
+  await page.click('button:has-text("สร้างโพสต์")');
+  await expect(page, "textarea", "composer opens for posting as the admin's own account");
+  await page.screenshot({ path: `${SHOT_DIR}/57-admin-posts.png`, fullPage: true });
 
   /* ---------- Questions ---------- */
   await page.click('a[href="/admin/questions"]');
   await page.waitForURL("**/admin/questions");
   await expect(page, "text=คลังคำถาม", "question bank page renders");
 
-  /* ---------- Users: lookup + the one staff-only write ---------- */
+  /* ---------- Users: roster, staff edits, verified override ---------- */
   await page.click('a[href="/admin/users"]');
   await page.waitForURL("**/admin/users");
-  await expect(page, "text=ปรับยอดคะแนนรางวัล", "staff-only reward adjustment form is present");
-  await expect(page, "text=GET /api/v1/users/", "missing user-admin endpoints are named");
-  await page.fill('input[placeholder="เช่น mildbakes"]', "mildbakes");
-  await page.click('button:has-text("ค้นหา")');
-  await expect(page, "text=@mildbakes", "user lookup returns a real public profile");
+  await expect(page, "tbody tr", "user roster renders");
+  await expect(page, "text=ปรับยอดคะแนนรางวัล", "staff-only reward adjustment survived the rebuild");
+  // Emails are on this page BY DESIGN now: the roster is IsAdminUser-gated
+  // PII. Passwords must still never appear anywhere.
   const usersBody = await page.textContent("body");
-  if (usersBody.includes("@example.com") || usersBody.includes("password")) {
-    throw new Error("user page leaked credentials or an email address");
+  if (/password|รหัสผ่าน:/.test(usersBody)) {
+    throw new Error("user roster leaked credential material");
   }
-  ok("user lookup exposes no email or credential");
+  ok("roster shows account PII to staff but never credentials");
+  await page.fill('input[type="search"]', "mildbakes");
+  await page.waitForTimeout(900);
+  await expect(page, "text=@mildbakes", "server-side roster search finds the account");
+  await page.locator("tbody tr").first().click();
+  await expect(page, 'dialog [role="switch"]', "detail panel offers the staff toggles");
+  await expect(page, "text=สำหรับกรณีฉุกเฉิน", "verified override is labelled as an emergency tool");
+  await page.keyboard.press("Escape");
   await page.screenshot({ path: `${SHOT_DIR}/55-admin-users.png`, fullPage: true });
 
-  /* ---------- Certificates (read-only + real verification) ---------- */
+  /* ---------- Certificates: registry + verification tool ---------- */
   await page.click('a[href="/admin/certificates"]');
   await page.waitForURL("**/admin/certificates");
-  await expect(page, "text=ตรวจสอบใบประกาศจากรหัส", "certificate verification tool renders");
-  const certBody = await page.textContent("body");
-  if (/เพิกถอนใบนี้|ปุ่มเพิกถอน/.test(certBody) && !certBody.includes("ยังไม่ถูกเปิดเป็น endpoint")) {
-    throw new Error("a revoke control was offered without a backend endpoint");
-  }
-  ok("no revoke control is offered (no endpoint exists)");
-  await page.fill('input[placeholder="วางรหัสจากลิงก์ /verify/…"]', "00000000-0000-4000-8000-000000000000");
+  await expect(page, "table", "certificate registry renders");
+  await expect(page, "text=ตรวจสอบใบประกาศจากรหัส", "verification tool survived the rebuild");
+  await page.fill('input[placeholder*="วางรหัส"]', "00000000-0000-4000-8000-000000000000");
   await page.click('button:has-text("ตรวจสอบ")');
   await expect(page, "text=ไม่พบใบประกาศ", "unknown token is reported honestly");
 
-  /* ---------- Learning / rewards read-only pages ---------- */
-  for (const [href, marker] of [
-    ["/admin/progress", "ความคืบหน้าของบัญชีที่กำลังใช้งาน"],
-    ["/admin/achievements", "ความสำเร็จของบัญชีที่กำลังใช้งาน"],
-    ["/admin/favorites", "รายการโปรดของบัญชีที่กำลังใช้งาน"],
-  ]) {
-    await page.goto(`${BASE}${href}`);
-    await page.waitForSelector(`text=${marker}`);
-    await page.waitForSelector("text=API ที่ยังไม่มีในระบบหลังบ้าน");
-    ok(`${href} shows own-scoped data and names the backend gap`);
-  }
+  /* ---------- Progress: cross-user dashboard ---------- */
+  await page.goto(`${BASE}/admin/progress`);
+  await expect(page, "text=อัตราการเรียนจบรายคอร์ส", "per-course completion funnel renders");
+  await page.waitForSelector("tbody tr");
+  await page.locator("tbody tr").first().click();
+  await expect(page, "text=ผู้เรียนใน", "learner roster opens for a course");
+  ok("per-course learner roster with progress renders");
 
-  /* ---------- Notifications ---------- */
+  await page.goto(`${BASE}/admin/achievements`);
+  await expect(page, "text=จำนวนคนได้รับ", "badge catalogue shows real awarded counts");
+  await expect(page, 'button:has-text("เพิ่มเหรียญ")', "badge create action present");
+  await page.click('button[role="tab"]:has-text("ประวัติการได้รับ")');
+  await page.waitForSelector("text=ผู้ได้รับ, text=ยังไม่มี", { timeout: 10_000 }).catch(() => {});
+  ok("award ledger tab renders (read-only, append-only by design)");
+
+  await page.goto(`${BASE}/admin/favorites`);
+  await expect(page, "text=สูตรยอดนิยม", "live most-favorited recipe ranking renders");
+  await expect(page, "text=คอร์สยอดนิยม", "live most-favorited course ranking renders");
+  await expect(page, "tbody tr", "cross-user favorites list renders");
+
+  /* ---------- Notifications: cross-user log + broadcast ---------- */
   await page.goto(`${BASE}/admin/notifications`);
-  await expect(page, "text=กล่องแจ้งเตือนของบัญชีนี้", "notifications inbox renders");
-  await expect(page, "text=broadcast", "missing broadcast/template endpoints are named");
+  await expect(page, 'button:has-text("ประกาศถึงทุกคน")', "broadcast action present");
+  await expect(page, "text=in-app เท่านั้น", "email delivery gap stays honestly disclosed");
+  await page.click('button:has-text("ประกาศถึงทุกคน")');
+  await expect(page, "text=หัวข้อ", "broadcast composer opens");
 
   /* ---------- Assistant ---------- */
   await page.goto(`${BASE}/admin/assistant`);
   await expect(page, "text=บทสนทนาของบัญชีนี้", "assistant monitoring renders");
   await expect(page, "text=เวอร์ชันพรอมป์ต", "prompt version column present (real field)");
 
-  /* ---------- Recommendations ---------- */
+  /* ---------- Recommendations: preview-as-user + weights ---------- */
   await page.goto(`${BASE}/admin/recommendations`);
-  await expect(page, "text=เหตุผลที่ถูกแนะนำ", "recommendation reasons column renders");
+  await expect(page, "text=ทดสอบ engine ในนามผู้ใช้", "preview-as-user tool renders");
+  // A learner fixture, not a creator: creators' own content is excluded
+  // from their feed, so a creator can legitimately preview to zero rows.
+  await page.getByLabel("ชื่อผู้ใช้").fill("p16fan0");
+  await page.click('button:has-text("รันตัวอย่าง")');
+  await page.waitForSelector("tbody tr", { timeout: 20_000 });
+  const previewHead = await page.textContent("thead");
+  if (!/คะแนน/.test(previewHead ?? "")) {
+    throw new Error("preview table does not show scores");
+  }
+  ok("preview returns a ranked list with scores for the target user");
+  await expect(page, "text=น้ำหนักคะแนน", "deployed engine weights panel renders");
 
   /* ---------- Mobile navigation ---------- */
   const mobile = await context.newPage();

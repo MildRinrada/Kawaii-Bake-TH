@@ -8,7 +8,7 @@ from apps.common.api.serializers import StrictSerializer
 
 
 class NotificationSerializer(serializers.Serializer):
-    """One notification row — the snapshot, verbatim."""
+    """One notification row  the snapshot, verbatim."""
 
     id = serializers.IntegerField(read_only=True)
     event_type = serializers.CharField(read_only=True)
@@ -35,11 +35,11 @@ class NotificationListSerializer(serializers.Serializer):
 
 
 class NotificationPreferencesSerializer(StrictSerializer):
-    """The per-event preference map — GET response and PATCH request.
+    """The per-event preference map  GET response and PATCH request.
 
     One declared boolean per supported event type; ``StrictSerializer``
     rejects unknown event types (and any other stray key) loudly. All
-    fields optional on PATCH — absent means unchanged.
+    fields optional on PATCH  absent means unchanged.
     """
 
     review_received = serializers.BooleanField(required=False)
@@ -47,6 +47,7 @@ class NotificationPreferencesSerializer(StrictSerializer):
     achievement_earned = serializers.BooleanField(required=False)
     qa_answer_received = serializers.BooleanField(required=False)
     qa_answer_accepted = serializers.BooleanField(required=False)
+    announcement = serializers.BooleanField(required=False)
 
 
 class ReadAllResultSerializer(serializers.Serializer):

@@ -34,7 +34,7 @@ class MessageRole(models.TextChoices):
     ASSISTANT = "assistant", "Assistant"
 
 
-# The user-message cap. Assistant replies are uncapped — the provider decides.
+# The user-message cap. Assistant replies are uncapped - the provider decides.
 MESSAGE_MAX_LENGTH = 4000
 
 TITLE_MAX_LENGTH = 200

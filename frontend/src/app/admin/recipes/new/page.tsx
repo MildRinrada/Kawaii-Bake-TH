@@ -10,7 +10,7 @@ export default function AdminRecipeCreatePage() {
     <>
       <AdminPageHeader
         title="เพิ่มสูตรใหม่"
-        description="POST /recipes/ สร้างเป็นฉบับร่างเสมอ — เผยแพร่เป็นขั้นตอนแยกหลังตรวจความครบถ้วน"
+        description="POST /recipes/ สร้างเป็นฉบับร่างเสมอ  เผยแพร่เป็นขั้นตอนแยกหลังตรวจความครบถ้วน"
         actions={
           <Link
             href="/admin/recipes"

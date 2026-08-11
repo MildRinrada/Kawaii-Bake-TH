@@ -8,7 +8,7 @@ from django.apps import AppConfig
 class ProgressConfig(AppConfig):
     """Learner progress: lesson completion, course completion, activity.
 
-    Phase 6 extracted this domain from ``lessons`` — learner state is not
+    Phase 6 extracted this domain from ``lessons``  learner state is not
     lesson content, and the split keeps the dependency graph acyclic:
     ``progress → lessons → courses``, and neither content app knows learner
     state exists. Course completion is **derived** from lesson completion

@@ -92,7 +92,7 @@ def enforce_registration_rate_limit(*, client_ip: str) -> None:
 def enforce_username_check_rate_limit(*, client_ip: str) -> None:
     """Throttle live username-availability checks from a single address.
 
-    Usernames are public handles, so availability is not a secret — the limit
+    Usernames are public handles, so availability is not a secret  the limit
     exists to stop the endpoint being scripted into a bulk enumeration scan.
 
     Args:

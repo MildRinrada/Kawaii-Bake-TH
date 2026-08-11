@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The browser-side guard — a deterrent and a sensor, never a control.
+ * The browser-side guard  a deterrent and a sensor, never a control.
  *
  * ## Read this before changing it
  *
@@ -25,17 +25,17 @@
  *
  * ## Configuration
  *
- * The mode comes from **one** place — the backend's
+ * The mode comes from **one** place  the backend's
  * `SECURITY_CLIENT_GUARD_MODE` env var, served by
  * `GET /security/client-policy/`. Duplicating it into a `NEXT_PUBLIC_`
  * variable would create two switches that can disagree.
  *
- *   off     — nothing runs
- *   detect  — observe and report, never interfere (default)
- *   deter   — additionally intercept F12 / Ctrl+Shift+I / Ctrl+Shift+J /
+ *   off      nothing runs
+ *   detect   observe and report, never interfere (default)
+ *   deter    additionally intercept F12 / Ctrl+Shift+I / Ctrl+Shift+J /
  *             Ctrl+U / right-click
  *
- * Signed-in visitors are exempt from `deter` when the policy says so —
+ * Signed-in visitors are exempt from `deter` when the policy says so 
  * the requested "only logged-in users can open F12", stated the honest
  * way round: anonymous visitors meet the speed bump, signed-in ones do
  * not.
@@ -72,7 +72,7 @@ const PROBE_INTERVAL_MS = 2_000;
  * Generous on purpose: a docked devtools panel is hundreds of pixels
  * wide, while browser chrome, scrollbars and zoom account for tens. A
  * tighter threshold would flag ordinary visitors, and a false positive
- * here is worse than a miss — the miss costs one weak signal, the false
+ * here is worse than a miss  the miss costs one weak signal, the false
  * positive puts a real learner in a security log.
  */
 const SIZE_DELTA_PX = 220;

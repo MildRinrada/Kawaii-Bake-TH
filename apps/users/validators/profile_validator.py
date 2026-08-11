@@ -75,7 +75,7 @@ def validate_favorite_categories(values: Any) -> list[str]:
     **Existence** is no longer decided here (Phase 14): the profile service
     resolves the slugs against the live ``recipe_categories`` taxonomy, so
     a newly added category is selectable without a code change and a
-    removed one stops validating — a frozen enum can do neither.
+    removed one stops validating  a frozen enum can do neither.
 
     Args:
         values: The submitted category slugs.

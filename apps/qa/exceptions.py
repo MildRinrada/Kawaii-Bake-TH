@@ -16,7 +16,7 @@ class ThreadNotFoundError(DomainError):
 class ThreadTargetNotFoundError(DomainError):
     """Raised when the recipe/course being asked about is absent or hidden.
 
-    This app's own 404 (ADR 0008) — a callee never raises for its caller.
+    This app's own 404 (ADR 0008)  a callee never raises for its caller.
     """
 
     code = "not_found"
@@ -36,7 +36,7 @@ class ThreadNotActiveError(DomainError):
     """Raised when answering/accepting on a thread that is not active.
 
     Reached only by viewers who can *see* the thread (its author, staff),
-    so 409 — the state conflict family — not a lying 404.
+    so 409  the state conflict family  not a lying 404.
     """
 
     code = "thread_not_active"

@@ -2,7 +2,7 @@
 
 The aggregate pair (average, count) is a rebuildable cache pushed through the
 review repository choke point (ADR 0021); this command repairs it after any
-mutation path that bypassed the API — most likely a change made in the
+mutation path that bypassed the API  most likely a change made in the
 Django admin.
 """
 

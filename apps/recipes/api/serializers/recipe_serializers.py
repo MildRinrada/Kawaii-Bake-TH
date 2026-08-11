@@ -77,6 +77,7 @@ class RecipeListItemSerializer(ImageUrlMixin):
     visibility = serializers.CharField(read_only=True)
     published_at = serializers.DateTimeField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
     cover_image_url = serializers.SerializerMethodField()
     author = AuthorRefSerializer(read_only=True)
     categories = CategoryRefSerializer(many=True, read_only=True)

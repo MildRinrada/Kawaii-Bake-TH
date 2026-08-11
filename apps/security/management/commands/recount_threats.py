@@ -2,7 +2,7 @@
 
 The profile is a cached aggregate. This command is the proof that it is
 only ever a cache: run it and the numbers must not move. It exists for
-three moments — after re-tuning
+three moments  after re-tuning
 :data:`~apps.security.constants.SIGNAL_WEIGHTS`, after restoring a
 database, and whenever an operator suspects drift.
 

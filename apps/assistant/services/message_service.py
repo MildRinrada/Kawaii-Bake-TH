@@ -2,7 +2,7 @@
 
 The transaction shape is deliberate (ADR 0013): the user's message commits
 **before** the provider is called, and the assistant's reply commits after.
-A database transaction must never stay open across an external network call —
+A database transaction must never stay open across an external network call 
 a slow provider would hold row locks for its full timeout. The observable
 contract: if the provider fails, the user's message is kept, no assistant
 message appears, and the client may retry.
@@ -133,7 +133,7 @@ def _build_system_prompt(
 
     The prompt-injection boundary lives here. The template is server-owned
     data; the content context is appended inside an explicitly labelled
-    fence; and user messages are **never** concatenated into this string —
+    fence; and user messages are **never** concatenated into this string 
     they travel only as ``user`` turns, so stored content can never rewrite
     the system role.
 

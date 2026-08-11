@@ -10,7 +10,7 @@ class QuizzesConfig(AppConfig):
 
     The dependent side of the ``quizzes → questions`` boundary: a quiz
     *references* bank questions, never owns them. The only communication is
-    calls into the questions app's public selectors/services — including
+    calls into the questions app's public selectors/services  including
     ``freeze_questions()``, pushed at attempt start because this app is the
     one that knows *why* a question must freeze. See
     ``docs/adr/0010-question-bank-and-quiz-boundary.md``.

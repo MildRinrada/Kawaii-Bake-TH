@@ -13,6 +13,8 @@ export interface DropdownItem {
   key: string;
   label: ReactNode;
   onSelect: () => void;
+  /** Draw a dividing rule above this item - starts a new group. */
+  separator?: boolean;
 }
 
 /** Minimal structural menu: outside-click + Escape close, ARIA wiring. */
@@ -66,18 +68,22 @@ export function Dropdown({
           )}
         >
           {items.map((item) => (
-            <button
-              key={item.key}
-              role="menuitem"
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                item.onSelect();
-              }}
-              className="block w-full px-3 py-2 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
-            >
-              {item.label}
-            </button>
+            <div key={item.key}>
+              {item.separator ? (
+                <hr role="separator" className="my-1 border-edge" />
+              ) : null}
+              <button
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  item.onSelect();
+                }}
+                className="block w-full px-3 py-2 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
+              >
+                {item.label}
+              </button>
+            </div>
           ))}
         </div>
       ) : null}

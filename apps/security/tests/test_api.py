@@ -443,7 +443,7 @@ class AdminActionTests(TestCase):
 
     def test_a_profile_cannot_be_reset_to_open_through_the_api(self) -> None:
         # Reopening is an automatic consequence of fresh activity, never
-        # an operator action — otherwise the queue could be silenced.
+        # an operator action  otherwise the queue could be silenced.
         response = self.client.post(
             f"{PROFILES}{self.profile.pk}/review/",
             {"state": ReviewState.OPEN.value},

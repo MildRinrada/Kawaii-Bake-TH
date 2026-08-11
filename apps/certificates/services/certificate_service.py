@@ -13,6 +13,7 @@ import uuid
 from django.db import IntegrityError
 
 from apps.certificates.exceptions import (
+    CertificateAlreadyRevokedError,
     CertificateCourseNotFoundError,
     CertificateEnrollmentRequiredError,
     CertificateNotFoundError,
@@ -30,15 +31,15 @@ logger = logging.getLogger("kawaiibake.certificates")
 
 
 def _printable_name(student) -> str:  # noqa: ANN001 - apps.users.models.User
-    """The name a certificate should print: the real name, not the handle.
+    """The name a certificate should print: the legal name, not the handle.
 
-    Falls back to the username only when no display name was ever set —
-    the same rule ``AuthorRefSerializer`` uses everywhere else a name is
-    shown. This is a one-time snapshot taken at issuance
-    (``Certificate.student_name`` never changes afterward, see the model
-    docstring); a learner renaming their profile later does not retitle
-    certificates already printed, the same way a paper certificate would
-    not rewrite itself.
+    Registration collects ``first_name``/``last_name`` precisely for this
+    line. The chain of fallbacks exists only for accounts that predate
+    the requirement: legal name → profile display name → username. This
+    is a one-time snapshot taken at issuance (``Certificate.student_name``
+    never changes afterward, see the model docstring); a learner renaming
+    themselves later does not retitle certificates already printed, the
+    same way a paper certificate would not rewrite itself.
 
     Args:
         student: The issuing user, or ``None``.
@@ -48,6 +49,9 @@ def _printable_name(student) -> str:  # noqa: ANN001 - apps.users.models.User
     """
     if student is None:
         return ""
+    legal = f"{student.first_name} {student.last_name}".strip()
+    if legal:
+        return legal
     profile = getattr(student, "profile", None)
     return (profile.display_name if profile else "") or student.username
 
@@ -59,8 +63,8 @@ def issue_if_completed(
 
     The gate order mirrors the lesson content gate: existence (404) →
     membership (403) → state (409). Completion is **trusted** from
-    progress — ``CourseProgress.completed_at``, stamped once by
-    ``recalculate_course_progress`` — never recomputed here.
+    progress  ``CourseProgress.completed_at``, stamped once by
+    ``recalculate_course_progress``  never recomputed here.
 
     Args:
         user_id: Primary key of the caller.
@@ -109,7 +113,7 @@ def issue_if_completed(
             completed_at=completed_at,
         )
     except IntegrityError:
-        # Lost the (user, course) race — the winner's certificate is ours.
+        # Lost the (user, course) race  the winner's certificate is ours.
         certificate = certificate_selector.get_active_certificate(
             user_id=user_id, course_id=course.id
         )
@@ -130,11 +134,11 @@ def issue_if_completed(
 
 
 def revoke(*, certificate_id: int, user_id: int) -> Certificate:
-    """Revoke a certificate — stamp-once, everything else untouched.
+    """Revoke a certificate  stamp-once, everything else untouched.
 
-    No HTTP endpoint exposes this in Phase 8; it exists for operators
-    (tests, admin actions, future moderation). Addressed through the owner
-    scope so a future endpoint inherits the 404-not-yours rule.
+    The owner-scoped variant: addressed through the owner so callers
+    inherit the 404-not-yours rule. Staff revocation goes through
+    :func:`revoke_as_staff`, which additionally records who and why.
 
     Args:
         certificate_id: Primary key of the certificate.
@@ -161,10 +165,50 @@ def revoke(*, certificate_id: int, user_id: int) -> Certificate:
     return certificate
 
 
+def revoke_as_staff(
+    *, certificate_id: int, actor_id: int, reason: str
+) -> Certificate:
+    """Revoke any certificate on behalf of a staff member.
+
+    Revocation rewrites the evidentiary value of someone else's
+    credential, so it must be attributable: the actor and the reason are
+    frozen with the stamp. A second revocation is a conflict, not a
+    no-op - silently confirming it would let two operators each believe
+    their reason is the recorded one.
+
+    Args:
+        certificate_id: Primary key of the certificate.
+        actor_id: The staff member performing the revocation.
+        reason: Why the credential is being withdrawn.
+
+    Returns:
+        The revoked certificate.
+
+    Raises:
+        CertificateNotFoundError: If the certificate does not exist.
+        CertificateAlreadyRevokedError: If it was already revoked.
+    """
+    certificate = certificate_selector.get_by_id(certificate_id=certificate_id)
+    if certificate is None:
+        raise CertificateNotFoundError
+    performed = certificate_repository.revoke(
+        certificate=certificate, actor_id=actor_id, reason=reason.strip()
+    )
+    if not performed:
+        raise CertificateAlreadyRevokedError
+    certificate.refresh_from_db()
+    logger.info(
+        "certificate_revoked_by_staff number=%s actor=%s",
+        certificate.certificate_number,
+        actor_id,
+    )
+    return certificate
+
+
 def verify_token(*, token: uuid.UUID) -> Certificate:
     """Resolve a public verification token.
 
-    Returns revoked certificates too — "revoked" is a verification answer,
+    Returns revoked certificates too  "revoked" is a verification answer,
     not a missing record. Unknown tokens are 404.
 
     Args:

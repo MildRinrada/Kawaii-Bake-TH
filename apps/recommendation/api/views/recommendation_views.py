@@ -28,7 +28,7 @@ class _RecommendationsView(PaginatedServiceAPIView):
 
     Optional auth, like the content listings themselves: an authenticated
     viewer gets a personalized ranking, an anonymous one the deterministic
-    cold-start ranking — same pipeline, same response shape. The service
+    cold-start ranking  same pipeline, same response shape. The service
     ranks the bounded candidate pool; pagination slices the ranked list;
     only the page's cards are then batch-fetched through the content app's
     own selector and serializer (the favorites stitching pattern).
@@ -48,7 +48,7 @@ class _RecommendationsView(PaginatedServiceAPIView):
 
 
 class RecipeRecommendationsView(_RecommendationsView):
-    """GET /recommendations/recipes/ — the ranked recipe feed."""
+    """GET /recommendations/recipes/  the ranked recipe feed."""
 
     @extend_schema(
         parameters=[RecommendationListQuerySerializer],
@@ -83,7 +83,7 @@ class RecipeRecommendationsView(_RecommendationsView):
 
 
 class CourseRecommendationsView(_RecommendationsView):
-    """GET /recommendations/courses/ — the ranked course feed."""
+    """GET /recommendations/courses/  the ranked course feed."""
 
     @extend_schema(
         parameters=[RecommendationListQuerySerializer],

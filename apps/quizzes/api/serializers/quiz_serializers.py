@@ -1,7 +1,7 @@
 """Read serializers for quizzes.
 
 The taker question/choice serializers render **DTOs** from the questions
-app's public selector — objects that structurally have no ``is_correct``
+app's public selector  objects that structurally have no ``is_correct``
 field. There is no owner variant of the quiz payload: correctness is only
 ever readable through the owner's own question-bank endpoints.
 """

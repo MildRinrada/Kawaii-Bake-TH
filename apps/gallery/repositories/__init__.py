@@ -1,1 +1,1 @@
-"""Gallery repositories — write orchestration for posts and their files."""
+"""Gallery repositories  write orchestration for posts and their files."""

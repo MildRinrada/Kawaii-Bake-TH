@@ -86,7 +86,7 @@ def ledger_counts(*, user_id: int) -> dict[str, int]:
 def leaderboard_queryset() -> QuerySet[UserLevel]:
     """The leaderboard: level rows by total XP, holders preloaded.
 
-    ``select_related`` keeps the page at one query regardless of size —
+    ``select_related`` keeps the page at one query regardless of size 
     the serializer reads only the public handle off the joined row.
 
     Returns:

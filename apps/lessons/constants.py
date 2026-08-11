@@ -8,8 +8,8 @@ from django.db import models
 class LessonStatus(models.TextChoices):
     """Editorial state of a lesson.
 
-    Two states, not three: a lesson has no audience of its own — the course
-    carries visibility — so "archived" would duplicate "draft" here.
+    Two states, not three: a lesson has no audience of its own  the course
+    carries visibility  so "archived" would duplicate "draft" here.
     """
 
     DRAFT = "draft", "Draft"
@@ -19,7 +19,7 @@ class LessonStatus(models.TextChoices):
 class VideoProvider(models.TextChoices):
     """Where an embedded lesson video is hosted.
 
-    External embeds only — no video infrastructure exists yet. The provider
+    External embeds only  no video infrastructure exists yet. The provider
     tells the Next.js frontend which player to render.
     """
 

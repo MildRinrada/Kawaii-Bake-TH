@@ -21,7 +21,7 @@ class Quiz(TimeStampedModel):
     """A published set of references into the question bank.
 
     A quiz owns its *composition* (which questions, in what order, worth how
-    many points — the ``QuizQuestion`` rows) but never the questions
+    many points  the ``QuizQuestion`` rows) but never the questions
     themselves. ``status`` and ``visibility`` are orthogonal and
     ``published_at`` is separate from ``status``, exactly as on Recipe and
     Course. Unlike Course there is no cross-app counter: the publish gate

@@ -1,1 +1,1 @@
-"""Notifications services — business logic, transport-agnostic."""
+"""Notifications services - business logic, transport-agnostic."""

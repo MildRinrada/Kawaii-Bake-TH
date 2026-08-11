@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Edit Profile — a dedicated edit state over the profile's own endpoint,
+ * Edit Profile  a dedicated edit state over the profile's own endpoint,
  * not a second settings page.
  *
  * Every field here exists on `ProfileUpdateSerializer`; username is

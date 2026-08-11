@@ -4,7 +4,7 @@
  * Minimal form submission state, mapped to the backend error contract.
  *
  * Deliberately not a form library: fields stay uncontrolled or in plain
- * component state; this hook owns only what every form repeats —
+ * component state; this hook owns only what every form repeats 
  * submitting flag, a form-level error message, and per-field errors
  * parsed from `ApiError.details`.
  */

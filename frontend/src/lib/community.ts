@@ -16,7 +16,7 @@ export const MAX_IMAGES_PER_POST = 10;
 /** `GALLERY_IMAGE_MAX_SIZE_BYTES` in the gallery app. */
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-/** `ALLOWED_GALLERY_IMAGE_EXTENSIONS` — SVG is excluded project-wide. */
+/** `ALLOWED_GALLERY_IMAGE_EXTENSIONS`  SVG is excluded project-wide. */
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -31,10 +31,10 @@ export const ALLOWED_IMAGE_LABEL = "JPG · PNG · WebP (ไม่เกิน 5 
  */
 export function describeImageProblem(file: File): string | null {
   if (/\.(heic|heif)$/i.test(file.name)) {
-    return "ไฟล์ .HEIC/.HEIF จาก iPhone ยังอัปโหลดไม่ได้ — แปลงเป็น JPG หรือ PNG ก่อนนะ";
+    return "ไฟล์ .HEIC/.HEIF จาก iPhone ยังอัปโหลดไม่ได้  แปลงเป็น JPG หรือ PNG ก่อนนะ";
   }
   if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
-    return `รองรับเฉพาะ ${ALLOWED_IMAGE_LABEL} — ไฟล์นี้เป็น ${file.type || "ชนิดที่ไม่รู้จัก"}`;
+    return `รองรับเฉพาะ ${ALLOWED_IMAGE_LABEL}  ไฟล์นี้เป็น ${file.type || "ชนิดที่ไม่รู้จัก"}`;
   }
   if (file.size > MAX_IMAGE_BYTES) {
     return `รูปใหญ่เกิน 5 MB (ไฟล์นี้ ${(file.size / 1024 / 1024).toFixed(1)} MB)`;

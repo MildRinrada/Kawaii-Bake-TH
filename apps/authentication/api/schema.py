@@ -16,7 +16,7 @@ class CookieSessionAuthScheme(OpenApiAuthenticationExtension):
     """Document cookie-session auth in the generated schema.
 
     Without this, drf-spectacular cannot resolve the custom authentication
-    class and silently omits security requirements — which would tell the
+    class and silently omits security requirements  which would tell the
     Next.js client that protected endpoints are public.
     """
 

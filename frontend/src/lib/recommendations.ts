@@ -1,6 +1,6 @@
 /**
  * Thai labels for the backend's deterministic recommendation reason
- * codes (apps/recommendation/constants.py — fixed vocabulary).
+ * codes (apps/recommendation/constants.py  fixed vocabulary).
  */
 export const REASON_LABELS: Record<string, string> = {
   matches_your_favorite_categories: "ตรงหมวดที่คุณชอบ",

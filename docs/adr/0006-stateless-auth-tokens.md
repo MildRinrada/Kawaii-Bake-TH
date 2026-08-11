@@ -1,4 +1,4 @@
-# 0006 — Stateless Tokens for Verification and Password Reset
+# 0006  Stateless Tokens for Verification and Password Reset
 
 - **Status:** Accepted
 - **Date:** 2026-08-07
@@ -25,7 +25,7 @@ Three details are load-bearing:
    replayed as a verification token.
 2. **The verification hash excludes the password and `last_login`.** Django's
    default includes both, which would invalidate a verification link as soon as
-   the user signs in — an extremely common sequence (register → sign in → open
+   the user signs in  an extremely common sequence (register → sign in → open
    email). Hashing `is_email_verified` instead keeps the token single-use: it
    stops validating the instant verification succeeds.
 3. **`check_token` is reimplemented for verification.** The stock method reads
@@ -45,6 +45,6 @@ used to test whether an address is registered.
 - **`LoginHistory` is genuinely lost.** Sign-ins go to the `kawaiibake.security`
   logger with user id and IP, but there is no queryable audit trail and no
   "active devices" screen. If either becomes a requirement, that table must be
-  added — this is a known gap, not an oversight.
+  added  this is a known gap, not an oversight.
 - Token lifetimes are governed by `PASSWORD_RESET_TIMEOUT` (1 hour) and
   `EMAIL_VERIFICATION_TIMEOUT` (7 days).

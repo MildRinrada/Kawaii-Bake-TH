@@ -34,7 +34,7 @@ const SIZES: Record<Size, string> = {
 };
 
 /**
- * Pill button — the KawaiiBake control shape. Warm, tactile, and calm:
+ * Pill button  the KawaiiBake control shape. Warm, tactile, and calm:
  * one raspberry primary, soft-outline secondary, quiet ghost.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

@@ -10,7 +10,7 @@ Sketch of the eventual implementation::
         def issue(self, *, request, user, remember):
             access, refresh = mint_tokens(user)
             return IssuedCredential(body={"access": access})
-            # `refresh` is attached by apply() as an httpOnly cookie —
+            # `refresh` is attached by apply() as an httpOnly cookie 
             # never returned in the body, and never stored in localStorage.
 
         def apply(self, *, response, credential):
@@ -21,7 +21,7 @@ Two decisions to make at that point, both already routed:
 
 * ``/api/v1/auth/token/refresh/`` is reserved in the URL conf.
 * Real logout requires a revocation list. Without one, an access token stays
-  valid until it expires, so ``revoke()`` would be a client-side lie — which is
+  valid until it expires, so ``revoke()`` would be a client-side lie  which is
   precisely why Phase 1 uses sessions instead.
 """
 

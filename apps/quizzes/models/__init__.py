@@ -1,4 +1,4 @@
-"""Quizzes models — public API."""
+"""Quizzes models  public API."""
 
 from __future__ import annotations
 

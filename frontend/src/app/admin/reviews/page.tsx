@@ -3,34 +3,30 @@
 /**
  * Community moderation.
  *
- * Three surfaces, three real staff capabilities:
+ * Two surfaces, two real staff capabilities:
  *
- * - **Reviews** — `PATCH /reviews/{id}/ {status}` (`active|hidden`, staff
- *   only) and `DELETE /reviews/{id}/` (soft delete). Reviews have no flat
- *   listing in this API; they are always read through the content they
- *   are attached to, which is why this tab starts with a content picker.
- * - **Q&A threads** — `PATCH /qa/threads/{id}/ {status}` and DELETE.
- * - **Gallery posts** — `PATCH /gallery/{id}/ {status}` and DELETE, which
- *   staff may perform on anyone's post.
+ * - **Reviews**  `GET /admin/reviews/` (staff-only) lists every review
+ *   across recipes and courses in one flat, filterable table, and
+ *   `PATCH /reviews/{id}/ {status}` (`active|hidden`) plus
+ *   `DELETE /reviews/{id}/` (soft delete) moderate them. There is
+ *   deliberately no way to edit review text: staff moderate visibility,
+ *   never content.
+ * - **Q&A threads**  `PATCH /qa/threads/{id}/ {status}` and DELETE.
  *
- * No moderation queue, report inbox or audit log is shown: the backend
- * has none.
+ * Gallery posts moved to their own page (`/admin/posts`), which also
+ * hosts the staff composer. No moderation queue, report inbox or audit
+ * log is shown: the backend has none.
  */
 
+import Link from "next/link";
 import { useState } from "react";
 
-import { api, type Paginated } from "@/lib/api/client";
-import type {
-  CourseListItem,
-  GalleryPost,
-  QaThread,
-  RecipeListItem,
-  Review,
-} from "@/lib/api/models";
-import { useApiQuery } from "@/lib/hooks/use-api-query";
+import { api } from "@/lib/api/client";
+import type { AdminReview, QaThread } from "@/lib/api/models";
 import { usePagedList, useDebounced } from "@/lib/admin/use-paged-list";
 import { relativeThai } from "@/lib/datetime";
 import { useToast } from "@/components/ui/toast";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Rating } from "@/components/ui/rating";
@@ -41,6 +37,7 @@ import {
   AdminPanel,
   DataTable,
   DataTableToolbar,
+  FilterBar,
   FilterSelect,
   Pagination,
   SearchInput,
@@ -50,61 +47,69 @@ import {
 import { describeAdminError } from "@/components/admin/lifecycle";
 
 /* ------------------------------------------------------------------ */
-/* Reviews (reached through a piece of content)                        */
+/* Reviews (flat cross-content list)                                   */
 /* ------------------------------------------------------------------ */
+
+const RATINGS = [
+  { value: "", label: "ทั้งหมด" },
+  { value: "5", label: "5 ดาว" },
+  { value: "4", label: "4 ดาว" },
+  { value: "3", label: "3 ดาว" },
+  { value: "2", label: "2 ดาว" },
+  { value: "1", label: "1 ดาว" },
+];
+
+// Without a `status` param the backend returns active + hidden and never
+// deleted rows; "ถูกลบ" opts into the soft-deleted slice explicitly.
+const STATUSES = [
+  { value: "", label: "ทั้งหมด" },
+  { value: "active", label: "แสดงอยู่" },
+  { value: "hidden", label: "ซ่อนอยู่" },
+  { value: "deleted", label: "ถูกลบ" },
+];
+
+const TARGETS = [
+  { value: "", label: "ทั้งหมด" },
+  { value: "recipe", label: "สูตร" },
+  { value: "course", label: "คอร์ส" },
+];
+
+/** Public URL of the reviewed content, or null when the slug is missing. */
+function reviewedUrl(review: AdminReview): string | null {
+  if (review.target === "recipe" && review.recipe_slug) {
+    return `/recipes/${encodeURIComponent(review.recipe_slug)}`;
+  }
+  if (review.target === "course" && review.course_slug) {
+    return `/courses/${encodeURIComponent(review.course_slug)}`;
+  }
+  return null;
+}
 
 function ReviewModeration() {
   const { toast } = useToast();
   const confirm = useConfirm();
-  const [target, setTarget] = useState<"recipes" | "courses">("recipes");
-  const [slug, setSlug] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounced(searchInput);
+  const [rating, setRating] = useState("");
+  const [status, setStatus] = useState("");
+  const [target, setTarget] = useState("");
   const [busy, setBusy] = useState<number | null>(null);
 
-  const recipes = useApiQuery(
-    (signal) =>
-      api.get<Paginated<RecipeListItem>>("/recipes/", {
-        query: { scope: "all", ordering: "title", page_size: 100 },
-        signal,
-      }),
-    [],
-  );
-  const courses = useApiQuery(
-    (signal) =>
-      api.get<Paginated<CourseListItem>>("/courses/", {
-        query: { scope: "all", ordering: "title", page_size: 100 },
-        signal,
-      }),
-    [],
-  );
+  // Empty filters are omitted entirely: the endpoint rejects unknown or
+  // blank query keys with a 400 instead of guessing.
+  const list = usePagedList<AdminReview>("/admin/reviews/", {
+    search: search || undefined,
+    rating: rating || undefined,
+    status: status || undefined,
+    target: target || undefined,
+  });
 
-  const options =
-    target === "recipes"
-      ? (recipes.data?.results ?? []).map((item) => ({
-          value: item.slug,
-          label: item.title,
-        }))
-      : (courses.data?.results ?? []).map((item) => ({
-          value: item.slug,
-          label: item.title,
-        }));
-
-  const reviews = useApiQuery(
-    (signal) =>
-      slug
-        ? api.get<Paginated<Review>>(`/${target}/${slug}/reviews/`, {
-            query: { page_size: 50 },
-            signal,
-          })
-        : Promise.resolve(null),
-    [target, slug],
-  );
-
-  async function setStatus(review: Review, status: "active" | "hidden") {
+  async function setReviewStatus(review: AdminReview, next: "active" | "hidden") {
     setBusy(review.id);
     try {
-      await api.patch(`/reviews/${review.id}/`, { body: { status } });
-      toast(status === "hidden" ? "ซ่อนรีวิวแล้ว" : "แสดงรีวิวอีกครั้งแล้ว", "success");
-      reviews.refetch();
+      await api.patch(`/reviews/${review.id}/`, { body: { status: next } });
+      toast(next === "hidden" ? "ซ่อนรีวิวแล้ว" : "แสดงรีวิวอีกครั้งแล้ว", "success");
+      list.refetch();
     } catch (error) {
       toast(describeAdminError(error), "danger");
     } finally {
@@ -112,102 +117,159 @@ function ReviewModeration() {
     }
   }
 
-  async function remove(review: Review) {
+  async function remove(review: AdminReview) {
     try {
       await api.delete(`/reviews/${review.id}/`);
       toast("ลบรีวิวแล้ว", "success");
-      reviews.refetch();
+      list.refetch();
     } catch (error) {
       toast(describeAdminError(error), "danger");
     }
   }
 
+  if (list.error) return <ErrorState error={list.error} onRetry={list.refetch} />;
+
   return (
     <>
       <AdminPanel>
-        <DataTableToolbar>
-          <FilterSelect
-            label="ประเภทเนื้อหา"
-            value={target}
-            options={[
-              { value: "recipes", label: "สูตรอาหาร" },
-              { value: "courses", label: "คอร์สเรียน" },
-            ]}
-            onChange={(value) => {
-              setTarget(value as "recipes" | "courses");
-              setSlug("");
-            }}
+        <DataTableToolbar
+          actions={
+            <span className="self-center text-xs text-fg-muted">
+              ทั้งหมด{" "}
+              <span className="font-mono tabular-nums">{list.count}</span> รีวิว
+            </span>
+          }
+        >
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="ค้นหาความเห็นหรือ username ผู้เขียน…"
+            label="ค้นหารีวิว"
           />
-          <FilterSelect
-            label="เลือกรายการ"
-            value={slug}
-            options={[{ value: "", label: "— เลือก —" }, ...options]}
-            onChange={setSlug}
-          />
+          <FilterBar>
+            <FilterSelect
+              label="คะแนน"
+              value={rating}
+              options={RATINGS}
+              onChange={setRating}
+            />
+            <FilterSelect
+              label="สถานะ"
+              value={status}
+              options={STATUSES}
+              onChange={setStatus}
+            />
+            <FilterSelect
+              label="ประเภท"
+              value={target}
+              options={TARGETS}
+              onChange={setTarget}
+            />
+          </FilterBar>
         </DataTableToolbar>
 
-        {!slug ? (
-          <AdminEmpty
-            title="เลือกสูตรหรือคอร์สก่อน"
-            description="API ไม่มีรายการรีวิวรวมทั้งแพลตฟอร์ม — รีวิวอ่านผ่านเนื้อหาที่ถูกรีวิวเสมอ"
-          />
-        ) : reviews.error ? (
-          <div className="p-4">
-            <ErrorState error={reviews.error} onRetry={reviews.refetch} />
-          </div>
-        ) : (
-          <DataTable
-            caption="รีวิวของเนื้อหาที่เลือก"
-            loading={reviews.loading}
-            rows={reviews.data?.results ?? []}
-            rowKey={(row) => row.id}
-            empty={<AdminEmpty title="ยังไม่มีรีวิวสำหรับรายการนี้" />}
-            columns={[
-              {
-                key: "user",
-                header: "ผู้เขียน",
-                render: (row) => (
-                  <span className="text-fg-muted">{row.user.username}</span>
-                ),
+        <DataTable
+          caption="รีวิวทั้งหมดในระบบ"
+          loading={list.loading}
+          rows={list.rows}
+          rowKey={(row) => row.id}
+          empty={
+            <AdminEmpty
+              title="ไม่พบรีวิวที่ตรงกับเงื่อนไข"
+              description="ลองล้างคำค้นหรือเปลี่ยนตัวกรอง"
+            />
+          }
+          columns={[
+            {
+              key: "user",
+              header: "ผู้เขียน",
+              render: (row) => (
+                <div className="min-w-0">
+                  <p className="line-clamp-1 font-medium">
+                    {row.user.display_name || row.user.username}
+                  </p>
+                  <p className="line-clamp-1 text-xs text-fg-subtle">
+                    @{row.user.username}
+                  </p>
+                </div>
+              ),
+            },
+            {
+              key: "rating",
+              header: "คะแนน",
+              render: (row) => <Rating average={row.rating} />,
+            },
+            {
+              key: "comment",
+              header: "ความเห็น",
+              render: (row) => (
+                <span className="line-clamp-2">{row.comment || ""}</span>
+              ),
+            },
+            {
+              key: "reviewed",
+              header: "รีวิวของ",
+              render: (row) => {
+                const title =
+                  row.target === "recipe" ? row.recipe_title : row.course_title;
+                const url = reviewedUrl(row);
+                return (
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <Badge tone={row.target === "recipe" ? "peach" : "lavender"}>
+                      {row.target === "recipe" ? "สูตร" : "คอร์ส"}
+                    </Badge>
+                    {url ? (
+                      <Link
+                        href={url}
+                        target="_blank"
+                        className="line-clamp-1 text-sm text-fg underline-offset-2 hover:underline"
+                      >
+                        {title ?? url}
+                      </Link>
+                    ) : (
+                      <span className="line-clamp-1 text-sm text-fg-muted">
+                        {title ?? ""}
+                      </span>
+                    )}
+                  </div>
+                );
               },
-              {
-                key: "rating",
-                header: "คะแนน",
-                render: (row) => <Rating average={row.rating} />,
-              },
-              {
-                key: "comment",
-                header: "ความเห็น",
-                render: (row) => (
-                  <span className="line-clamp-2">{row.comment || "—"}</span>
-                ),
-              },
-              {
-                key: "status",
-                header: "สถานะ",
-                render: (row) => <StatusBadge status={row.status} />,
-              },
-              {
-                key: "created",
-                header: "เมื่อ",
-                render: (row) => (
-                  <span className="whitespace-nowrap text-xs text-fg-muted">
-                    {relativeThai(row.created_at)}
-                  </span>
-                ),
-              },
-              {
-                key: "actions",
-                header: "จัดการ",
-                className: "w-px",
-                render: (row) => (
+            },
+            {
+              key: "status",
+              header: "สถานะ",
+              render: (row) => <StatusBadge status={row.status} />,
+            },
+            {
+              key: "created",
+              header: "เมื่อ",
+              render: (row) => (
+                <span className="whitespace-nowrap text-xs text-fg-muted">
+                  {relativeThai(row.created_at)}
+                </span>
+              ),
+            },
+            {
+              key: "actions",
+              header: "จัดการ",
+              className: "w-px",
+              // Staff moderate visibility, never content: there is no edit
+              // button by design. A soft-deleted review is a tombstone
+              // it stays readable for the record but offers no actions.
+              render: (row) =>
+                row.status === "deleted" ? (
+                  <span className="text-xs text-fg-subtle">ลบแล้ว</span>
+                ) : (
                   <div className="flex gap-1">
                     <Button
                       size="sm"
                       variant="secondary"
                       disabled={busy === row.id}
                       onClick={() =>
-                        setStatus(row, row.status === "hidden" ? "active" : "hidden")
+                        setReviewStatus(
+                          row,
+                          row.status === "hidden" ? "active" : "hidden",
+                        )
                       }
                     >
                       {row.status === "hidden" ? "แสดงอีกครั้ง" : "ซ่อน"}
@@ -229,10 +291,16 @@ function ReviewModeration() {
                     </Button>
                   </div>
                 ),
-              },
-            ]}
-          />
-        )}
+            },
+          ]}
+        />
+
+        <Pagination
+          page={list.page}
+          pageSize={list.pageSize}
+          count={list.count}
+          onPage={list.setPage}
+        />
       </AdminPanel>
       {confirm.dialog}
     </>
@@ -327,7 +395,7 @@ function ThreadModeration() {
               header: "เกี่ยวกับ",
               render: (row) => (
                 <span className="text-xs text-fg-muted">
-                  {row.recipe?.title ?? row.course?.title ?? "—"}
+                  {row.recipe?.title ?? row.course?.title ?? ""}
                 </span>
               ),
             },
@@ -395,191 +463,18 @@ function ThreadModeration() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Gallery posts                                                       */
-/* ------------------------------------------------------------------ */
-
-function GalleryModeration() {
-  const { toast } = useToast();
-  const confirm = useConfirm();
-  const [author, setAuthor] = useState("");
-  const authorFilter = useDebounced(author);
-  const [busy, setBusy] = useState<number | null>(null);
-
-  const list = usePagedList<GalleryPost>("/gallery/", {
-    author: authorFilter || undefined,
-  });
-
-  async function setStatus(post: GalleryPost, status: "published" | "unpublished") {
-    setBusy(post.id);
-    try {
-      await api.patch(`/gallery/${post.id}/`, { body: { status } });
-      toast("อัปเดตสถานะโพสต์แล้ว", "success");
-      list.refetch();
-    } catch (error) {
-      toast(describeAdminError(error), "danger");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function remove(post: GalleryPost) {
-    try {
-      await api.delete(`/gallery/${post.id}/`);
-      toast("ลบโพสต์แล้ว", "success");
-      list.refetch();
-    } catch (error) {
-      toast(describeAdminError(error), "danger");
-    }
-  }
-
-  if (list.error) return <ErrorState error={list.error} onRetry={list.refetch} />;
-
-  return (
-    <>
-      <AdminPanel>
-        <DataTableToolbar
-          actions={
-            <span className="self-center text-xs text-fg-muted">
-              ทั้งหมด{" "}
-              <span className="font-mono tabular-nums">{list.count}</span> โพสต์
-            </span>
-          }
-        >
-          {/* The gallery list filters by author username, not free text. */}
-          <SearchInput
-            value={author}
-            onChange={setAuthor}
-            placeholder="กรองด้วย username ผู้โพสต์…"
-            label="กรองตามผู้โพสต์"
-          />
-        </DataTableToolbar>
-
-        <DataTable
-          caption="โพสต์ในแกลเลอรี"
-          loading={list.loading}
-          rows={list.rows}
-          rowKey={(row) => row.id}
-          empty={<AdminEmpty title="ไม่พบโพสต์" />}
-          columns={[
-            {
-              key: "image",
-              header: "",
-              className: "w-px",
-              render: (row) =>
-                row.images[0] ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail from the API origin
-                  <img
-                    src={row.images[0].url}
-                    alt=""
-                    className="size-10 rounded border border-edge object-cover"
-                  />
-                ) : (
-                  <span className="text-xs text-fg-subtle">—</span>
-                ),
-            },
-            {
-              key: "caption",
-              header: "คำบรรยาย",
-              render: (row) => (
-                <span className="line-clamp-2">{row.caption || "—"}</span>
-              ),
-            },
-            {
-              key: "author",
-              header: "ผู้โพสต์",
-              render: (row) => (
-                <span className="text-fg-muted">{row.author_handle}</span>
-              ),
-            },
-            {
-              key: "target",
-              header: "เกี่ยวกับ",
-              render: (row) => (
-                <span className="text-xs text-fg-muted">
-                  {row.recipe?.title ?? row.course?.title ?? "—"}
-                </span>
-              ),
-            },
-            {
-              key: "status",
-              header: "สถานะ",
-              render: (row) => <StatusBadge status={row.status} />,
-            },
-            {
-              key: "created",
-              header: "เมื่อ",
-              render: (row) => (
-                <span className="whitespace-nowrap text-xs text-fg-muted">
-                  {relativeThai(row.created_at)}
-                </span>
-              ),
-            },
-            {
-              key: "actions",
-              header: "จัดการ",
-              className: "w-px",
-              render: (row) => (
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={busy === row.id}
-                    onClick={() =>
-                      setStatus(
-                        row,
-                        row.status === "published" ? "unpublished" : "published",
-                      )
-                    }
-                  >
-                    {row.status === "published" ? "ซ่อน" : "แสดง"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() =>
-                      confirm.ask({
-                        title: "ลบโพสต์นี้?",
-                        body: "โพสต์และรูปภาพทั้งหมดจะถูกลบออกจากแกลเลอรี",
-                        confirmLabel: "ลบโพสต์",
-                        danger: true,
-                        action: () => remove(row),
-                      })
-                    }
-                  >
-                    ลบ
-                  </Button>
-                </div>
-              ),
-            },
-          ]}
-        />
-
-        <Pagination
-          page={list.page}
-          pageSize={list.pageSize}
-          count={list.count}
-          onPage={list.setPage}
-        />
-      </AdminPanel>
-      {confirm.dialog}
-    </>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 
 export default function AdminModerationPage() {
   return (
     <>
       <AdminPageHeader
         title="การกลั่นกรองชุมชน"
-        description="รีวิว กระทู้ถาม-ตอบ และแกลเลอรี — ทุกคำสั่งใช้สิทธิ์ staff ที่ระบบหลังบ้านตรวจสอบเองอีกชั้น"
+        description="รีวิวทุกสูตรและคอร์สในตารางเดียว พร้อมกระทู้ถาม-ตอบ  ทุกคำสั่งใช้สิทธิ์ staff ที่ระบบหลังบ้านตรวจสอบเองอีกชั้น"
       />
       <Tabs
         items={[
           { key: "reviews", label: "รีวิว", content: <ReviewModeration /> },
           { key: "qa", label: "ถาม-ตอบ", content: <ThreadModeration /> },
-          { key: "gallery", label: "แกลเลอรี", content: <GalleryModeration /> },
         ]}
       />
     </>

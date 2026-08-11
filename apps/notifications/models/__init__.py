@@ -1,4 +1,4 @@
-"""Notifications models — public API."""
+"""Notifications models - public API."""
 
 from __future__ import annotations
 

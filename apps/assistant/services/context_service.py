@@ -4,14 +4,14 @@ The assistant never duplicates visibility logic and never touches another
 app's models directly: recipes and courses are read through their public
 selectors (which apply the detail visibility rule), lessons through its
 public service (which enforces the two-layer 404/403 gate). What crosses
-into the ``ai`` package is a plain dict — never a Django model.
+into the ``ai`` package is a plain dict  never a Django model.
 
 Two modes share one loader:
 
 * **strict** (conversation creation): a hidden target raises this app's own
   404/403, so you cannot anchor a conversation to content you cannot read.
 * **lenient** (every send): a target that has since vanished or been made
-  private degrades to ``None`` — the conversation keeps working without
+  private degrades to ``None``  the conversation keeps working without
   content context, and the assistant stops seeing content the viewer no
   longer can.
 """
@@ -167,7 +167,7 @@ def _lesson_context(
     """Load a lesson's content through lessons' two-layer gate.
 
     Lesson bodies are enrollment-gated, so this goes through the lessons
-    app's public service — the one implementation of that gate — and
+    app's public service  the one implementation of that gate  and
     translates its domain errors into this app's own (ADR 0008).
     """
     if lesson_id is None:

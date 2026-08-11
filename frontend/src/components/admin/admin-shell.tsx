@@ -4,7 +4,7 @@
  * Admin chrome: sidebar, topbar, breadcrumbs and the staff gate.
  *
  * The gate reads `is_staff` from `/auth/me/` (ADR 0022) and is a
- * *rendering* decision only — the backend authorises every read and
+ * *rendering* decision only  the backend authorises every read and
  * write regardless. A non-staff caller who types an admin URL sees the
  * 403 screen here, and would see nothing privileged even if they didn't:
  * `scope=all` silently narrows to the public set for non-staff.
@@ -57,27 +57,29 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     title: "ชุมชน",
     items: [
-      { href: "/admin/reviews", label: "รีวิว", icon: "reviews" },
+      { href: "/admin/reviews", label: "รีวิวและถาม-ตอบ", icon: "reviews" },
+      { href: "/admin/posts", label: "โพสต์ชุมชน", icon: "posts" },
       { href: "/admin/questions", label: "คลังคำถาม", icon: "questions" },
     ],
   },
   {
     title: "การเรียนและรางวัล",
     items: [
-      { href: "/admin/progress", label: "ความคืบหน้า", icon: "progress", limited: true },
-      { href: "/admin/certificates", label: "ใบประกาศ", icon: "certificates", limited: true },
-      { href: "/admin/achievements", label: "ความสำเร็จ", icon: "achievements", limited: true },
-      { href: "/admin/favorites", label: "รายการโปรด", icon: "favorites", limited: true },
+      { href: "/admin/progress", label: "ความคืบหน้า", icon: "progress" },
+      { href: "/admin/certificates", label: "ใบประกาศ", icon: "certificates" },
+      { href: "/admin/achievements", label: "ความสำเร็จ", icon: "achievements" },
+      { href: "/admin/favorites", label: "รายการโปรด", icon: "favorites" },
     ],
   },
   {
     title: "ระบบ",
     items: [
-      { href: "/admin/users", label: "ผู้ใช้", icon: "users", limited: true },
-      { href: "/admin/notifications", label: "การแจ้งเตือน", icon: "notifications", limited: true },
+      { href: "/admin/users", label: "ผู้ใช้", icon: "users" },
+      { href: "/admin/notifications", label: "การแจ้งเตือน", icon: "notifications" },
       { href: "/admin/assistant", label: "ผู้ช่วย AI", icon: "assistant", limited: true },
-      { href: "/admin/recommendations", label: "การแนะนำ", icon: "recommendations", limited: true },
+      { href: "/admin/recommendations", label: "การแนะนำ", icon: "recommendations" },
       { href: "/admin/security", label: "ความปลอดภัย", icon: "security" },
+      { href: "/admin/legal", label: "ข้อตกลงและนโยบาย", icon: "legal" },
     ],
   },
 ];
@@ -116,6 +118,8 @@ function GateScreen({
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
+  // Desktop-only: icon-rail mode for operators who want more table width.
+  const [collapsed, setCollapsed] = useState(false);
   // The session mirror is the live signal: signing out elsewhere in the
   // app must drop this shell back to the gate, not leave it rendering
   // admin chrome against a stale identity read.
@@ -173,7 +177,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <GateScreen
         code="403"
         title="บัญชีนี้ไม่มีสิทธิ์ผู้ดูแลระบบ"
-        description="คุณเข้าสู่ระบบแล้ว แต่บัญชีนี้ไม่ได้เป็น staff — ระบบหลังบ้านจะปฏิเสธคำสั่งของผู้ดูแลทุกคำสั่งอยู่ดี"
+        description="คุณเข้าสู่ระบบแล้ว แต่บัญชีนี้ไม่ได้เป็น staff  ระบบหลังบ้านจะปฏิเสธคำสั่งของผู้ดูแลทุกคำสั่งอยู่ดี"
         action={
           <Link href="/">
             <Button size="sm" variant="secondary">
@@ -190,8 +194,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh bg-canvas">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-edge bg-surface lg:flex">
-        <SidebarContent pathname={pathname} />
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-edge bg-surface lg:flex",
+          collapsed ? "w-14" : "w-60",
+        )}
+      >
+        <SidebarContent
+          pathname={pathname}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((value) => !value)}
+        />
       </aside>
 
       {/* Mobile drawer */}
@@ -231,25 +244,39 @@ export function AdminShell({ children }: { children: ReactNode }) {
 function SidebarContent({
   pathname,
   onNavigate,
+  collapsed = false,
+  onToggleCollapse,
 }: {
   pathname: string;
   onNavigate?: () => void;
+  /** Icon-rail mode - labels hidden, `title` tooltips carry the names. */
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   return (
     <>
-      <div className="flex h-14 items-center gap-2 border-b border-edge px-4">
+      <div
+        className={cn(
+          "flex h-14 items-center gap-2 border-b border-edge",
+          collapsed ? "justify-center px-0" : "px-4",
+        )}
+      >
         <ArtIcon src={BRAND_MARK} className="size-7" />
-        <div>
-          <p className="text-sm font-semibold leading-tight text-fg">KawaiiBake</p>
-          <p className="text-xs leading-tight text-fg-subtle">ผู้ดูแลระบบ</p>
-        </div>
+        {collapsed ? null : (
+          <div>
+            <p className="text-sm font-semibold leading-tight text-fg">KawaiiBake</p>
+            <p className="text-xs leading-tight text-fg-subtle">ผู้ดูแลระบบ</p>
+          </div>
+        )}
       </div>
       <nav aria-label="เมนูผู้ดูแลระบบ" className="flex-1 overflow-y-auto py-3">
         {ADMIN_NAV.map((group) => (
           <div key={group.title} className="mb-3">
-            <p className="px-4 pb-1 text-xs font-medium uppercase tracking-wide text-fg-subtle">
-              {group.title}
-            </p>
+            {collapsed ? null : (
+              <p className="px-4 pb-1 text-xs font-medium uppercase tracking-wide text-fg-subtle">
+                {group.title}
+              </p>
+            )}
             <ul>
               {group.items.map((item) => {
                 const active = pathname === item.href;
@@ -259,16 +286,27 @@ function SidebarContent({
                       href={item.href as "/admin/dashboard"}
                       onClick={onNavigate}
                       aria-current={active ? "page" : undefined}
+                      aria-label={collapsed ? item.label : undefined}
+                      title={collapsed ? item.label : undefined}
                       className={cn(
-                        "flex items-center gap-2.5 px-4 py-1.5 text-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
+                        "flex items-center gap-2.5 py-1.5 text-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
+                        collapsed ? "justify-center px-0" : "px-4",
                         active
-                          ? "border-l-2 border-accent bg-accent-subtle pl-3.5 font-medium text-fg"
-                          : "border-l-2 border-transparent pl-3.5 text-fg-muted hover:bg-surface-sunken hover:text-fg",
+                          ? cn(
+                              "border-l-2 border-accent bg-accent-subtle font-medium text-fg",
+                              collapsed ? "" : "pl-3.5",
+                            )
+                          : cn(
+                              "border-l-2 border-transparent text-fg-muted hover:bg-surface-sunken hover:text-fg",
+                              collapsed ? "" : "pl-3.5",
+                            ),
                       )}
                     >
                       <Icon name={`admin/${item.icon}`} className="size-4" />
-                      <span className="truncate">{item.label}</span>
-                      {item.limited ? (
+                      {collapsed ? null : (
+                        <span className="truncate">{item.label}</span>
+                      )}
+                      {!collapsed && item.limited ? (
                         <span
                           title="ระบบหลังบ้านยังไม่มี API สำหรับหน้านี้ทั้งหมด"
                           className="ml-auto text-xs text-warning"
@@ -284,14 +322,40 @@ function SidebarContent({
           </div>
         ))}
       </nav>
-      <div className="border-t border-edge px-4 py-3">
-        <Link
-          href="/"
-          className="text-xs text-fg-muted hover:text-accent-hover"
-          onClick={onNavigate}
-        >
-          ← กลับไปหน้าเว็บผู้เรียน
-        </Link>
+      <div
+        className={cn(
+          "border-t border-edge py-3",
+          collapsed ? "flex flex-col items-center gap-2 px-0" : "px-4",
+        )}
+      >
+        {collapsed ? null : (
+          <Link
+            href="/"
+            className="text-xs text-fg-muted hover:text-accent-hover"
+            onClick={onNavigate}
+          >
+            ← กลับไปหน้าเว็บผู้เรียน
+          </Link>
+        )}
+        {onToggleCollapse ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? "ขยายเมนู" : "ย่อเมนู"}
+            title={collapsed ? "ขยายเมนู" : "ย่อเมนู"}
+            className={cn(
+              "rounded p-1 text-fg-subtle hover:bg-surface-sunken hover:text-fg",
+              "focus-visible:outline-2 focus-visible:outline-focus",
+              collapsed ? "" : "mt-2 block",
+            )}
+          >
+            <Icon
+              name={collapsed ? "ui/arrow-right" : "ui/arrow-left"}
+              className="size-4"
+              tint
+            />
+          </button>
+        ) : null}
       </div>
     </>
   );

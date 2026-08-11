@@ -1,11 +1,11 @@
 """Replace emoji `icon` values with frontend asset keys.
 
 0002 originally seeded `icon` with an emoji character, on the theory that
-the frontend might render it directly. It never did — badge artwork lives
+the frontend might render it directly. It never did  badge artwork lives
 in `frontend/public/achievements/<slug>.svg` and is resolved by *slug*
 (`badgeArt()`), not by this field. Storing emoji in an admin-facing
 column was purely accidental duplication with no consumer, so this
-migration rewrites every seeded row's `icon` to match its own slug —
+migration rewrites every seeded row's `icon` to match its own slug 
 readable in Django admin, and consistent with what 0002 now seeds for a
 fresh database.
 
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from django.db import migrations
 
-# slug -> (new asset key, old emoji) — the mapping this migration walks
+# slug -> (new asset key, old emoji)  the mapping this migration walks
 # in both directions.
 _REWRITES = [
     ("course_completed", "course_completed", "\U0001f393"),  # 🎓

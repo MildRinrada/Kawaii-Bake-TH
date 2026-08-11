@@ -10,7 +10,7 @@ class QuestionsConfig(AppConfig):
 
     Deliberately a **leaf**: this app imports no other feature app and knows
     nothing about quizzes, attempts, scores or gamification. That ignorance is
-    what makes a question reusable — any future consumer (lesson inline
+    what makes a question reusable  any future consumer (lesson inline
     checks, AI-generated practice) composes questions through the same public
     services this app already exposes. See
     ``docs/adr/0010-question-bank-and-quiz-boundary.md``.

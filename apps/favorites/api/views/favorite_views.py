@@ -78,7 +78,7 @@ class MyFavoritesView(PaginatedServiceAPIView):
 
         Pagination runs on the favorites queryset (already visibility-filtered
         via the content apps' prefix Q builders); the page's target cards are
-        then batch-fetched through each app's own card selector — the same
+        then batch-fetched through each app's own card selector  the same
         two-step embed the lesson detail uses, so cards carry their full
         prefetches without joining them through the favorites table.
         """

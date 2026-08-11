@@ -54,7 +54,7 @@ class ClientSignalView(ServiceAPIView):
     """Accept one browser-reported observation.
 
     Unauthenticated on purpose: the visitors this watches are by
-    definition not signed in. That makes rate limiting non-optional —
+    definition not signed in. That makes rate limiting non-optional 
     without the scope below, this endpoint would be a free way to fill
     the events table.
     """

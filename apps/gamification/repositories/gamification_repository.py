@@ -1,7 +1,7 @@
 """Write operations for the XP ledger and the derived rows.
 
 The ledger gets an append only. The two derived rows (level, streak) get a
-full overwrite — they are recomputed aggregates, so "update" here means
+full overwrite  they are recomputed aggregates, so "update" here means
 "replace with the freshly derived truth", never arithmetic on stored state.
 """
 

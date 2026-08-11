@@ -84,7 +84,10 @@ class ProfileApiTests(TestCase):
                 "cover_url",
                 "username",
                 "email",
+                "first_name",
+                "last_name",
                 "is_email_verified",
+                "is_staff",
                 "joined_at",
                 "display_name",
                 "bio",
@@ -282,7 +285,7 @@ class AccountDeactivationApiTests(TestCase):
 
 
 class ProfileCoverApiTests(TestCase):
-    """PATCH /api/v1/users/profile/update/ — the cover banner.
+    """PATCH /api/v1/users/profile/update/  the cover banner.
 
     The browser crops before uploading, so these tests assert the parts that
     survive a hostile client: the bytes are validated, the URL comes back
@@ -343,7 +346,7 @@ class ProfileCoverApiTests(TestCase):
 
     def test_an_svg_is_rejected(self) -> None:
         # SVG can carry script; storing one would be stored XSS. A `.png`
-        # extension does not launder it — the bytes are what is checked.
+        # extension does not launder it  the bytes are what is checked.
         self.client.force_login(self.user)
         svg = SimpleUploadedFile(
             "evil.png", b"<svg xmlns='http://www.w3.org/2000/svg'/>",
@@ -367,7 +370,7 @@ class ProfileCoverApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         # The domain rule's own message, not the generic "not a valid image"
-        # that a corrupt file would produce — proof the size branch ran.
+        # that a corrupt file would produce  proof the size branch ran.
         self.assertIn(
             "Cover image must be smaller than 4 MB.",
             response.json()["error"]["details"]["non_field_errors"],

@@ -1,10 +1,10 @@
 /**
- * Cover-image upload on /admin/recipes/new — the failure paths.
+ * Cover-image upload on /admin/recipes/new  the failure paths.
  *
  * 1. A HEIC file is refused at pick time with a Thai explanation, before
  *    any request is made (the server's Pillow has no HEIF plugin).
  * 2. A non-image that reaches the server produces a Thai error, and the
- *    retry does NOT create a second recipe — the regression that made
+ *    retry does NOT create a second recipe  the regression that made
  *    "can't upload a cover" leave orphan drafts behind.
  * 3. A normal JPEG uploads and is served back from the API origin.
  */
@@ -35,7 +35,7 @@ writeFileSync(jpegPath, Buffer.from(JPEG_1X1, "base64"));
 let passed = 0;
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 async function expect(page, selector, label, timeout = 15_000) {
   await page.waitForSelector(selector, { timeout });
@@ -78,6 +78,9 @@ try {
 
   /* ---------- 2. Server-side rejection must not duplicate the recipe --- */
   await page.locator("form input").first().fill(TITLE);
+  // The description textarea (nth 1; nth 0 is the summary) - required by
+  // the client gate, which must NOT swallow this server-rejection test.
+  await page.locator("form textarea").nth(1).fill("ทดสอบไฟล์รูปที่เซิร์ฟเวอร์ปฏิเสธ");
   await page.fill('input[aria-label="ชื่อวัตถุดิบรายการที่ 1"]', "แป้ง");
   await page.fill('textarea[aria-label="เนื้อหาขั้นตอนที่ 1"]', "ผสมให้เข้ากัน");
   // Bypass the client check the way a mislabelled file would.
@@ -116,7 +119,7 @@ try {
   if (creates !== 1) {
     throw new Error(`retry created a duplicate recipe (${creates} POSTs)`);
   }
-  ok("the retry updated the existing recipe — no duplicate draft");
+  ok("the retry updated the existing recipe  no duplicate draft");
 
   await page.reload();
   await page.waitForSelector("text=แก้ไขสูตร");
@@ -131,7 +134,7 @@ try {
   await page.locator('dialog[open] button:has-text("ลบถาวร")').click();
   await page.waitForURL("**/admin/recipes", { timeout: 15_000 });
   slug = null;
-  ok("test recipe deleted — the script leaves no residue");
+  ok("test recipe deleted  the script leaves no residue");
 
   console.log(`\nCover upload E2E: ${passed}/${passed} passed`);
 } finally {

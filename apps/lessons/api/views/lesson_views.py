@@ -59,7 +59,7 @@ def _quiz_ref(request: Request, lesson: Lesson) -> dict[str, Any] | None:
 
     Uses the viewer-aware ``list_refs_by_ids``, so a quiz that has gone
     private or back to draft since linking degrades to ``None`` rather than
-    leaking. Only reference fields are embedded — questions live behind the
+    leaking. Only reference fields are embedded  questions live behind the
     quiz's own endpoints.
     """
     if lesson.quiz_id is None:

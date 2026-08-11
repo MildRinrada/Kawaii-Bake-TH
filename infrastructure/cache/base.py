@@ -1,4 +1,4 @@
-"""Cache seam — rate limiting primitives.
+"""Cache seam  rate limiting primitives.
 
 Auth throttling is deliberately cache-backed rather than table-backed, so no
 database table is required to defend the login and password-reset endpoints.

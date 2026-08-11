@@ -1,4 +1,4 @@
-"""The message entity — append-only."""
+"""The message entity - append-only."""
 
 from __future__ import annotations
 
@@ -12,11 +12,11 @@ class AssistantMessage(models.Model):
 
     Append-only: there is no edit or delete API, no ``updated_at``, and the
     repository exposes only ``add``. The transcript is a record of what was
-    actually said — to the user *and* to the provider — so it must never be
+    actually said - to the user *and* to the provider - so it must never be
     rewritten (the LearningActivity precedent, ADR 0012).
 
     ``system`` never appears here: the system prompt is rebuilt from the
-    versioned template on every send, which is the prompt-injection boundary —
+    versioned template on every send, which is the prompt-injection boundary -
     stored user content structurally cannot become a system turn.
 
     ``provider``/``model_name``/token counts are stamped per message, not per
@@ -39,7 +39,7 @@ class AssistantMessage(models.Model):
     class Meta:
         verbose_name = "assistant message"
         verbose_name_plural = "assistant messages"
-        # Chronological — a transcript reads top to bottom.
+        # Chronological - a transcript reads top to bottom.
         ordering = ("created_at", "id")
         indexes = [
             models.Index(

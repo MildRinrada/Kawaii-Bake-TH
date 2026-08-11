@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 
 /**
  * The KawaiiBake surface: generously rounded, soft warm shadow, sand
- * border. One card style everywhere — variety comes from content and
+ * border. One card style everywhere  variety comes from content and
  * flavor accents, not from competing card treatments.
  */
 export function Card({

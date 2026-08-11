@@ -1,4 +1,4 @@
-"""Nutrition handling — validation and storage only.
+"""Nutrition handling  validation and storage only.
 
 Phase 2 performs **no arithmetic** on nutrition: no summing over ingredients,
 no unit conversion, no per-serving division. Values are author-supplied and are

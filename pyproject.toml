@@ -1,7 +1,7 @@
 [project]
 name = "kawaiibake"
 version = "0.1.0"
-description = "KawaiiBake — bakery learning platform"
+description = "KawaiiBake bakery learning platform"
 requires-python = ">=3.12"
 
 [tool.ruff]

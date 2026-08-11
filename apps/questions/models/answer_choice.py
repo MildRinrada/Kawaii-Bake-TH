@@ -16,7 +16,7 @@ class AnswerChoice(TimeStampedModel):
     have no such field at all (``selectors/question_selector.py``); the only
     serializer allowed to render it is the owner's own bank endpoint.
 
-    Frozen state lives on the parent question only — a choice is frozen iff
+    Frozen state lives on the parent question only  a choice is frozen iff
     its question is, so the state cannot drift between parent and children.
     Choices of an unfrozen question are freely replaced as a collection
     (nothing references them yet: attempt selections only ever point at
@@ -24,7 +24,7 @@ class AnswerChoice(TimeStampedModel):
     answer row is created).
 
     ``ordering`` is by ``position`` then ``id`` and must never involve
-    ``is_correct`` — a correct-first sort order would leak the key through
+    ``is_correct``  a correct-first sort order would leak the key through
     row order.
     """
 

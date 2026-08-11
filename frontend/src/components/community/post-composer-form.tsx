@@ -4,8 +4,8 @@
  * The one post composer, used inline on the feed and on `/community/create`.
  *
  * Two real endpoints, in order:
- *   1. `POST /gallery/` — caption, status and the optional `recipe_id`.
- *   2. `POST /gallery/{id}/images/` — one multipart request per photo,
+ *   1. `POST /gallery/`  caption, status and the optional `recipe_id`.
+ *   2. `POST /gallery/{id}/images/`  one multipart request per photo,
  *      which is the only image shape the backend offers.
  *
  * Step 1 already created the post, so a failure in step 2 must not create
@@ -91,12 +91,25 @@ export function PostComposerForm({
     if (fileInput.current) fileInput.current.value = "";
   }
 
-  const canPublish = caption.trim().length > 0 || images.length > 0;
   const displayName = user?.display_name || user?.username || "คุณ";
+  const [gateError, setGateError] = useState<string | null>(null);
 
   async function publish(event: React.FormEvent) {
     event.preventDefault();
-    if (!canPublish) return;
+
+    // A community post is a photo with a story: both are required, and
+    // forgetting one gets a named, friendly nudge - never a silent no-op
+    // or a bare 400. The recipe attachment stays optional on purpose.
+    const missing: string[] = [];
+    if (caption.trim().length === 0) missing.push("ข้อความเล่าเรื่อง");
+    if (images.length === 0) missing.push("รูปภาพอย่างน้อย 1 รูป");
+    if (missing.length > 0) {
+      setGateError(
+        `เกือบแล้ว! โพสต์ยังขาด ${missing.join(" และ ")} - เพิ่มก่อนแล้วค่อยกดโพสต์นะ`,
+      );
+      return;
+    }
+    setGateError(null);
 
     await form.submit(async () => {
       let postId = createdId;
@@ -146,6 +159,14 @@ export function PostComposerForm({
           {form.formError}
         </p>
       ) : null}
+      {gateError ? (
+        <p
+          role="alert"
+          className="rounded-control bg-danger-subtle px-3 py-2 text-sm text-danger"
+        >
+          {gateError}
+        </p>
+      ) : null}
 
       <div className="flex items-start gap-3">
         <Avatar src={user?.avatar_url} name={displayName} />
@@ -164,8 +185,19 @@ export function PostComposerForm({
             aria-describedby="caption-count"
             className="block w-full resize-y rounded-control border border-edge-strong/50 bg-surface px-3.5 py-2.5 text-sm text-fg placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
           />
-          <p id="caption-count" className="mt-1 text-right text-xs text-fg-subtle">
-            {caption.length}/500
+          <p
+            id="caption-count"
+            className="mt-1 flex justify-between gap-2 text-xs text-fg-subtle"
+          >
+            <span>
+              ต้องมีข้อความและรูปอย่างน้อย 1 รูป
+              <span aria-hidden className="font-semibold text-danger">
+                {" "}
+                *
+              </span>{" "}
+              - แนบสูตรหรือไม่ก็ได้
+            </span>
+            <span>{caption.length}/500</span>
           </p>
           {form.fieldErrors.caption?.length ? (
             <p role="alert" className="text-sm text-danger">
@@ -185,6 +217,7 @@ export function PostComposerForm({
           disabled={images.length >= MAX_IMAGES_PER_POST}
         >
           <Icon name="ui/camera" className="size-4" /> รูปภาพ
+          <span aria-hidden className="font-semibold text-danger">*</span>
         </Button>
         <Button
           type="button"
@@ -280,7 +313,7 @@ export function PostComposerForm({
 
       {createdId !== null ? (
         <p className="rounded-control bg-warning-subtle px-3 py-2 text-xs text-warning">
-          โพสต์ถูกสร้างแล้ว — การกดเผยแพร่อีกครั้งจะอัปโหลดเฉพาะรูปที่ยังไม่ขึ้น
+          โพสต์ถูกสร้างแล้ว  การกดเผยแพร่อีกครั้งจะอัปโหลดเฉพาะรูปที่ยังไม่ขึ้น
           ไม่สร้างโพสต์ซ้ำ
         </p>
       ) : null}
@@ -293,7 +326,7 @@ export function PostComposerForm({
               ยกเลิก
             </Button>
           ) : null}
-          <Button type="submit" loading={form.submitting} disabled={!canPublish}>
+          <Button type="submit" loading={form.submitting}>
             เผยแพร่โพสต์
           </Button>
         </div>

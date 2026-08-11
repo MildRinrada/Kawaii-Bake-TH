@@ -1,4 +1,4 @@
-"""The threat profile — the running summary for one source address."""
+"""The threat profile  the running summary for one source address."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ class ThreatProfile(models.Model):
     an index. The recount management command rebuilds it from the events
     whenever the two are suspected of disagreeing.
 
-    ``level`` is likewise denormalised from ``score`` — always written
+    ``level`` is likewise denormalised from ``score``  always written
     together, never independently, so they cannot drift apart.
 
     An address, not a person: KawaiiBake never claims that one IP is one

@@ -1,6 +1,6 @@
 """The ingredient substitution rule registry.
 
-This module — not a table — owns substitution knowledge in Phase 12
+This module  not a table  owns substitution knowledge in Phase 12
 (ADR 0018 §12). Rules are curated kitchen practice keyed by the same
 normalised form ``recipes`` stores in ``RecipeIngredient.normalized_name``,
 so a free-text ingredient matches a rule exactly when it would match the
@@ -13,7 +13,7 @@ Honesty rules, enforced by convention and tests:
   otherwise it is empty and the option is a *candidate*, not a formula.
 - Allergen implications appear as cautions in ``note``. Nothing here claims
   nutritional equivalence, allergy safety, or medical suitability.
-- ``confidence`` is one of three coarse buckets — the only precision that
+- ``confidence`` is one of three coarse buckets  the only precision that
   honestly exists.
 - Options are declared best-first; declaration order is the API order.
 """
@@ -40,7 +40,7 @@ class SubstitutionOption:
 
 
 # Canonical rules. Keys MUST already be in normalised form (lowercase,
-# NFC, single-spaced) — a test asserts this so a typo cannot silently
+# NFC, single-spaced)  a test asserts this so a typo cannot silently
 # create an unreachable rule.
 RULES: dict[str, tuple[SubstitutionOption, ...]] = {
     "เนย": (
@@ -67,7 +67,7 @@ RULES: dict[str, tuple[SubstitutionOption, ...]] = {
         SubstitutionOption(
             name="นมถั่วเหลือง",
             ratio="1:1",
-            note="มีถั่วเหลือง — ผู้แพ้ถั่วเหลืองควรหลีกเลี่ยง",
+            note="มีถั่วเหลือง  ผู้แพ้ถั่วเหลืองควรหลีกเลี่ยง",
             confidence=CONFIDENCE_HIGH,
         ),
         SubstitutionOption(
@@ -79,7 +79,7 @@ RULES: dict[str, tuple[SubstitutionOption, ...]] = {
         SubstitutionOption(
             name="นมอัลมอนด์",
             ratio="1:1",
-            note="มีถั่วเปลือกแข็ง — ผู้แพ้ถั่วควรหลีกเลี่ยง เนื้อบางกว่านมวัว",
+            note="มีถั่วเปลือกแข็ง  ผู้แพ้ถั่วควรหลีกเลี่ยง เนื้อบางกว่านมวัว",
             confidence=CONFIDENCE_MEDIUM,
         ),
     ),
@@ -203,7 +203,7 @@ def canonical_key(normalized_name: str) -> str:
 
     Names the registry does not know canonicalise to themselves, so exact
     matching still works for unknown ingredients. This is also how the
-    endpoint's ``?ingredient=`` filter matches across languages — asking
+    endpoint's ``?ingredient=`` filter matches across languages  asking
     for ``butter`` finds the recipe's ``เนย`` line, because both fold to
     the same key.
 
@@ -223,7 +223,7 @@ def lookup(normalized_name: str) -> tuple[SubstitutionOption, ...]:
         normalized_name: The output of ``normalize_ingredient_name``.
 
     Returns:
-        The options best-first, or an empty tuple when nothing is known —
+        The options best-first, or an empty tuple when nothing is known 
         an honest empty answer, never a guess.
     """
     return RULES.get(canonical_key(normalized_name), ())

@@ -1,4 +1,4 @@
-"""The level curve — a pure function from total XP to level standing.
+"""The level curve  a pure function from total XP to level standing.
 
 Progressive: advancing from level ``L`` to ``L+1`` costs ``L × 100`` XP,
 so early levels come fast and the curve stretches naturally. The curve

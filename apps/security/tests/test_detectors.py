@@ -1,4 +1,4 @@
-"""Detector rules — pure string tests, no database, no HTTP.
+"""Detector rules  pure string tests, no database, no HTTP.
 
 The rules are the part of this app most likely to be wrong in a way that
 matters: a false positive scores a real learner, a false negative misses
@@ -70,7 +70,7 @@ class QueryRuleTests(SimpleTestCase):
         self.assertEqual(signal.kind, SignalKind.XSS_PROBE)
 
     def test_an_ordinary_search_query_is_not_flagged(self) -> None:
-        # A Thai recipe search with filters — the shape real traffic has.
+        # A Thai recipe search with filters  the shape real traffic has.
         self.assertIsNone(
             request_rules.check_query(
                 "search=%E0%B8%84%E0%B8%B8%E0%B8%81%E0%B8%81%E0%B8%B5%E0%B9%89"

@@ -1,10 +1,10 @@
-"""Seed the badge definitions — one per achievement type, bilingual.
+"""Seed the badge definitions  one per achievement type, bilingual.
 
 Badges are system-owned data with no CRUD API, so the initial set ships as
 a data migration (the prompt-template precedent, Phase 7). Curation happens
 in Django admin; slugs are identities and never change.
 
-``icon`` stores an asset key, not emoji — it names a file under the
+``icon`` stores an asset key, not emoji  it names a file under the
 frontend's `public/achievements/` (see that folder's README and ADR 0024).
 """
 

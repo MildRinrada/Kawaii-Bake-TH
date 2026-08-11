@@ -1,7 +1,7 @@
 """Lesson endpoints addressed by course slug.
 
 These live under the ``/api/v1/courses/`` URL prefix but belong to the lessons
-app — the prefix is a config concern. Each view resolves the course through
+app  the prefix is a config concern. Each view resolves the course through
 courses' public ``get_course_ref`` API, then operates on this app's own rows.
 """
 
@@ -46,11 +46,11 @@ class CourseLessonListView(ServiceAPIView):
         responses={200: LessonSyllabusItemSerializer(many=True)}, tags=["lessons"]
     )
     def get(self, request: Request, slug: str) -> Response:
-        """Return the syllabus — lesson metadata only.
+        """Return the syllabus  lesson metadata only.
 
         Content and video URLs are behind the lesson detail endpoint's
         enrollment gate, and the viewer's completion state lives at the
-        progress app's ``{slug}/progress/`` endpoint — this app knows nothing
+        progress app's ``{slug}/progress/`` endpoint  this app knows nothing
         about learner state (ADR 0012). Unpaginated: a course caps at 100
         lessons and the syllabus is rendered as one list.
         """
@@ -94,7 +94,7 @@ class CourseLessonListView(ServiceAPIView):
 
 
 class CourseLessonReorderView(ServiceAPIView):
-    """Reorder a course's lessons — built for drag-and-drop."""
+    """Reorder a course's lessons  built for drag-and-drop."""
 
     permission_classes = (IsAuthenticated,)
 

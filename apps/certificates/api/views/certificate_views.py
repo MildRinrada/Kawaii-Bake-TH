@@ -50,7 +50,7 @@ class CourseCertificateView(ServiceAPIView):
 
 
 class MyCertificatesView(PaginatedServiceAPIView):
-    """The caller's certificates, newest first — revoked included."""
+    """The caller's certificates, newest first  revoked included."""
 
     permission_classes = (IsAuthenticated,)
 
@@ -64,7 +64,7 @@ class MyCertificatesView(PaginatedServiceAPIView):
 
 
 class CertificateVerifyView(ServiceAPIView):
-    """Public verification — for employers checking a printed certificate."""
+    """Public verification  for employers checking a printed certificate."""
 
     permission_classes = (AllowAny,)
 
@@ -96,7 +96,7 @@ class MyAchievementsView(PaginatedServiceAPIView):
 
 
 class BadgeCatalogView(ServiceAPIView):
-    """Every badge the platform presents — what there is to earn.
+    """Every badge the platform presents  what there is to earn.
 
     Public and user-independent by construction: it answers "which
     achievements exist", never "who has them". A client pairs it with the

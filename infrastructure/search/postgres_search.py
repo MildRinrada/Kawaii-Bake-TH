@@ -1,6 +1,6 @@
 """PostgreSQL trigram search.
 
-**Trigram-first, not tsvector-first — because of Thai.**
+**Trigram-first, not tsvector-first  because of Thai.**
 
 ``to_tsvector`` tokenises on whitespace. Thai is written without inter-word
 spaces, so ``to_tsvector('simple', 'ครัวซองต์ไส้ช็อกโกแลต')`` yields a *single*
@@ -12,7 +12,7 @@ is invisible if the test data is English.
 Thai and tolerates typos. ``SearchRank`` is added on top purely for stemming on
 the English half of the corpus.
 
-**This module is not exercised by the test suite** — the suite runs on SQLite,
+**This module is not exercised by the test suite**  the suite runs on SQLite,
 and ``SearchVector`` cannot even be compiled without the PostgreSQL backend. See
 ``docs/adr/0008-cross-app-model-references.md`` for the accepted trade-off.
 

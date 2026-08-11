@@ -1,4 +1,4 @@
-"""The per-user level row — a recomputed aggregate, not a source of truth."""
+"""The per-user level row  a recomputed aggregate, not a source of truth."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ class UserLevel(models.Model):
     """One user's current level standing.
 
     **Derived state**: every field is recomputed from the XP ledger by
-    ``level_service`` — this row exists so the leaderboard can sort without
+    ``level_service``  this row exists so the leaderboard can sort without
     summing ledgers, and it can be rebuilt from scratch at any time. No
     history lives here; history is :class:`XPTransaction`.
     """

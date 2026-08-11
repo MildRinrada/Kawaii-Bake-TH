@@ -17,6 +17,7 @@ from apps.gallery.api.serializers import (
     GalleryPostSerializer,
     GalleryPostUpdateSerializer,
 )
+from apps.gallery.constants import GalleryPostStatus
 from apps.gallery.exceptions import GalleryPostNotFoundError
 from apps.gallery.selectors import gallery_selector
 from apps.gallery.services import gallery_service
@@ -47,10 +48,16 @@ class GalleryListCreateView(PaginatedServiceAPIView):
         """Return a page of visible posts, newest first.
 
         Filters: ``recipe_id``, ``course_id``, ``category`` (slug),
-        ``author`` (username).
+        ``author`` (username), ``status``. The status filter intersects
+        the visibility rule, so it can never widen what a viewer sees -
+        it exists for the staff moderation queue and the owner's own
+        hidden-posts view.
         """
         viewer_id, viewer_is_staff = _viewer(request)
         params = request.query_params
+        requested_status = params.get("status") or None
+        if requested_status not in GalleryPostStatus.values:
+            requested_status = None
         queryset = gallery_selector.list_posts(
             viewer_id=viewer_id,
             viewer_is_staff=viewer_is_staff,
@@ -58,6 +65,7 @@ class GalleryListCreateView(PaginatedServiceAPIView):
             course_id=_int_or_none(params.get("course_id")),
             category_slug=params.get("category") or None,
             author_username=params.get("author") or None,
+            post_status=requested_status,
         )
         return self.paginated_response(queryset, GalleryPostSerializer)
 

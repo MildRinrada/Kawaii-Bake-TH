@@ -1,14 +1,14 @@
 /**
  * The certificate itself, rendered from the credential's real stored
- * fields — the same immutable snapshot the backend issued (recipient,
+ * fields  the same immutable snapshot the backend issued (recipient,
  * course, dates, number). Not a placeholder image: there is no
  * certificate asset in the system, so the document *is* this render,
  * and printing it (browser → Save as PDF) is the honest download path.
  *
  * The signature block is a deliberate design flourish, not a claim
  * about a specific person: it renders the platform's own name
- * ("KawaiiBake") in a script face, the way an institution — not an
- * individual instructor the backend has no record of — signs a
+ * ("KawaiiBake") in a script face, the way an institution  not an
+ * individual instructor the backend has no record of  signs a
  * document. The seal beside it is likewise decorative, not a forgeable
  * mark; verification happens at the unguessable link, not the artwork.
  */
@@ -28,7 +28,7 @@ export function formatThaiDate(value: string): string {
   return new Date(value).toLocaleDateString("th-TH", { dateStyle: "long" });
 }
 
-/** One corner of the printed rule — mirrored via CSS transforms. */
+/** One corner of the printed rule  mirrored via CSS transforms. */
 function CornerFlourish({ className }: { className?: string }) {
   return (
     <svg
@@ -71,7 +71,7 @@ export function CertificateSheet({
           "radial-gradient(circle at 88% 92%, var(--kb-lavender-soft) 0%, transparent 32%)",
       }}
     >
-      {/* Inner rule — the printed border of the document */}
+      {/* Inner rule  the printed border of the document */}
       <div className="relative flex h-full w-full flex-col items-center rounded-control border-2 border-butter-ink/30 px-[6%] py-[3%]">
         <CornerFlourish className="left-[3%] top-[3%]" />
         <CornerFlourish className="right-[3%] top-[3%] -scale-x-100" />
@@ -103,7 +103,7 @@ export function CertificateSheet({
           </p>
         </div>
 
-        {/* Footer: date — seal — signature, the three-column formal layout */}
+        {/* Footer: date  seal  signature, the three-column formal layout */}
         <div className="grid w-full grid-cols-3 items-end gap-[2%] text-[clamp(0.5rem,1.15cqw,0.7rem)] text-fg-subtle">
           <div className="text-left">
             <span className="block text-fg-muted">ออกให้เมื่อ</span>

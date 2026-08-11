@@ -1,7 +1,7 @@
 """Django admin for the notifications app.
 
 Notifications are private snapshots and preferences are the user's own
-choices — both strictly read-only here (no admin CRUD, per the Phase 10
+choices  both strictly read-only here (no admin CRUD, per the Phase 10
 spec). Inspection only.
 """
 

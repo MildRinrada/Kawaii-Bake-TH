@@ -22,11 +22,11 @@ export const MODAL_ART = {
  * `cake_decorating` / `vegan` / `gluten_free` were retired (deactivated
  * server-side, not deleted) because they describe a technique or a diet
  * that cuts across every other category rather than sitting beside them
- * — a macaron can be vegan, a cake can be decorated. They no longer come
+ *  a macaron can be vegan, a cake can be decorated. They no longer come
  * back from `/recipe-categories/`, so they never reach this map.
  *
  * An unknown slug (a category an admin adds later, or a recipe left
- * genuinely uncategorised) resolves to `other.svg` — a real "ไม่แน่ใจว่า
+ * genuinely uncategorised) resolves to `other.svg`  a real "ไม่แน่ใจว่า
  * เข้าหมวดไหน" bucket, not a broken image.
  */
 const CATEGORY_PHOTOS: Record<string, string> = {
@@ -47,7 +47,7 @@ export function categoryArt(slug: string): string {
 
 /**
  * Small flat-colour category glyphs (bread, cake, cookies, …) for inline
- * chips and pills — where `categoryArt`'s cropped photo would be too much
+ * chips and pills  where `categoryArt`'s cropped photo would be too much
  * detail at 20px. Same slug set as `CATEGORY_PHOTOS`; an unknown slug
  * falls back to the same "other" bucket art used for photos.
  */
@@ -84,7 +84,7 @@ export const BRAND_MARK = "/brand/logo-mark.svg";
  * Badge artwork for one catalogue slug.
  *
  * The catalogue is server-owned and can grow at any time, so an unknown
- * slug resolves to generic artwork instead of a broken image — a new
+ * slug resolves to generic artwork instead of a broken image  a new
  * badge shipped by the backend looks plain, never broken. Unearned
  * badges share one padlock silhouette; that is a *display* decision made
  * from the earned flag the ledger already gave us, not a second source

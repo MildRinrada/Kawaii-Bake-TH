@@ -18,13 +18,13 @@ class RewardTransaction(TimeStampedModel):
     """One economic change, forever.
 
     Append-only in the ``XPTransaction``/``LearningActivity`` family: no
-    service, repository or API updates or deletes a row — history is the
+    service, repository or API updates or deletes a row  history is the
     audit trail. Each row answers the full "what/why/how much/balance
     afterward/which source event/when" set on its own.
 
     ``event_key`` is the idempotency anchor: the unique constraint on
-    ``(account, event_key)`` is what makes duplicate delivery — retries,
-    races, replays — structurally unable to grant twice. An `if exists`
+    ``(account, event_key)`` is what makes duplicate delivery  retries,
+    races, replays  structurally unable to grant twice. An `if exists`
     check would race; the constraint cannot.
 
     ``actor_handle`` is a Phase 10-style snapshot (public handle, no FK)

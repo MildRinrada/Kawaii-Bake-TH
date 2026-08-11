@@ -1,5 +1,5 @@
 /**
- * Admin recipe create/edit E2E — a full round trip against the real API:
+ * Admin recipe create/edit E2E  a full round trip against the real API:
  * create a draft → verify it exists via the list → edit every kind of
  * field (scalars, categories, ingredient rows, step rows + reorder) →
  * confirm the changes came back from the server → delete it again, so
@@ -15,7 +15,7 @@ const TITLE = `สูตรทดสอบผู้ดูแล ${Date.now() % 1
 let passed = 0;
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 async function expect(page, selector, label, timeout = 15_000) {
   await page.waitForSelector(selector, { timeout });
@@ -63,14 +63,29 @@ try {
   await page.click('button:has-text("+ เพิ่มขั้นตอน")');
   await page.fill('textarea[aria-label="เนื้อหาขั้นตอนที่ 2"]', "อบที่ 170 องศา 25 นาที");
 
-  // Title/summary live in labelled Field wrappers.
+  // Title/summary/description live in labelled Field wrappers.
   const titleInput = page.locator("form input").first();
   await titleInput.fill(TITLE);
-  await page.locator("form textarea").first().fill("สูตรสำหรับทดสอบระบบผู้ดูแล");
+  await page.locator("form textarea").nth(0).fill("สูตรสำหรับทดสอบระบบผู้ดูแล");
+  await page.locator("form textarea").nth(1).fill("รายละเอียดสูตรทดสอบ อบง่าย ได้ผลจริง");
 
   // One category chip.
   await page.locator('button[aria-pressed="false"]').first().click();
   ok("form accepts scalars, categories, ingredient rows and step rows");
+
+  /* ---------- The gate: no cover → friendly error, nothing created ---- */
+  await page.click('button[type="submit"]:has-text("สร้างเป็นฉบับร่าง")');
+  await expect(page, "text=อีกนิดเดียว! ยังขาด รูปหน้าปก", "missing cover blocks with a friendly Thai error");
+
+  // A real 1x1 PNG so the upload path runs end-to-end at create time.
+  await page.setInputFiles('input[aria-label="เลือกรูปหน้าปก"]', {
+    name: "cover.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  });
   await page.screenshot({ path: `${SHOT_DIR}/58-admin-recipe-new.png`, fullPage: true });
 
   /* ---------- Create ---------- */
@@ -159,10 +174,10 @@ try {
   ok("cover image persisted and is served back from the API origin");
   await page.screenshot({ path: `${SHOT_DIR}/59-admin-recipe-edit.png`, fullPage: true });
 
-  /* ---------- Validation error surfaces ---------- */
+  /* ---------- Validation: the client gate intercepts before the API --- */
   await page.locator("form input").first().fill("ก");
   await page.click('button[type="submit"]:has-text("บันทึกการแก้ไข")');
-  await expect(page, '[role="alert"]', "backend validation error is surfaced on the form");
+  await expect(page, "text=อีกนิดเดียว! ยังขาด ชื่อสูตร", "short title is blocked client-side with friendly Thai");
   await page.locator("form input").first().fill(TITLE);
 
   /* ---------- Delete (confirm dialog + real DELETE) ---------- */
@@ -173,16 +188,10 @@ try {
   ok("DELETE /recipes/{slug}/ removed the recipe and returned to the list");
   createdSlug = null;
 
-  const expected400 = apiErrors.filter(
-    (line) => line.startsWith("400 PATCH") && line.includes("/recipes/"),
-  );
-  const unexpected = apiErrors.filter((line) => !expected400.includes(line));
-  if (expected400.length !== 1) {
-    throw new Error(
-      `expected exactly one deliberate 400 from the short-title save, saw ${expected400.length}`,
-    );
-  }
-  ok("the only 4xx was the deliberate validation test");
+  // The client gate stops invalid saves before the network, so a clean
+  // run makes zero 4xx requests at all.
+  const unexpected = apiErrors;
+  ok("no request was wasted on input the form already knew was invalid");
   if (unexpected.length) {
     throw new Error(`Unexpected API errors:\n  ${unexpected.join("\n  ")}`);
   }

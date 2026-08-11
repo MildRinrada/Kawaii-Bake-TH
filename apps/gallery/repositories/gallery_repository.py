@@ -97,7 +97,7 @@ def delete_post(*, post: GalleryPost) -> None:
     """Hard-delete a post, its image rows and their stored files.
 
     Files are collected before the row cascade and removed after the
-    database commit — a failed transaction must not have half-deleted
+    database commit  a failed transaction must not have half-deleted
     media, and a committed one must not leave orphans.
 
     Args:

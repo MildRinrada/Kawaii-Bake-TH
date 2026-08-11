@@ -1,6 +1,6 @@
 """Notification routes, mounted at ``/api/v1/me/notifications/`` by config.
 
-Everything here is the caller's own — the ``me/`` prefix is shared with
+Everything here is the caller's own - the ``me/`` prefix is shared with
 progress, assistant and certificates by config (ADR 0009); these patterns
 cannot collide with theirs.
 """

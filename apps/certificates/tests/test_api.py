@@ -17,7 +17,7 @@ from apps.users.tests.factories import create_user
 
 
 class CertificateApiTests(TestCase):
-    """Issue, list, verify — with the permission split."""
+    """Issue, list, verify  with the permission split."""
 
     def setUp(self) -> None:
         self.client = APIClient()
@@ -93,7 +93,7 @@ class CertificateApiTests(TestCase):
         )
 
         self.client.force_login(self.student)
-        # session + user + count + page — snapshots keep the list join-free.
+        # session + user + count + page  snapshots keep the list join-free.
         with self.assertNumQueries(4):
             response = self.client.get("/api/v1/me/certificates/")
         self.assertEqual(response.json()["count"], 3)
@@ -162,7 +162,7 @@ class CertificateApiTests(TestCase):
 
 
 class BadgeCatalogApiTests(TestCase):
-    """GET /api/v1/achievements/ — what there is to earn."""
+    """GET /api/v1/achievements/  what there is to earn."""
 
     def setUp(self) -> None:
         self.client = APIClient()

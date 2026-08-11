@@ -2,7 +2,7 @@
 
 Pure over primitives: the service gathers what the checks need (its own
 composition count, the questions app's verdict on answer validity) and this
-module only judges. Deliberately not enforced on every save — a draft must be
+module only judges. Deliberately not enforced on every save  a draft must be
 saveable while incomplete.
 """
 
@@ -32,7 +32,7 @@ def assert_publishable(
     Args:
         quiz: The quiz about to be published.
         question_count: Size of the quiz's composition.
-        answer_problems: The questions app's verdict per question id — the
+        answer_problems: The questions app's verdict per question id  the
             domain that owns the answer rules re-checked what is stored.
 
     Raises:

@@ -17,7 +17,7 @@ logger = logging.getLogger("kawaiibake.favorites")
 def _resolve_target(*, kind: str, slug: str, user_id: int) -> int:
     """Resolve a target slug to its id through the detail visibility rule.
 
-    Private content cannot be favorited — hidden and absent are the same 404.
+    Private content cannot be favorited  hidden and absent are the same 404.
 
     Raises:
         FavoriteTargetNotFoundError: If the target is absent or hidden.
@@ -35,7 +35,7 @@ def _resolve_target(*, kind: str, slug: str, user_id: int) -> int:
 
 
 def favorite(*, user_id: int, kind: str, slug: str) -> tuple[Favorite, bool]:
-    """Favorite a visible target. Idempotent — a toggle, like enroll.
+    """Favorite a visible target. Idempotent  a toggle, like enroll.
 
     Args:
         user_id: Primary key of the user.
@@ -60,7 +60,7 @@ def favorite(*, user_id: int, kind: str, slug: str) -> tuple[Favorite, bool]:
 
 
 def unfavorite(*, user_id: int, kind: str, slug: str) -> None:
-    """Remove a favorite. Idempotent — removing what is absent is a no-op.
+    """Remove a favorite. Idempotent  removing what is absent is a no-op.
 
     Args:
         user_id: Primary key of the user.
@@ -68,7 +68,7 @@ def unfavorite(*, user_id: int, kind: str, slug: str) -> None:
         slug: The target's slug.
 
     Raises:
-        FavoriteTargetNotFoundError: If the target is absent or hidden —
+        FavoriteTargetNotFoundError: If the target is absent or hidden 
             fail-closed: a hidden target cannot be addressed even to
             unfavorite it (the row silently leaves the list instead).
     """

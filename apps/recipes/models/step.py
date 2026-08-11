@@ -18,7 +18,7 @@ def step_image_upload_to(instance: RecipeStep, filename: str) -> str:
 class RecipeStep(TimeStampedModel):
     """One instruction in a recipe's method.
 
-    ``position`` is assigned by the service from the submitted array order —
+    ``position`` is assigned by the service from the submitted array order 
     never accepted from the client, which routinely sends duplicate or gapped
     values. The array order is unambiguous and JSON preserves it.
     """

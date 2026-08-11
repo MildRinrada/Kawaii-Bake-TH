@@ -7,7 +7,7 @@
  *
  * Authenticated: composes a post with text + image + an attached recipe
  * picked from the real selector, publishes it, sees it in the feed and
- * on the attached recipe's page, edits and deletes it — and deleting the
+ * on the attached recipe's page, edits and deletes it  and deleting the
  * post leaves the recipe untouched.
  */
 import { chromium } from "playwright";
@@ -28,7 +28,7 @@ const JPEG_1X1 =
 let passed = 0;
 function ok(label) {
   passed += 1;
-  console.log(`  ok ${String(passed).padStart(2, "0")} — ${label}`);
+  console.log(`  ok ${String(passed).padStart(2, "0")}  ${label}`);
 }
 async function expect(page, selector, label, timeout = 15_000) {
   await page.waitForSelector(selector, { timeout });
@@ -104,8 +104,21 @@ try {
   await expect(page, "#post-caption", "composer expands in place");
   const inlineCaption = `โพสต์จากคอมโพสเซอร์ในฟีด ${STAMP}`;
   await page.fill("#post-caption", inlineCaption);
+
+  // Posts now require a photo: publishing text-only gets the friendly
+  // gate, then attaching an image lets the same submit succeed.
   await page.click('button[type="submit"]:has-text("เผยแพร่โพสต์")');
-  await expect(page, "text=เผยแพร่โพสต์แล้ว", "inline composer publishes");
+  await expect(page, "text=/เกือบแล้ว!.*รูปภาพ/", "text-only post is blocked with a friendly nudge");
+  await page.setInputFiles('input[aria-label="เลือกรูปภาพ"]', {
+    name: "bake.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  });
+  await page.click('button[type="submit"]:has-text("เผยแพร่โพสต์")');
+  await expect(page, "text=เผยแพร่โพสต์แล้ว", "inline composer publishes once a photo is attached");
   if (!page.url().endsWith("/community")) {
     throw new Error(`inline publish navigated away to ${page.url()}`);
   }
@@ -118,7 +131,7 @@ try {
   await page.click('button:has-text("ลบโพสต์")');
   await page.locator('div[role="dialog"] button:has-text("ลบโพสต์")').click();
   await page.waitForURL("**/community", { timeout: 15_000 });
-  ok("inline-composed post deleted — no residue");
+  ok("inline-composed post deleted  no residue");
 
   await page.goto(`${BASE}/community/create`);
   await expect(page, "text=สร้างโพสต์", "the full-page composer still exists");
@@ -137,7 +150,7 @@ try {
 
   // Drafts must not be offerable: the backend only accepts a reference to
   // a publicly visible recipe, so the selector reads the public feed.
-  // The title is read live — hard-coding one broke the moment that recipe
+  // The title is read live  hard-coding one broke the moment that recipe
   // was published.
   const hidden = await page.evaluate(async (api) => {
     const mine = await (
@@ -156,7 +169,7 @@ try {
     "text=/ไม่พบสูตรที่ตรงกับ/",
     hidden
       ? `a draft recipe is not offerable as an attachment (${hidden})`
-      : "no draft to test with — an unmatched search shows the empty state",
+      : "no draft to test with  an unmatched search shows the empty state",
   );
 
   await page.fill('input[aria-label="ค้นหาสูตร"]', "คุกกี้");

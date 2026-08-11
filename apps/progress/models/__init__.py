@@ -1,4 +1,4 @@
-"""Progress models — public API."""
+"""Progress models - public API."""
 
 from __future__ import annotations
 
