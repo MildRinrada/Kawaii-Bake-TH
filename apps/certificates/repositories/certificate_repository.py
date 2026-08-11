@@ -18,7 +18,12 @@ from apps.certificates.constants import (
     NUMBER_ALLOCATION_ATTEMPTS,
 )
 from apps.certificates.exceptions import CertificateNumberExhaustedError
-from apps.certificates.models import Achievement, BadgeDefinition, Certificate
+from apps.certificates.models import (
+    Achievement,
+    BadgeDefinition,
+    Certificate,
+    CertificateTemplate,
+)
 
 
 def _next_number(*, year: int) -> str:
@@ -144,3 +149,75 @@ def award_achievement(
         achievement_type=achievement_type,
         defaults={"badge": badge, "metadata": metadata or {}},
     )
+
+
+def get_or_create_template(
+    *, course_id: int, default_design: dict
+) -> CertificateTemplate:
+    """Fetch a course's template row, creating it from the default design.
+
+    Args:
+        course_id: Primary key of the course.
+        default_design: Seed draft when no row exists yet.
+
+    Returns:
+        The template row.
+    """
+    template, _ = CertificateTemplate.objects.get_or_create(
+        course_id=course_id, defaults={"draft_design": default_design}
+    )
+    return template
+
+
+def save_draft(
+    *, template: CertificateTemplate, design: dict, actor_id: int
+) -> CertificateTemplate:
+    """Replace the draft design (the autosave write).
+
+    Args:
+        template: The template row.
+        design: The validated design document.
+        actor_id: The staff member editing.
+
+    Returns:
+        The updated template.
+    """
+    template.draft_design = design
+    template.updated_by_id = actor_id
+    template.save(update_fields=["draft_design", "updated_by", "updated_at"])
+    return template
+
+
+def publish_template(
+    *, template: CertificateTemplate, actor_id: int
+) -> CertificateTemplate:
+    """Freeze the current draft as the published design.
+
+    Args:
+        template: The template row.
+        actor_id: The staff member publishing.
+
+    Returns:
+        The updated template.
+    """
+    template.published_design = template.draft_design
+    template.published_at = timezone.now()
+    template.updated_by_id = actor_id
+    template.save(
+        update_fields=[
+            "published_design",
+            "published_at",
+            "updated_by",
+            "updated_at",
+        ]
+    )
+    return template
+
+
+def delete_template(*, template: CertificateTemplate) -> None:
+    """Remove the row entirely — the course falls back to the default.
+
+    Args:
+        template: The template to delete.
+    """
+    template.delete()

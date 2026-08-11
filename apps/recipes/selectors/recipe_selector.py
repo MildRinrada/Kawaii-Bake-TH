@@ -17,6 +17,7 @@ from apps.recipes.constants import (
     ORDERING_MAP,
     Ordering,
     RecipeScope,
+    RecipeStatus,
 )
 from apps.recipes.models import Recipe, RecipeImage, RecipeIngredient, RecipeStep
 from apps.recipes.selectors.recipe_filters import RecipeListFilters
@@ -525,3 +526,19 @@ def count_visible(
             viewer_id=viewer_id, viewer_is_staff=viewer_is_staff, scope=scope
         )
     ).count()
+
+
+def published_author_ids() -> list[int]:
+    """User ids that have published at least one recipe.
+
+    Part of the cross-app audience API (ADR 0030): campaign targeting
+    reaches recipe authorship only through this selector. Ids only.
+
+    Returns:
+        The distinct author ids of published recipes.
+    """
+    return list(
+        Recipe.objects.filter(status=RecipeStatus.PUBLISHED)
+        .values_list("author_id", flat=True)
+        .distinct()
+    )

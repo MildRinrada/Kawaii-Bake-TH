@@ -8,6 +8,8 @@ from django.db import models
 from apps.notifications.constants import (
     ACTOR_HANDLE_MAX_LENGTH,
     BODY_MAX_LENGTH,
+    CTA_MAX_LENGTH,
+    ICON_MAX_LENGTH,
     LINK_MAX_LENGTH,
     TITLE_MAX_LENGTH,
     NotificationEventType,
@@ -49,6 +51,19 @@ class Notification(models.Model):
         max_length=ACTOR_HANDLE_MAX_LENGTH, blank=True
     )
     link = models.CharField(max_length=LINK_MAX_LENGTH, blank=True)
+    # ADR 0030: staff campaigns choose their own glyph and call-to-action
+    # label; machine events leave both blank and the frontend keeps its
+    # per-event icon. The campaign FK is aggregation-only (read-rate) -
+    # SET_NULL so deleting nothing ever erases a recipient's history.
+    icon = models.CharField(max_length=ICON_MAX_LENGTH, blank=True)
+    cta_text = models.CharField(max_length=CTA_MAX_LENGTH, blank=True)
+    campaign = models.ForeignKey(
+        "notifications.NotificationCampaign",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="deliveries",
+    )
     read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 

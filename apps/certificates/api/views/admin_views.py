@@ -22,9 +22,16 @@ from apps.certificates.api.serializers.admin_serializers import (
     BadgeUpdateSerializer,
     CertificateFilterSerializer,
     CertificateRevokeSerializer,
+    TemplateDetailSerializer,
+    TemplateDraftSerializer,
+    TemplateRowSerializer,
 )
 from apps.certificates.selectors import award_selector, certificate_selector
-from apps.certificates.services import badge_service, certificate_service
+from apps.certificates.services import (
+    badge_service,
+    certificate_service,
+    template_service,
+)
 from apps.common.api.views import PaginatedServiceAPIView, ServiceAPIView
 
 
@@ -178,4 +185,108 @@ class AdminCertificateRevokeView(ServiceAPIView):
         )
         return Response(
             AdminCertificateSerializer(certificate).data, status=status.HTTP_200_OK
+        )
+
+
+class AdminTemplateListView(ServiceAPIView):
+    """Existing template rows, for the designer workspace."""
+
+    permission_classes = (IsAdminUser,)
+
+    @extend_schema(
+        responses={200: TemplateRowSerializer(many=True)},
+        tags=["certificates-admin"],
+    )
+    def get(self, request: Request) -> Response:
+        """Return every course that has a template row.
+
+        Courses without a row use the built-in default design; the
+        frontend merges this with the course list to show that honestly.
+        """
+        rows = template_service.list_templates()
+        return Response(
+            TemplateRowSerializer(rows, many=True).data, status=status.HTTP_200_OK
+        )
+
+
+class AdminTemplateDetailView(ServiceAPIView):
+    """One course's design documents: read, autosave, remove."""
+
+    permission_classes = (IsAdminUser,)
+
+    @extend_schema(
+        responses={200: TemplateDetailSerializer}, tags=["certificates-admin"]
+    )
+    def get(self, request: Request, course_slug: str) -> Response:
+        """Return the draft/published pair, seeding a fresh draft from
+        the default design when the course never had one."""
+        template = template_service.get_template(course_slug=course_slug)
+        return Response(
+            TemplateDetailSerializer(template).data, status=status.HTTP_200_OK
+        )
+
+    @extend_schema(
+        request=TemplateDraftSerializer,
+        responses={200: TemplateDetailSerializer},
+        tags=["certificates-admin"],
+    )
+    def put(self, request: Request, course_slug: str) -> Response:
+        """Replace the draft — the designer's debounced autosave."""
+        serializer = TemplateDraftSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        template = template_service.save_draft(
+            course_slug=course_slug,
+            design=serializer.validated_data["design"],
+            actor_id=request.user.id,
+        )
+        return Response(
+            TemplateDetailSerializer(template).data, status=status.HTTP_200_OK
+        )
+
+    @extend_schema(responses={204: None}, tags=["certificates-admin"])
+    def delete(self, request: Request, course_slug: str) -> Response:
+        """Drop the row — the course returns to the built-in default."""
+        template_service.remove_template(
+            course_slug=course_slug, actor_id=request.user.id
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminTemplatePublishView(ServiceAPIView):
+    """The deliberate act: draft becomes the production design."""
+
+    permission_classes = (IsAdminUser,)
+
+    @extend_schema(
+        request=None,
+        responses={200: TemplateDetailSerializer},
+        tags=["certificates-admin"],
+    )
+    def post(self, request: Request, course_slug: str) -> Response:
+        """Publish the current draft."""
+        template = template_service.publish(
+            course_slug=course_slug, actor_id=request.user.id
+        )
+        return Response(
+            TemplateDetailSerializer(template).data, status=status.HTTP_200_OK
+        )
+
+
+class AdminTemplateResetView(ServiceAPIView):
+    """Throw the experiment away: draft := published (or the default)."""
+
+    permission_classes = (IsAdminUser,)
+
+    @extend_schema(
+        request=None,
+        responses={200: TemplateDetailSerializer},
+        tags=["certificates-admin"],
+    )
+    def post(self, request: Request, course_slug: str) -> Response:
+        """Reset the draft to the last published version."""
+        template = template_service.reset_draft(
+            course_slug=course_slug, actor_id=request.user.id
+        )
+        return Response(
+            TemplateDetailSerializer(template).data, status=status.HTTP_200_OK
         )

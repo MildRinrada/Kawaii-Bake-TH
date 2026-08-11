@@ -16,6 +16,10 @@ class NotificationSerializer(serializers.Serializer):
     body = serializers.CharField(read_only=True)
     actor_handle = serializers.CharField(read_only=True)
     link = serializers.CharField(read_only=True)
+    # ADR 0030: campaign sends choose a glyph and CTA label; machine
+    # events leave both blank and the frontend keeps per-event icons.
+    icon = serializers.CharField(read_only=True)
+    cta_text = serializers.CharField(read_only=True)
     read_at = serializers.DateTimeField(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True)
 

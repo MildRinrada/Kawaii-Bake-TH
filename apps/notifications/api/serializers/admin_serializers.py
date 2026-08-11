@@ -12,8 +12,13 @@ from apps.common.api.serializers import (
 )
 from apps.notifications.constants import (
     BODY_MAX_LENGTH,
+    CTA_MAX_LENGTH,
+    ICON_MAX_LENGTH,
+    KIND_MAX_LENGTH,
     LINK_MAX_LENGTH,
+    TEMPLATE_NAME_MAX_LENGTH,
     TITLE_MAX_LENGTH,
+    CampaignStatus,
     NotificationEventType,
 )
 
@@ -66,3 +71,157 @@ class BroadcastResultSerializer(serializers.Serializer):
     """How far a broadcast reached."""
 
     recipients = serializers.IntegerField(read_only=True)
+
+
+# --------------------------------------------------------------------------
+# Campaigns and templates (ADR 0030)
+# --------------------------------------------------------------------------
+
+
+class CampaignSerializer(serializers.Serializer):
+    """One staff campaign row, author and read receipts included."""
+
+    id = serializers.IntegerField(read_only=True)
+    kind = serializers.CharField(read_only=True)
+    icon = serializers.CharField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    body = serializers.CharField(read_only=True)
+    cta_text = serializers.CharField(read_only=True)
+    link = serializers.CharField(read_only=True)
+    audience = serializers.JSONField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    scheduled_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    sent_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    recipients_count = serializers.IntegerField(
+        read_only=True, allow_null=True
+    )
+    read_count = serializers.IntegerField(read_only=True, default=0)
+    created_by = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+
+    def get_created_by(self, obj: Any) -> str:
+        """Return the author's handle, blank when the account is gone."""
+        return obj.created_by.username if obj.created_by else ""
+
+
+class CampaignWriteSerializer(StrictSerializer):
+    """Payload for creating or editing a campaign.
+
+    ``audience`` is passed through as JSON - the service's audience
+    validator closes its schema (kinds, params, ranges), so the API
+    layer does not duplicate that contract.
+    """
+
+    kind = serializers.RegexField(
+        r"^[a-z0-9_]+$",
+        max_length=KIND_MAX_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    icon = serializers.CharField(
+        max_length=ICON_MAX_LENGTH, required=False, allow_blank=True
+    )
+    title = serializers.CharField(max_length=TITLE_MAX_LENGTH)
+    body = serializers.CharField(
+        max_length=BODY_MAX_LENGTH, required=False, allow_blank=True
+    )
+    cta_text = serializers.CharField(
+        max_length=CTA_MAX_LENGTH, required=False, allow_blank=True
+    )
+    link = serializers.CharField(
+        max_length=LINK_MAX_LENGTH, required=False, allow_blank=True
+    )
+    audience = serializers.JSONField()
+    status = serializers.ChoiceField(
+        choices=(CampaignStatus.DRAFT, CampaignStatus.SCHEDULED),
+        required=False,
+        default=CampaignStatus.DRAFT,
+    )
+    scheduled_at = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class CampaignFilterSerializer(PaginatedFilterSerializer):
+    """Query parameters accepted by the campaign list."""
+
+    status = serializers.ChoiceField(
+        choices=CampaignStatus.choices, required=False, allow_blank=True
+    )
+    search = serializers.CharField(
+        max_length=120, required=False, allow_blank=True
+    )
+
+
+class CampaignAnalyticsSerializer(serializers.Serializer):
+    """Honest delivery analytics: snapshots created and read receipts."""
+
+    recipients = serializers.IntegerField(read_only=True)
+    delivered = serializers.IntegerField(read_only=True)
+    read = serializers.IntegerField(read_only=True)
+    unread = serializers.IntegerField(read_only=True)
+    read_rate = serializers.FloatField(read_only=True)
+    sent_at = serializers.DateTimeField(read_only=True, allow_null=True)
+
+
+class AudienceEstimateSerializer(StrictSerializer):
+    """Payload for a recipient-count estimate."""
+
+    audience = serializers.JSONField()
+
+
+class AudienceEstimateResultSerializer(serializers.Serializer):
+    """How many accounts the audience resolves to right now."""
+
+    count = serializers.IntegerField(read_only=True)
+
+
+class TemplateItemSerializer(serializers.Serializer):
+    """One reusable composer template."""
+
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    kind = serializers.CharField(read_only=True)
+    icon = serializers.CharField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    body = serializers.CharField(read_only=True)
+    cta_text = serializers.CharField(read_only=True)
+    link = serializers.CharField(read_only=True)
+    is_archived = serializers.BooleanField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+
+
+class TemplateWriteSerializer(StrictSerializer):
+    """Payload for creating or editing a template."""
+
+    name = serializers.CharField(max_length=TEMPLATE_NAME_MAX_LENGTH)
+    kind = serializers.RegexField(
+        r"^[a-z0-9_]+$",
+        max_length=KIND_MAX_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    icon = serializers.CharField(
+        max_length=ICON_MAX_LENGTH, required=False, allow_blank=True
+    )
+    title = serializers.CharField(max_length=TITLE_MAX_LENGTH)
+    body = serializers.CharField(
+        max_length=BODY_MAX_LENGTH, required=False, allow_blank=True
+    )
+    cta_text = serializers.CharField(
+        max_length=CTA_MAX_LENGTH, required=False, allow_blank=True
+    )
+    link = serializers.CharField(
+        max_length=LINK_MAX_LENGTH, required=False, allow_blank=True
+    )
+    is_archived = serializers.BooleanField(required=False)
+
+
+class AdminNotificationStatsSerializer(serializers.Serializer):
+    """Headline numbers for the staff notifications hub."""
+
+    campaigns_sent = serializers.IntegerField(read_only=True)
+    drafts = serializers.IntegerField(read_only=True)
+    scheduled = serializers.IntegerField(read_only=True)
+    sent_today = serializers.IntegerField(read_only=True)
+    delivered_total = serializers.IntegerField(read_only=True)
+    read_total = serializers.IntegerField(read_only=True)

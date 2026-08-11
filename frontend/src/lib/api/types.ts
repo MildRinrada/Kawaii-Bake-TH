@@ -125,6 +125,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/certificates/templates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return every course that has a template row.
+         *
+         *     Courses without a row use the built-in default design; the
+         *     frontend merges this with the course list to show that honestly.
+         */
+        get: operations["admin_certificates_templates_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/certificates/templates/{course_slug}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return the draft/published pair, seeding a fresh draft from
+         *     the default design when the course never had one.
+         */
+        get: operations["admin_certificates_templates_retrieve"];
+        /** @description Replace the draft — the designer's debounced autosave. */
+        put: operations["admin_certificates_templates_update"];
+        post?: never;
+        /** @description Drop the row — the course returns to the built-in default. */
+        delete: operations["admin_certificates_templates_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/certificates/templates/{course_slug}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Publish the current draft. */
+        post: operations["admin_certificates_templates_publish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/certificates/templates/{course_slug}/reset/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Reset the draft to the last published version. */
+        post: operations["admin_certificates_templates_reset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/favorites/": {
         parameters: {
             query?: never;
@@ -176,6 +254,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/notifications/audience/estimate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Resolve the audience the same way a send would, and count it. */
+        post: operations["admin_notifications_audience_estimate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/notifications/broadcast/": {
         parameters: {
             query?: never;
@@ -191,6 +286,147 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/campaigns/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return a page of campaigns, newest first. */
+        get: operations["admin_notifications_campaigns_list"];
+        put?: never;
+        /** @description Create a campaign as a draft, or directly scheduled. */
+        post: operations["admin_notifications_campaigns_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/campaigns/{campaign_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return one campaign. */
+        get: operations["admin_notifications_campaigns_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description Delete a draft or canceled campaign. */
+        delete: operations["admin_notifications_campaigns_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Edit a draft or scheduled campaign. */
+        patch: operations["admin_notifications_campaigns_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/campaigns/{campaign_id}/analytics/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return delivered/read counts and the read rate. */
+        get: operations["admin_notifications_campaigns_analytics_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/campaigns/{campaign_id}/cancel/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Cancel the schedule and return the campaign. */
+        post: operations["admin_notifications_campaigns_cancel_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/campaigns/{campaign_id}/send/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Send the campaign and report how many recipients it reached. */
+        post: operations["admin_notifications_campaigns_send_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/stats/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return campaign counts, today's deliveries, and read totals. */
+        get: operations["admin_notifications_stats_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/templates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return every template, active first. */
+        get: operations["admin_notifications_templates_list"];
+        put?: never;
+        /** @description Create a template. */
+        post: operations["admin_notifications_templates_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/notifications/templates/{template_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete a template. */
+        delete: operations["admin_notifications_templates_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Edit a template's fields or archived flag. */
+        patch: operations["admin_notifications_templates_partial_update"];
         trace?: never;
     };
     "/api/v1/admin/progress/courses/": {
@@ -2492,6 +2728,15 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
+        /** @description Headline numbers for the staff notifications hub. */
+        AdminNotificationStats: {
+            readonly campaigns_sent: number;
+            readonly drafts: number;
+            readonly scheduled: number;
+            readonly sent_today: number;
+            readonly delivered_total: number;
+            readonly read_total: number;
+        };
         /**
          * @description A review on the staff surface - adds the target's title.
          *
@@ -2582,6 +2827,14 @@ export interface components {
             readonly percentage: string;
             readonly passed: boolean | null;
         };
+        /** @description Payload for a recipient-count estimate. */
+        AudienceEstimateRequest: {
+            audience: unknown;
+        };
+        /** @description How many accounts the audience resolves to right now. */
+        AudienceEstimateResult: {
+            readonly count: number;
+        };
         /** @description Documents the shape returned by a successful sign-in. */
         AuthenticatedResponse: {
             readonly status: string;
@@ -2653,6 +2906,68 @@ export interface components {
         BroadcastResult: {
             readonly recipients: number;
         };
+        /** @description One staff campaign row, author and read receipts included. */
+        Campaign: {
+            readonly id: number;
+            readonly kind: string;
+            readonly icon: string;
+            readonly title: string;
+            readonly body: string;
+            readonly cta_text: string;
+            readonly link: string;
+            readonly audience: unknown;
+            readonly status: string;
+            /** Format: date-time */
+            readonly scheduled_at: string | null;
+            /** Format: date-time */
+            readonly sent_at: string | null;
+            readonly recipients_count: number | null;
+            /** @default 0 */
+            readonly read_count: number;
+            /** @description Return the author's handle, blank when the account is gone. */
+            readonly created_by: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Honest delivery analytics: snapshots created and read receipts. */
+        CampaignAnalytics: {
+            readonly recipients: number;
+            readonly delivered: number;
+            readonly read: number;
+            readonly unread: number;
+            /** Format: double */
+            readonly read_rate: number;
+            /** Format: date-time */
+            readonly sent_at: string | null;
+        };
+        /**
+         * @description Payload for creating or editing a campaign.
+         *
+         *     ``audience`` is passed through as JSON - the service's audience
+         *     validator closes its schema (kinds, params, ranges), so the API
+         *     layer does not duplicate that contract.
+         */
+        CampaignWriteRequest: {
+            kind?: string;
+            icon?: string;
+            title: string;
+            body?: string;
+            cta_text?: string;
+            link?: string;
+            audience: unknown;
+            /** @default draft */
+            status: components["schemas"]["CampaignWriteStatusEnum"];
+            /** Format: date-time */
+            scheduled_at?: string | null;
+        };
+        /**
+         * @description * `draft` - draft
+         *     * `scheduled` - scheduled
+         * @enum {string}
+         */
+        CampaignWriteStatusEnum: "draft" | "scheduled";
         /** @description A category in the category listing. */
         Category: {
             /** @description Return the absolute tile-photo URL, or ``None`` when unset. */
@@ -3352,6 +3667,8 @@ export interface components {
             readonly body: string;
             readonly actor_handle: string;
             readonly link: string;
+            readonly icon: string;
+            readonly cta_text: string;
             /** Format: date-time */
             readonly read_at: string | null;
             /** Format: date-time */
@@ -3612,6 +3929,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["AttemptSummary"][];
+        };
+        PaginatedCampaignList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Campaign"][];
         };
         PaginatedCertificateList: {
             /** @example 123 */
@@ -3922,6 +4254,26 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * @description Payload for creating or editing a campaign.
+         *
+         *     ``audience`` is passed through as JSON - the service's audience
+         *     validator closes its schema (kinds, params, ranges), so the API
+         *     layer does not duplicate that contract.
+         */
+        PatchedCampaignWriteRequest: {
+            kind?: string;
+            icon?: string;
+            title?: string;
+            body?: string;
+            cta_text?: string;
+            link?: string;
+            audience?: unknown;
+            /** @default draft */
+            status: components["schemas"]["CampaignWriteStatusEnum"];
+            /** Format: date-time */
+            scheduled_at?: string | null;
+        };
+        /**
          * @description Multipart payload for editing a category; absent keys are unchanged.
          *
          *     ``image: null`` removes the tile photo.
@@ -4089,6 +4441,17 @@ export interface components {
             rating?: number;
             comment?: string;
             status?: components["schemas"]["ReviewUpdateStatusEnum"];
+        };
+        /** @description Payload for creating or editing a template. */
+        PatchedTemplateWriteRequest: {
+            name?: string;
+            kind?: string;
+            icon?: string;
+            title?: string;
+            body?: string;
+            cta_text?: string;
+            link?: string;
+            is_archived?: boolean;
         };
         /** @description Payload for editing a thread; ``status`` is staff moderation. */
         PatchedThreadUpdateRequest: {
@@ -4623,6 +4986,66 @@ export interface components {
          * @enum {string}
          */
         TargetTypeEnum: "recipe" | "course";
+        /** @description The full document pair the designer edits against. */
+        TemplateDetail: {
+            readonly course_slug: string;
+            readonly course_title: string;
+            /** @description ``published`` once frozen, else ``draft``. */
+            readonly status: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** Format: date-time */
+            readonly published_at: string | null;
+            /** @description The last editor's handle, when known. */
+            readonly updated_by: string | null;
+            readonly draft_design: unknown;
+            readonly published_design: unknown;
+        };
+        /**
+         * @description The autosave payload: the whole design document, validated deep
+         *     in the service (bounds, caps, the 3-signature ceiling).
+         */
+        TemplateDraftRequest: {
+            design: unknown;
+        };
+        /** @description One reusable composer template. */
+        TemplateItem: {
+            readonly id: number;
+            readonly name: string;
+            readonly kind: string;
+            readonly icon: string;
+            readonly title: string;
+            readonly body: string;
+            readonly cta_text: string;
+            readonly link: string;
+            readonly is_archived: boolean;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description One course template on the workspace list. */
+        TemplateRow: {
+            readonly course_slug: string;
+            readonly course_title: string;
+            /** @description ``published`` once frozen, else ``draft``. */
+            readonly status: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** Format: date-time */
+            readonly published_at: string | null;
+            /** @description The last editor's handle, when known. */
+            readonly updated_by: string | null;
+        };
+        /** @description Payload for creating or editing a template. */
+        TemplateWriteRequest: {
+            name: string;
+            kind?: string;
+            icon?: string;
+            title: string;
+            body?: string;
+            cta_text?: string;
+            link?: string;
+            is_archived?: boolean;
+        };
         /**
          * @description * `system` - Match system
          *     * `light` - Light
@@ -5025,6 +5448,135 @@ export interface operations {
             };
         };
     };
+    admin_certificates_templates_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateRow"][];
+                };
+            };
+        };
+    };
+    admin_certificates_templates_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateDetail"];
+                };
+            };
+        };
+    };
+    admin_certificates_templates_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateDraftRequest"];
+                "multipart/form-data": components["schemas"]["TemplateDraftRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TemplateDraftRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateDetail"];
+                };
+            };
+        };
+    };
+    admin_certificates_templates_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_certificates_templates_publish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateDetail"];
+                };
+            };
+        };
+    };
+    admin_certificates_templates_reset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateDetail"];
+                };
+            };
+        };
+    };
     admin_favorites_list: {
         parameters: {
             query?: {
@@ -5097,6 +5649,31 @@ export interface operations {
             };
         };
     };
+    admin_notifications_audience_estimate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AudienceEstimateRequest"];
+                "multipart/form-data": components["schemas"]["AudienceEstimateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AudienceEstimateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudienceEstimateResult"];
+                };
+            };
+        };
+    };
     admin_notifications_broadcast_create: {
         parameters: {
             query?: never;
@@ -5118,6 +5695,298 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BroadcastResult"];
+                };
+            };
+        };
+    };
+    admin_notifications_campaigns_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                search?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCampaignList"];
+                };
+            };
+        };
+    };
+    admin_notifications_campaigns_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignWriteRequest"];
+                "multipart/form-data": components["schemas"]["CampaignWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CampaignWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campaign"];
+                };
+            };
+        };
+    };
+    admin_notifications_campaigns_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campaign"];
+                };
+            };
+        };
+    };
+    admin_notifications_campaigns_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_notifications_campaigns_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCampaignWriteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedCampaignWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCampaignWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campaign"];
+                };
+            };
+        };
+    };
+    admin_notifications_campaigns_analytics_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignAnalytics"];
+                };
+            };
+        };
+    };
+    admin_notifications_campaigns_cancel_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campaign"];
+                };
+            };
+        };
+    };
+    admin_notifications_campaigns_send_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BroadcastResult"];
+                };
+            };
+        };
+    };
+    admin_notifications_stats_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminNotificationStats"];
+                };
+            };
+        };
+    };
+    admin_notifications_templates_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateItem"][];
+                };
+            };
+        };
+    };
+    admin_notifications_templates_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateWriteRequest"];
+                "multipart/form-data": components["schemas"]["TemplateWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TemplateWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateItem"];
+                };
+            };
+        };
+    };
+    admin_notifications_templates_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_notifications_templates_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTemplateWriteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedTemplateWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedTemplateWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateItem"];
                 };
             };
         };

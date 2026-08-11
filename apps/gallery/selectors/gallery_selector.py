@@ -103,3 +103,15 @@ def get_editable_post(
     if not viewer_is_staff:
         queryset = queryset.filter(author_id=viewer_id)
     return queryset.first()
+
+
+def author_ids() -> list[int]:
+    """User ids that have shared at least one community post.
+
+    Part of the cross-app audience API (ADR 0030): campaign targeting
+    reaches gallery authorship only through this selector. Ids only.
+
+    Returns:
+        The distinct post author ids.
+    """
+    return list(GalleryPost.objects.values_list("author_id", flat=True).distinct())

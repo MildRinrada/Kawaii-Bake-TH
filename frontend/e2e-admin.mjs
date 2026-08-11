@@ -317,11 +317,28 @@ try {
   await page.keyboard.press("Escape");
   await page.screenshot({ path: `${SHOT_DIR}/55-admin-users.png`, fullPage: true });
 
-  /* ---------- Certificates: registry + verification tool ---------- */
+  /* ---------- Certificates: template designer + issued registry ---------- */
   await page.click('a[href="/admin/certificates"]');
   await page.waitForURL("**/admin/certificates");
-  await expect(page, "table", "certificate registry renders");
-  await expect(page, "text=ตรวจสอบใบประกาศจากรหัส", "verification tool survived the rebuild");
+  await expect(page, "text=สถานะเทมเพลต", "template workspace lists per-course designs");
+  await page.locator('a:has-text("แก้ไขเทมเพลต")').first().click();
+  await page.waitForURL("**/designer");
+  await expect(page, "[data-canvas]", "designer canvas renders the live certificate");
+  await expect(page, 'button:has-text("เผยแพร่เทมเพลต")', "publish is separate from autosave");
+  await expect(page, "text=ข้อมูลอัตโนมัติ", "dynamic-field library present");
+  await expect(page, 'button:has-text("ลายเซ็น")', "signature counter with the 3-cap renders");
+  await page.click('button:has-text("ตัวอักษร")');
+  await page.waitForSelector("text=บันทึกแล้ว", { timeout: 15_000 });
+  ok("adding an element autosaves the draft");
+  // Undo the probe edit so repeated runs never accumulate stray elements.
+  await page.click('button:has-text("เลิกทำ")');
+  await page.waitForSelector("text=บันทึกแล้ว", { timeout: 15_000 });
+  ok("undo reverts the draft (and autosaves the reverted state)");
+  await page.screenshot({ path: `${SHOT_DIR}/58-admin-cert-designer.png`, fullPage: true });
+
+  await page.goto(`${BASE}/admin/certificates/issued`);
+  await expect(page, "table", "issued registry lives at /issued");
+  await expect(page, "text=ตรวจสอบใบประกาศจากรหัส", "verification tool survived the move");
   await page.fill('input[placeholder*="วางรหัส"]', "00000000-0000-4000-8000-000000000000");
   await page.click('button:has-text("ตรวจสอบ")');
   await expect(page, "text=ไม่พบใบประกาศ", "unknown token is reported honestly");
@@ -346,12 +363,72 @@ try {
   await expect(page, "text=คอร์สยอดนิยม", "live most-favorited course ranking renders");
   await expect(page, "tbody tr", "cross-user favorites list renders");
 
-  /* ---------- Notifications: cross-user log + broadcast ---------- */
+  /* ---------- Notifications: campaign hub + composer (ADR 0030) ---------- */
   await page.goto(`${BASE}/admin/notifications`);
-  await expect(page, 'button:has-text("ประกาศถึงทุกคน")', "broadcast action present");
+  await expect(page, "text=แคมเปญที่ส่งแล้ว", "campaign stats cards render");
+  await expect(page, 'a:has-text("+ สร้างการแจ้งเตือน")', "create-notification CTA present");
+  await expect(page, 'button[role="tab"]:has-text("เทมเพลต")', "tabbed campaign views render");
+
+  // Compose a campaign: type → content with a variable → named audience
+  // with a live estimate → save as draft.
+  await page.goto(`${BASE}/admin/notifications/compose`);
+  await page.click('button:has-text("โซเชียล")');
+  await page.click('button:has-text("โพสต์กำลังไวรัล")');
+  await page.getByLabel("หัวข้อ").fill("🎉 ทดสอบแคมเปญถึง {{user_name}}");
+  await page.click('button:has-text("ระบุรายชื่อ")');
+  await page.getByLabel("ชื่อผู้ใช้").fill("p16fan0");
+  await page.waitForSelector("text=ผู้รับโดยประมาณ", { timeout: 15_000 });
+  ok("audience estimate resolves before sending");
+  await page.screenshot({ path: `${SHOT_DIR}/60-admin-notif-composer.png`, fullPage: true });
+  await page.getByRole("button", { name: "บันทึกฉบับร่าง" }).click();
+  await page.waitForSelector("text=บันทึกฉบับร่างแล้ว", { timeout: 15_000 });
+  ok("composer saves a draft campaign");
+
+  // Send the draft from the hub, confirming with the server's estimate.
+  await page.click('button[role="tab"]:has-text("ฉบับร่าง")');
+  const draftRow = page
+    .locator("tbody tr", { hasText: "ทดสอบแคมเปญถึง" })
+    .first();
+  await draftRow.locator('button[aria-haspopup="menu"]').click();
+  await page.click('button[role="menuitem"]:has-text("ส่งตอนนี้")');
+  await page.waitForSelector("text=ส่งแล้วเรียกคืนไม่ได้", { timeout: 10_000 });
+  await page.click('dialog[open] button:has-text("ส่งตอนนี้")');
+  await page.waitForSelector("text=ส่งถึง 1 บัญชีแล้ว", { timeout: 15_000 });
+  ok("draft sends to the named audience (1 account)");
+
+  // Sent campaigns are immutable evidence with honest analytics.
+  await page.click('button[role="tab"]:has-text("ส่งแล้ว")');
+  const sentRow = page
+    .locator("tbody tr", { hasText: "ทดสอบแคมเปญถึง" })
+    .first();
+  await sentRow.locator('button:has-text("ดูสถิติ")').click();
+  await page.waitForSelector("text=อัตราการอ่าน", { timeout: 10_000 });
+  await expect(page, "text=ไม่มีการติดตามการคลิก CTA", "analytics disclose the no-click-tracking gap");
+  await page.keyboard.press("Escape");
+  ok("sent campaign exposes read-receipt analytics");
+  await page.screenshot({ path: `${SHOT_DIR}/59-admin-notif-hub.png`, fullPage: true });
+
+  // Templates: create, see it listed, delete again (net-zero per run).
+  await page.click('button[role="tab"]:has-text("เทมเพลต")');
+  await page.click('button:has-text("+ สร้างเทมเพลต")');
+  await page.getByLabel("ชื่อเทมเพลต").fill("เทมเพลตทดสอบ E2E");
+  await page.getByLabel("หัวข้อ").fill("สวัสดี {{user_name}}");
+  await page.getByRole("button", { name: "สร้างเทมเพลต", exact: true }).click();
+  await page.waitForSelector("text=สร้างเทมเพลต “เทมเพลตทดสอบ E2E” แล้ว", { timeout: 15_000 });
+  const templateRow = page
+    .locator("tbody tr", { hasText: "เทมเพลตทดสอบ E2E" })
+    .first();
+  await templateRow.locator('button[aria-haspopup="menu"]').click();
+  await page.click('button[role="menuitem"]:has-text("ลบเทมเพลต")');
+  await page.click('dialog[open] button:has-text("ลบเทมเพลต")');
+  await page.waitForSelector("text=ลบเทมเพลตแล้ว", { timeout: 15_000 });
+  ok("template create/use-list/delete round trip");
+
+  // The per-recipient delivery log moved to /log, unchanged in spirit.
+  await page.goto(`${BASE}/admin/notifications/log`);
+  await expect(page, "text=บันทึกรายผู้รับ", "delivery log lives at /log");
   await expect(page, "text=in-app เท่านั้น", "email delivery gap stays honestly disclosed");
-  await page.click('button:has-text("ประกาศถึงทุกคน")');
-  await expect(page, "text=หัวข้อ", "broadcast composer opens");
+  await expect(page, "tbody tr", "delivered snapshots are listed per recipient");
 
   /* ---------- Assistant ---------- */
   await page.goto(`${BASE}/admin/assistant`);

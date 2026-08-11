@@ -436,6 +436,14 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = TIME_ZONE
+# Scheduled notification campaigns (ADR 0030). Fires only when a beat
+# process runs; `manage.py dispatch_campaigns` is the cron alternative.
+CELERY_BEAT_SCHEDULE = {
+    "dispatch-due-notification-campaigns": {
+        "task": "notifications.dispatch_due_campaigns",
+        "schedule": 60.0,
+    },
+}
 
 
 # --------------------------------------------------------------------------

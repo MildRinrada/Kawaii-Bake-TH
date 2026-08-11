@@ -42,13 +42,29 @@ class NotificationModelTests(TestCase):
         self.assertEqual(notification.read_at, first_stamp)
 
     def test_no_foreign_key_to_any_content_domain(self) -> None:
-        """The snapshot rule, enforced structurally (ADR 0016)."""
-        fk_targets = [
-            field.related_model._meta.label
+        """The snapshot rule, enforced structurally (ADR 0016).
+
+        The recipient is the only cross-app FK. The ``campaign``
+        backreference (ADR 0030) stays inside the notifications app and
+        must be ``SET_NULL`` - nothing may ever cascade a recipient's
+        history away.
+        """
+        foreign_keys = [
+            field
             for field in Notification._meta.get_fields()
             if isinstance(field, models.ForeignKey)
         ]
-        self.assertEqual(fk_targets, [settings.AUTH_USER_MODEL])
+        cross_app = [
+            field.related_model._meta.label
+            for field in foreign_keys
+            if field.related_model._meta.app_label != "notifications"
+        ]
+        self.assertEqual(cross_app, [settings.AUTH_USER_MODEL])
+        for field in foreign_keys:
+            if field.related_model._meta.app_label == "notifications":
+                self.assertEqual(
+                    field.remote_field.on_delete, models.SET_NULL
+                )
 
     def test_thai_snapshot_round_trip(self) -> None:
         notification = create_notification(

@@ -1096,12 +1096,32 @@ inflated by fuzzy search hits.
 | GET | `/admin/certificates/` | 200 | The platform registry. `search` matches number / printed name / course / holder; `status` ∈ `valid\|revoked` |
 | POST | `/admin/certificates/{id}/revoke/` | 200 | Body `{reason}` (required). Records `revoked_by` + `revoked_reason` with the stamp. Already revoked ⇒ 409 `certificate_already_revoked` - the first operator's reason stays. The public verification answer flips to `revoked`, never to missing |
 
+**Certificate templates - `/admin/certificates/templates/` (ADR 0029)**
+
+| Method | Path | Success | Notes |
+|---|---|---|---|
+| GET | `/admin/certificates/templates/` | 200 | Unpaginated rows for courses that have a design (status `draft`/`published`, last editor). Courses without a row use the built-in default |
+| GET | `/admin/certificates/templates/{slug}/` | 200 / 404 | The draft/published design pair; a first read seeds the draft from the default design |
+| PUT | `/admin/certificates/templates/{slug}/` | 200 | The designer's autosave: replaces the draft. The document is validated (closed element kinds, numeric bounds, <=60 elements, **<=3 signatures**, length-capped strings) - a design is data, never markup |
+| POST | `/admin/certificates/templates/{slug}/publish/` | 200 | Draft becomes the production design; stamps who/when. Saving and publishing are deliberately different acts |
+| POST | `/admin/certificates/templates/{slug}/reset/` | 200 | Draft := published version (or the default when never published) |
+| DELETE | `/admin/certificates/templates/{slug}/` | 204 | Drop the row - the course returns to the built-in default design |
+
 **Notifications - `/admin/notifications/`**
 
 | Method | Path | Success | Notes |
 |---|---|---|---|
 | GET | `/admin/notifications/` | 200 | Cross-user log with read state. Filters `search`, `event_type`, `unread` |
 | POST | `/admin/notifications/broadcast/` | 201 | `{title, body?, link?}` → `{recipients}`. Creates an `announcement` for every active account that has not opted out - the new sixth event type, same preference machinery as the rest. In-app only: there is no email channel, so no delivered/bounced status exists to report |
+| GET | `/admin/notifications/stats/` | 200 | Hub numbers: campaigns by status, snapshots created today, delivered/read totals (ADR 0030) |
+| GET/POST | `/admin/notifications/campaigns/` | 200 / 201 / 400 | Staff campaigns. Filters `status`, `search`. Create as `draft` or `scheduled` (future `scheduled_at` else 400 `invalid_schedule`); `audience` is a closed JSON document validated server-side (400 `invalid_audience`) |
+| GET/PATCH/DELETE | `/admin/notifications/campaigns/{id}/` | 200 / 204 / 409 | Edit only `draft`/`scheduled`; delete only `draft`/`canceled`. Sent campaigns are immutable evidence - 409 `campaign_state` |
+| POST | `/admin/notifications/campaigns/{id}/send/` | 200 / 400 / 409 | Deliver now: resolves the audience, drops announcement opt-outs, renders `{{user_name}}`/`{{course_name}}` per recipient, bulk-creates snapshots with a `campaign` backreference. Unresolvable variables → 400 `unresolvable_variables` |
+| POST | `/admin/notifications/campaigns/{id}/cancel/` | 200 / 409 | Call off a scheduled send |
+| GET | `/admin/notifications/campaigns/{id}/analytics/` | 200 / 404 | `recipients`, `delivered`, `read`, `unread`, `read_rate`, `sent_at` - real receipts only, no click tracking exists |
+| POST | `/admin/notifications/audience/estimate/` | 200 / 400 | `{audience}` → `{count}` via the same resolve-then-drop-opt-outs pipeline a send uses |
+| GET/POST | `/admin/notifications/templates/` | 200 / 201 | Reusable composer templates (admin-side config, never user preferences) |
+| PATCH/DELETE | `/admin/notifications/templates/{id}/` | 200 / 204 / 404 | Edit fields or toggle `is_archived`; delete is allowed - templates are config, not history |
 
 **Recommendations - `/admin/recommendations/`**
 

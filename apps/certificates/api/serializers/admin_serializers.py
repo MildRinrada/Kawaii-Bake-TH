@@ -137,3 +137,36 @@ class CertificateRevokeSerializer(StrictSerializer):
     """Payload for a staff revocation - the reason is not optional."""
 
     reason = serializers.CharField(max_length=200)
+
+
+class TemplateRowSerializer(serializers.Serializer):
+    """One course template on the workspace list."""
+
+    course_slug = serializers.CharField(read_only=True, source="course.slug")
+    course_title = serializers.CharField(read_only=True, source="course.title")
+    status = serializers.SerializerMethodField()
+    updated_at = serializers.DateTimeField(read_only=True)
+    published_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    updated_by = serializers.SerializerMethodField()
+
+    def get_status(self, obj: Any) -> str:
+        """``published`` once frozen, else ``draft``."""
+        return "published" if obj.published_at else "draft"
+
+    def get_updated_by(self, obj: Any) -> str | None:
+        """The last editor's handle, when known."""
+        return obj.updated_by.username if obj.updated_by else None
+
+
+class TemplateDetailSerializer(TemplateRowSerializer):
+    """The full document pair the designer edits against."""
+
+    draft_design = serializers.JSONField(read_only=True)
+    published_design = serializers.JSONField(read_only=True, allow_null=True)
+
+
+class TemplateDraftSerializer(StrictSerializer):
+    """The autosave payload: the whole design document, validated deep
+    in the service (bounds, caps, the 3-signature ceiling)."""
+
+    design = serializers.JSONField()

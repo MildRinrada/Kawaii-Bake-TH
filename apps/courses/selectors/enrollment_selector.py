@@ -163,3 +163,40 @@ def list_enrolled_course_ids(*, user_id: int) -> QuerySet:
         user_id=user_id,
         status__in=(EnrollmentStatus.ACTIVE, EnrollmentStatus.COMPLETED),
     ).values_list("course_id", flat=True)
+
+
+def enrolled_user_ids(*, course_id: int) -> list[int]:
+    """User ids enrolled in (or graduated from) one course.
+
+    Part of the cross-app audience API (ADR 0030): campaign targeting
+    reaches enrollment data only through this selector. Dropped students
+    chose to leave, so they are not part of the course's audience.
+
+    Args:
+        course_id: Primary key of the course.
+
+    Returns:
+        The enrolled or completed user ids.
+    """
+    return list(
+        Enrollment.objects.filter(
+            course_id=course_id,
+            status__in=(EnrollmentStatus.ACTIVE, EnrollmentStatus.COMPLETED),
+        ).values_list("user_id", flat=True)
+    )
+
+
+def completed_user_ids(*, course_id: int) -> list[int]:
+    """User ids that completed one course (ADR 0030 audience API).
+
+    Args:
+        course_id: Primary key of the course.
+
+    Returns:
+        The completed user ids.
+    """
+    return list(
+        Enrollment.objects.filter(
+            course_id=course_id, status=EnrollmentStatus.COMPLETED
+        ).values_list("user_id", flat=True)
+    )

@@ -8,10 +8,16 @@ exist" are the same 404 at the API. The one exception is
 
 from __future__ import annotations
 
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
+from django.utils import timezone
 
-from apps.notifications.constants import NotificationEventType
-from apps.notifications.models import Notification, NotificationPreference
+from apps.notifications.constants import CampaignStatus, NotificationEventType
+from apps.notifications.models import (
+    Notification,
+    NotificationCampaign,
+    NotificationPreference,
+    NotificationTemplate,
+)
 
 
 def list_all(
@@ -131,4 +137,140 @@ def effective_preferences(*, user_id: int) -> dict[str, bool]:
     return {
         event_type: stored.get(event_type, True)
         for event_type in NotificationEventType.values
+    }
+
+
+# --------------------------------------------------------------------------
+# Campaigns and templates (ADR 0030) - staff surface only
+# --------------------------------------------------------------------------
+
+
+def list_campaigns(
+    *, status: str = "", search: str = ""
+) -> QuerySet[NotificationCampaign]:
+    """Campaigns for the tabbed staff list, newest first.
+
+    Args:
+        status: Restrict to one :class:`CampaignStatus`, or all when blank.
+        search: Matches the title or body.
+
+    Returns:
+        A lazy queryset with the author preloaded.
+    """
+    queryset = NotificationCampaign.objects.select_related(
+        "created_by"
+    ).annotate(
+        read_count=Count(
+            "deliveries", filter=Q(deliveries__read_at__isnull=False)
+        )
+    )
+    if status:
+        queryset = queryset.filter(status=status)
+    cleaned = search.strip()
+    if cleaned:
+        queryset = queryset.filter(
+            Q(title__icontains=cleaned) | Q(body__icontains=cleaned)
+        )
+    return queryset.order_by("-created_at", "-id")
+
+
+def get_campaign(*, campaign_id: int) -> NotificationCampaign | None:
+    """Fetch one campaign with its author preloaded.
+
+    Args:
+        campaign_id: Primary key of the campaign.
+
+    Returns:
+        The campaign, or ``None`` when absent.
+    """
+    return (
+        NotificationCampaign.objects.select_related("created_by")
+        .annotate(
+            read_count=Count(
+                "deliveries", filter=Q(deliveries__read_at__isnull=False)
+            )
+        )
+        .filter(pk=campaign_id)
+        .first()
+    )
+
+
+def campaign_delivery_stats(*, campaign_id: int) -> dict[str, int]:
+    """Honest delivery analytics: rows created, rows read.
+
+    In-app only, so "delivered" means the snapshot exists and
+    ``read_at`` is the only receipt the platform can report - there is
+    no click tracking to pretend at.
+
+    Args:
+        campaign_id: Primary key of the campaign.
+
+    Returns:
+        Mapping with ``delivered`` and ``read`` counts.
+    """
+    row = Notification.objects.filter(campaign_id=campaign_id).aggregate(
+        delivered=Count("id"), read=Count("id", filter=Q(read_at__isnull=False))
+    )
+    return {"delivered": row["delivered"], "read": row["read"]}
+
+
+def list_templates(
+    *, include_archived: bool = True
+) -> QuerySet[NotificationTemplate]:
+    """Composer templates, active first, then by name.
+
+    Args:
+        include_archived: Whether archived templates are included.
+
+    Returns:
+        A lazy queryset.
+    """
+    queryset = NotificationTemplate.objects.all()
+    if not include_archived:
+        queryset = queryset.filter(is_archived=False)
+    return queryset
+
+
+def get_template(*, template_id: int) -> NotificationTemplate | None:
+    """Fetch one template.
+
+    Args:
+        template_id: Primary key of the template.
+
+    Returns:
+        The template, or ``None`` when absent.
+    """
+    return NotificationTemplate.objects.filter(pk=template_id).first()
+
+
+def admin_stats() -> dict[str, int]:
+    """Headline numbers for the staff notifications hub.
+
+    Every figure is a real count: campaigns by status, snapshots
+    delivered today, and the platform-wide read receipts.
+
+    Returns:
+        Mapping with campaign counts, today's deliveries, and the
+        delivered/read totals the read-rate is computed from.
+    """
+    by_status = dict(
+        NotificationCampaign.objects.values_list("status").annotate(
+            total=Count("id")
+        )
+    )
+    today_start = timezone.now().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    receipts = Notification.objects.aggregate(
+        delivered=Count("id"), read=Count("id", filter=Q(read_at__isnull=False))
+    )
+    return {
+        "campaigns_sent": by_status.get(CampaignStatus.SENT, 0),
+        "drafts": by_status.get(CampaignStatus.DRAFT, 0),
+        "scheduled": by_status.get(CampaignStatus.SCHEDULED, 0),
+        "sent_today": Notification.objects.filter(
+            created_at__gte=today_start
+        ).count(),
+        "delivered_total": receipts["delivered"],
+        "read_total": receipts["read"],
     }

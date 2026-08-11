@@ -268,3 +268,172 @@ class AdminCertificateApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class CertificateTemplateApiTests(TestCase):
+    """/api/v1/admin/certificates/templates/…"""
+
+    def setUp(self) -> None:
+        from apps.courses.tests.factories import create_published_course
+
+        self.client = APIClient()
+        self.staff = create_user(is_staff=True)
+        self.member = create_user()
+        self.course = create_published_course(instructor=create_user())
+        self.detail_url = reverse(
+            "certificates_admin:template-detail",
+            kwargs={"course_slug": self.course.slug},
+        )
+
+    def _design(self, **overrides):
+        base = {
+            "size": {"width": 1123, "height": 794},
+            "background": "#fffaf3",
+            "elements": [
+                {
+                    "id": "recipient",
+                    "kind": "field",
+                    "name": "ชื่อผู้รับ",
+                    "field": "recipient_full_name",
+                    "x": 100, "y": 100, "w": 700, "h": 60,
+                    "rotation": 0, "opacity": 1, "z": 1,
+                    "locked": False, "hidden": False,
+                    "style": {"fontSize": 40, "align": "center"},
+                }
+            ],
+        }
+        base.update(overrides)
+        return base
+
+    def test_every_route_requires_staff(self) -> None:
+        for user, expected in (
+            (None, status.HTTP_401_UNAUTHORIZED),
+            (self.member, status.HTTP_403_FORBIDDEN),
+        ):
+            if user:
+                self.client.force_login(user)
+            self.assertEqual(
+                self.client.get(self.detail_url).status_code, expected
+            )
+            self.client.logout()
+
+    def test_first_read_seeds_the_default_design(self) -> None:
+        self.client.force_login(self.staff)
+
+        payload = self.client.get(self.detail_url).json()
+
+        self.assertEqual(payload["status"], "draft")
+        self.assertIsNone(payload["published_design"])
+        element_ids = {e["id"] for e in payload["draft_design"]["elements"]}
+        self.assertIn("recipient", element_ids)
+        self.assertIn("signature-1", element_ids)
+
+    def test_autosave_publish_reset_round_trip(self) -> None:
+        self.client.force_login(self.staff)
+
+        saved = self.client.put(
+            self.detail_url, {"design": self._design()}, format="json"
+        )
+        self.assertEqual(saved.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(saved.json()["draft_design"]["elements"]), 1)
+
+        published = self.client.post(
+            reverse(
+                "certificates_admin:template-publish",
+                kwargs={"course_slug": self.course.slug},
+            )
+        )
+        self.assertEqual(published.status_code, status.HTTP_200_OK)
+        self.assertEqual(published.json()["status"], "published")
+        self.assertEqual(
+            len(published.json()["published_design"]["elements"]), 1
+        )
+
+        # Draft drifts, reset returns it to the published version.
+        design = self._design()
+        design["elements"] = []
+        self.client.put(self.detail_url, {"design": design}, format="json")
+        reset = self.client.post(
+            reverse(
+                "certificates_admin:template-reset",
+                kwargs={"course_slug": self.course.slug},
+            )
+        )
+        self.assertEqual(len(reset.json()["draft_design"]["elements"]), 1)
+
+    def test_the_signature_ceiling_is_enforced(self) -> None:
+        self.client.force_login(self.staff)
+        signature = {
+            "kind": "signature",
+            "name": "ลายเซ็น",
+            "x": 0, "y": 0, "w": 200, "h": 100,
+            "rotation": 0, "opacity": 1, "z": 1,
+            "locked": False, "hidden": False,
+            "signature": {"name": "a", "title": "b", "organization": "", "image": ""},
+            "style": {},
+        }
+        design = self._design(
+            elements=[{**signature, "id": f"sig-{i}"} for i in range(4)]
+        )
+
+        response = self.client.put(
+            self.detail_url, {"design": design}, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_malformed_documents_are_rejected(self) -> None:
+        self.client.force_login(self.staff)
+        for design in (
+            [],
+            {"size": {"width": 1123, "height": 794}, "elements": "nope"},
+            self._design(
+                elements=[{"id": "x", "kind": "teleporter", "x": 0, "y": 0,
+                           "w": 10, "h": 10, "rotation": 0, "opacity": 1,
+                           "z": 0, "locked": False, "hidden": False,
+                           "style": {}}]
+            ),
+        ):
+            response = self.client.put(
+                self.detail_url, {"design": design}, format="json"
+            )
+            self.assertEqual(
+                response.status_code, status.HTTP_400_BAD_REQUEST
+            )
+
+    def test_delete_returns_the_course_to_the_default(self) -> None:
+        from apps.certificates.models import CertificateTemplate
+
+        self.client.force_login(self.staff)
+        self.client.put(self.detail_url, {"design": self._design()}, format="json")
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            CertificateTemplate.objects.filter(course=self.course).exists()
+        )
+
+    def test_unknown_course_is_a_404(self) -> None:
+        self.client.force_login(self.staff)
+
+        response = self.client.get(
+            reverse(
+                "certificates_admin:template-detail",
+                kwargs={"course_slug": "no-course"},
+            )
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_the_workspace_list_shows_existing_rows(self) -> None:
+        self.client.force_login(self.staff)
+        self.client.put(self.detail_url, {"design": self._design()}, format="json")
+
+        rows = self.client.get(
+            reverse("certificates_admin:templates")
+        ).json()
+
+        self.assertEqual(rows[0]["course_slug"], self.course.slug)
+        self.assertEqual(rows[0]["status"], "draft")
+        self.assertEqual(rows[0]["updated_by"], self.staff.username)

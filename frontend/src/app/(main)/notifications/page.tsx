@@ -2,6 +2,8 @@
 
 /** Notification center: unread emphasis, read stamps, read-all. */
 
+import Link from "next/link";
+
 import { api } from "@/lib/api/client";
 import type { NotificationList } from "@/lib/api/models";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
@@ -100,10 +102,16 @@ function NotificationsContent() {
                   aria-hidden
                   className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-fg-muted"
                 >
-                  <Icon
-                    name={`ui/${EVENT_ICONS[item.event_type] ?? "bell"}`}
-                    className="size-5"
-                  />
+                  {/* Campaign sends carry their own glyph (ADR 0030);
+                      machine events keep the per-event icon. */}
+                  {item.icon ? (
+                    <span className="text-xl leading-none">{item.icon}</span>
+                  ) : (
+                    <Icon
+                      name={`ui/${EVENT_ICONS[item.event_type] ?? "bell"}`}
+                      className="size-5"
+                    />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className={cn("text-sm text-fg", unread && "font-medium")}>
@@ -111,6 +119,14 @@ function NotificationsContent() {
                   </p>
                   {item.body ? (
                     <p className="mt-0.5 text-sm text-fg-muted">{item.body}</p>
+                  ) : null}
+                  {item.link ? (
+                    <Link
+                      href={item.link}
+                      className="mt-1.5 inline-block text-sm font-medium text-accent hover:underline"
+                    >
+                      {item.cta_text || "ดูรายละเอียด"} →
+                    </Link>
                   ) : null}
                   <p className="mt-1 text-xs text-fg-subtle">
                     {new Date(item.created_at).toLocaleString("th-TH")}

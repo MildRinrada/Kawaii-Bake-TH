@@ -9,7 +9,12 @@ from __future__ import annotations
 
 from django.contrib import admin
 
-from apps.notifications.models import Notification, NotificationPreference
+from apps.notifications.models import (
+    Notification,
+    NotificationCampaign,
+    NotificationPreference,
+    NotificationTemplate,
+)
 
 
 class _ReadOnlyAdmin(admin.ModelAdmin):
@@ -41,3 +46,30 @@ class NotificationPreferenceAdmin(_ReadOnlyAdmin):
     list_display = ("user", "event_type", "enabled", "updated_at")
     list_filter = ("event_type", "enabled")
     raw_id_fields = ("user",)
+
+
+@admin.register(NotificationCampaign)
+class NotificationCampaignAdmin(_ReadOnlyAdmin):
+    """Inspect staff campaigns - managed through the API surface."""
+
+    list_display = (
+        "id",
+        "title",
+        "kind",
+        "status",
+        "scheduled_at",
+        "sent_at",
+        "recipients_count",
+        "created_by",
+    )
+    list_filter = ("status", "kind")
+    raw_id_fields = ("created_by",)
+
+
+@admin.register(NotificationTemplate)
+class NotificationTemplateAdmin(_ReadOnlyAdmin):
+    """Inspect composer templates - managed through the API surface."""
+
+    list_display = ("id", "name", "kind", "is_archived", "updated_at")
+    list_filter = ("is_archived", "kind")
+    raw_id_fields = ("created_by",)

@@ -1,338 +1,814 @@
 "use client";
 
 /**
- * Notifications - the cross-user delivery log plus broadcast.
+ * Notifications hub - the staff campaign manager (ADR 0030).
  *
- * Reads `GET /admin/notifications/` (staff-only): every delivered row
- * with its recipient, filterable by event type and read state. The one
- * write is `POST /admin/notifications/broadcast/`, which fans an
- * announcement out to every active account that has not opted out of
- * the "announcement" event type.
+ * Campaigns are staff-authored sends with a lifecycle (draft →
+ * scheduled → sent / canceled); templates are reusable composer
+ * starting points. Composition lives at `/admin/notifications/compose`,
+ * the per-recipient delivery log at `/admin/notifications/log`. This is
+ * NOT the user's notification-preferences page - that stays in
+ * `/settings`.
  *
- * Rows are read-only by design: there is no delete endpoint, so no row
- * actions are offered here.
+ * Every number here is a real count from the API; sent campaigns are
+ * immutable and only expose duplicate + analytics.
  */
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { api } from "@/lib/api/client";
-import type { AdminNotification, BroadcastResult } from "@/lib/api/models";
+import type {
+  AdminNotificationStats,
+  AudienceEstimate,
+  BroadcastResult,
+  CampaignAnalytics,
+  NotificationCampaign,
+  NotificationTemplateItem,
+} from "@/lib/api/models";
+import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { usePagedList, useDebounced } from "@/lib/admin/use-paged-list";
 import { relativeThai } from "@/lib/datetime";
 import { useToast } from "@/components/ui/toast";
-import { Badge, type Tone } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dropdown } from "@/components/ui/dropdown";
 import { ErrorState } from "@/components/ui/error-state";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
 import {
   AdminEmpty,
   AdminPanel,
   DataTable,
   DataTableToolbar,
-  FilterBar,
-  FilterSelect,
+  DetailPanel,
+  DetailRow,
   Pagination,
   SearchInput,
+  StatCard,
   useConfirm,
 } from "@/components/admin/primitives";
 import { describeAdminError } from "@/components/admin/lifecycle";
+import { cn } from "@/lib/cn";
 
-/** Every event type the backend emits, with its admin-facing label. */
-const EVENT_TYPES: { value: string; label: string; tone: Tone }[] = [
-  { value: "announcement", label: "ประกาศ", tone: "berry" },
-  { value: "review_received", label: "ได้รับรีวิว", tone: "peach" },
-  { value: "course_enrollment", label: "มีผู้ลงเรียน", tone: "mint" },
-  { value: "achievement_earned", label: "ได้รับเหรียญ", tone: "butter" },
-  { value: "qa_answer_received", label: "มีคำตอบ", tone: "lavender" },
-  { value: "qa_answer_accepted", label: "คำตอบถูกเลือก", tone: "success" },
-];
+import { CAMPAIGN_STATUS, audienceLabel, kindLabel } from "./kinds";
+import { NotificationPreviewCard } from "./preview-card";
+import { TemplateForm } from "./template-form";
 
-const EVENT_BY_VALUE = new Map(EVENT_TYPES.map((item) => [item.value, item]));
+const TABS = [
+  { key: "all", label: "ทั้งหมด" },
+  { key: "draft", label: "ฉบับร่าง" },
+  { key: "scheduled", label: "ตั้งเวลา" },
+  { key: "sent", label: "ส่งแล้ว" },
+  { key: "templates", label: "เทมเพลต" },
+] as const;
 
-const READ_STATES = [
-  { value: "", label: "ทั้งหมด" },
-  { value: "true", label: "ยังไม่อ่าน" },
-  { value: "false", label: "อ่านแล้ว" },
-];
+type TabKey = (typeof TABS)[number]["key"];
 
-function EventTypeBadge({ eventType }: { eventType: string }) {
-  const meta = EVENT_BY_VALUE.get(eventType);
+function StatusBadgeFor({ campaign }: { campaign: NotificationCampaign }) {
+  const meta = CAMPAIGN_STATUS[campaign.status] ?? {
+    label: campaign.status,
+    tone: "neutral" as const,
+  };
+  const overdue =
+    campaign.status === "scheduled" &&
+    campaign.scheduled_at !== null &&
+    new Date(campaign.scheduled_at) <= new Date();
   return (
-    <Badge tone={meta?.tone ?? "neutral"} className="whitespace-nowrap">
-      {meta?.label ?? eventType}
-    </Badge>
+    <div className="space-y-0.5">
+      <Badge tone={meta.tone} className="whitespace-nowrap">
+        {meta.label}
+      </Badge>
+      {campaign.status === "scheduled" && campaign.scheduled_at ? (
+        <p className="whitespace-nowrap text-xs text-fg-muted">
+          {new Date(campaign.scheduled_at).toLocaleString("th-TH", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}
+          {overdue ? (
+            <span className="text-warning"> · ถึงกำหนดแล้ว</span>
+          ) : null}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Analytics slide-over for one (usually sent) campaign. */
+function CampaignAnalyticsPanel({
+  campaign,
+  onClose,
+}: {
+  campaign: NotificationCampaign;
+  onClose: () => void;
+}) {
+  const { data, loading, error, refetch } = useApiQuery(
+    (signal) =>
+      api.get<CampaignAnalytics>(
+        `/admin/notifications/campaigns/${campaign.id}/analytics/`,
+        { signal },
+      ),
+    [campaign.id],
+  );
+  const percent = data ? Math.round(data.read_rate * 100) : 0;
+
+  return (
+    <DetailPanel open title={`สถิติ: ${campaign.title}`} onClose={onClose}>
+      <div className="space-y-4">
+        <NotificationPreviewCard
+          icon={campaign.icon}
+          title={campaign.title}
+          body={campaign.body}
+          ctaText={campaign.cta_text}
+          link={campaign.link}
+        />
+
+        {loading ? (
+          <Skeleton className="h-32 w-full rounded-md" />
+        ) : error ? (
+          <ErrorState error={error} onRetry={refetch} />
+        ) : data ? (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <StatCard label="ผู้รับ" value={data.recipients} />
+              <StatCard label="ส่งถึงแล้ว" value={data.delivered} />
+              <StatCard label="อ่านแล้ว" value={data.read} />
+              <StatCard label="ยังไม่อ่าน" value={data.unread} />
+            </div>
+            <div>
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="text-fg-muted">อัตราการอ่าน</span>
+                <span className="font-mono font-semibold tabular-nums">
+                  {percent}%
+                </span>
+              </div>
+              <div
+                role="progressbar"
+                aria-valuenow={percent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="อัตราการอ่าน"
+                className="h-2 overflow-hidden rounded-full bg-surface-sunken"
+              >
+                <div
+                  className="h-full rounded-full bg-accent"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+            </div>
+            <div className="rounded-md border border-edge">
+              <DetailRow label="กลุ่มเป้าหมาย">
+                {audienceLabel(campaign.audience)}
+              </DetailRow>
+              <DetailRow label="ส่งเมื่อ">
+                {data.sent_at
+                  ? new Date(data.sent_at).toLocaleString("th-TH")
+                  : "-"}
+              </DetailRow>
+              <DetailRow label="สร้างโดย">
+                {campaign.created_by ? `@${campaign.created_by}` : "-"}
+              </DetailRow>
+            </div>
+            <p className="text-xs text-fg-muted">
+              ระบบแจ้งเตือนเป็น in-app เท่านั้น “อ่านแล้ว”
+              คือใบเสร็จเดียวที่ยืนยันได้จริง - ไม่มีการติดตามการคลิก CTA
+            </p>
+          </>
+        ) : null}
+      </div>
+    </DetailPanel>
   );
 }
 
 export default function AdminNotificationsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const confirm = useConfirm();
 
-  // Log filters
+  const [tab, setTab] = useState<TabKey>("all");
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounced(searchInput);
-  const [eventType, setEventType] = useState("");
-  const [readState, setReadState] = useState("");
+  const [analyticsFor, setAnalyticsFor] =
+    useState<NotificationCampaign | null>(null);
+  const [templatePanel, setTemplatePanel] = useState<{
+    open: boolean;
+    item: NotificationTemplateItem | null;
+  }>({ open: false, item: null });
 
-  // Broadcast composer
-  const [composing, setComposing] = useState(false);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [link, setLink] = useState("");
-  const [titleError, setTitleError] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
+  const stats = useApiQuery(
+    (signal) =>
+      api.get<AdminNotificationStats>("/admin/notifications/stats/", {
+        signal,
+      }),
+    [],
+  );
+  const campaigns = usePagedList<NotificationCampaign>(
+    "/admin/notifications/campaigns/",
+    {
+      status: tab === "all" || tab === "templates" ? undefined : tab,
+      search: search || undefined,
+    },
+  );
+  const templates = useApiQuery(
+    (signal) =>
+      api.get<NotificationTemplateItem[]>("/admin/notifications/templates/", {
+        signal,
+      }),
+    [],
+  );
 
-  const list = usePagedList<AdminNotification>("/admin/notifications/", {
-    // Unknown or empty query keys are a 400 on this endpoint - omit them.
-    search: search || undefined,
-    event_type: eventType || undefined,
-    unread: readState === "" ? undefined : readState === "true",
-  });
-
-  async function sendBroadcast() {
-    setSending(true);
-    try {
-      const result = await api.post<BroadcastResult>(
-        "/admin/notifications/broadcast/",
-        {
-          body: {
-            title: title.trim(),
-            ...(body.trim() ? { body: body.trim() } : {}),
-            ...(link.trim() ? { link: link.trim() } : {}),
-          },
-        },
-      );
-      toast(`ส่งประกาศถึง ${result.recipients} บัญชีแล้ว`, "success");
-      setComposing(false);
-      setTitle("");
-      setBody("");
-      setLink("");
-      list.refetch();
-    } catch (error) {
-      toast(describeAdminError(error), "danger");
-    } finally {
-      setSending(false);
-    }
+  function refresh() {
+    campaigns.refetch();
+    stats.refetch();
   }
 
-  function submitBroadcast(event: React.FormEvent) {
-    event.preventDefault();
-    if (!title.trim()) {
-      setTitleError("กรุณากรอกหัวข้อก่อนส่งประกาศ");
-      return;
+  async function sendNow(campaign: NotificationCampaign) {
+    // Estimate first, so the confirmation states the real blast radius.
+    let estimated: number | null = null;
+    try {
+      const estimate = await api.post<AudienceEstimate>(
+        "/admin/notifications/audience/estimate/",
+        { body: { audience: campaign.audience } },
+      );
+      estimated = estimate.count;
+    } catch {
+      // The send itself re-validates; the dialog just says "unknown".
     }
-    setTitleError(null);
     confirm.ask({
-      title: "ส่งประกาศถึงทุกคน?",
-      body: "ประกาศนี้จะถูกส่งเข้ากล่องแจ้งเตือนของทุกบัญชีที่ยังใช้งานอยู่และไม่ได้ปิดรับ “ประกาศ” - ส่งแล้วเรียกคืนไม่ได้",
-      confirmLabel: "ส่งประกาศ",
-      action: sendBroadcast,
+      title: `ส่ง “${campaign.title}” ตอนนี้?`,
+      body:
+        estimated === null
+          ? "ไม่สามารถประเมินจำนวนผู้รับได้ - ระบบจะตรวจสอบกลุ่มเป้าหมายอีกครั้งตอนส่ง ส่งแล้วเรียกคืนไม่ได้"
+          : `การแจ้งเตือนจะถูกส่งถึงประมาณ ${estimated.toLocaleString("th-TH")} บัญชี - ส่งแล้วเรียกคืนไม่ได้`,
+      confirmLabel: "ส่งตอนนี้",
+      action: async () => {
+        try {
+          const result = await api.post<BroadcastResult>(
+            `/admin/notifications/campaigns/${campaign.id}/send/`,
+          );
+          toast(`ส่งถึง ${result.recipients} บัญชีแล้ว`, "success");
+          refresh();
+        } catch (error) {
+          toast(describeAdminError(error), "danger");
+        }
+      },
     });
   }
 
-  if (list.error) {
-    return <ErrorState error={list.error} onRetry={list.refetch} />;
+  function cancelScheduled(campaign: NotificationCampaign) {
+    confirm.ask({
+      title: `ยกเลิกการตั้งเวลา “${campaign.title}”?`,
+      body: "แคมเปญจะไม่ถูกส่งตามเวลาเดิม และจะย้ายไปสถานะยกเลิก",
+      confirmLabel: "ยกเลิกการตั้งเวลา",
+      action: async () => {
+        try {
+          await api.post(
+            `/admin/notifications/campaigns/${campaign.id}/cancel/`,
+          );
+          toast("ยกเลิกการตั้งเวลาแล้ว", "success");
+          refresh();
+        } catch (error) {
+          toast(describeAdminError(error), "danger");
+        }
+      },
+    });
+  }
+
+  function deleteCampaign(campaign: NotificationCampaign) {
+    confirm.ask({
+      title: `ลบ “${campaign.title}”?`,
+      body: "ลบได้เฉพาะฉบับร่างและแคมเปญที่ยกเลิกแล้ว - ลบแล้วกู้คืนไม่ได้",
+      confirmLabel: "ลบแคมเปญ",
+      danger: true,
+      action: async () => {
+        try {
+          await api.delete(`/admin/notifications/campaigns/${campaign.id}/`);
+          toast("ลบแคมเปญแล้ว", "success");
+          refresh();
+        } catch (error) {
+          toast(describeAdminError(error), "danger");
+        }
+      },
+    });
+  }
+
+  async function duplicateTemplate(item: NotificationTemplateItem) {
+    try {
+      await api.post("/admin/notifications/templates/", {
+        body: {
+          name: `${item.name} (สำเนา)`,
+          kind: item.kind,
+          icon: item.icon,
+          title: item.title,
+          body: item.body,
+          cta_text: item.cta_text,
+          link: item.link,
+        },
+      });
+      toast("ทำสำเนาเทมเพลตแล้ว", "success");
+      templates.refetch();
+    } catch (error) {
+      toast(describeAdminError(error), "danger");
+    }
+  }
+
+  async function toggleTemplateArchive(item: NotificationTemplateItem) {
+    try {
+      await api.patch(`/admin/notifications/templates/${item.id}/`, {
+        body: { is_archived: !item.is_archived },
+      });
+      toast(
+        item.is_archived ? "นำเทมเพลตกลับมาใช้แล้ว" : "เก็บเทมเพลตแล้ว",
+        "success",
+      );
+      templates.refetch();
+    } catch (error) {
+      toast(describeAdminError(error), "danger");
+    }
+  }
+
+  function deleteTemplate(item: NotificationTemplateItem) {
+    confirm.ask({
+      title: `ลบเทมเพลต “${item.name}”?`,
+      body: "แคมเปญที่เคยสร้างจากเทมเพลตนี้ไม่ได้รับผลกระทบ",
+      confirmLabel: "ลบเทมเพลต",
+      danger: true,
+      action: async () => {
+        try {
+          await api.delete(`/admin/notifications/templates/${item.id}/`);
+          toast("ลบเทมเพลตแล้ว", "success");
+          templates.refetch();
+        } catch (error) {
+          toast(describeAdminError(error), "danger");
+        }
+      },
+    });
+  }
+
+  function campaignMenu(row: NotificationCampaign) {
+    const editable = row.status === "draft" || row.status === "scheduled";
+    const items = [];
+    if (editable) {
+      items.push({
+        key: "edit",
+        label: "แก้ไข",
+        onSelect: () =>
+          router.push(`/admin/notifications/compose?edit=${row.id}`),
+      });
+      items.push({
+        key: "send",
+        label: "ส่งตอนนี้",
+        onSelect: () => void sendNow(row),
+      });
+    }
+    items.push({
+      key: "duplicate",
+      label: "ทำสำเนา",
+      onSelect: () =>
+        router.push(`/admin/notifications/compose?from=${row.id}`),
+    });
+    if (row.status === "sent") {
+      items.push({
+        key: "analytics",
+        label: "ดูสถิติ",
+        onSelect: () => setAnalyticsFor(row),
+      });
+    }
+    if (row.status === "scheduled") {
+      items.push({
+        key: "cancel",
+        label: "ยกเลิกการตั้งเวลา",
+        onSelect: () => cancelScheduled(row),
+        separator: true,
+      });
+    }
+    if (row.status === "draft" || row.status === "canceled") {
+      items.push({
+        key: "delete",
+        label: <span className="text-danger">ลบแคมเปญ</span>,
+        onSelect: () => deleteCampaign(row),
+        separator: true,
+      });
+    }
+    return items;
+  }
+
+  const readRate =
+    stats.data && stats.data.delivered_total > 0
+      ? `${Math.round((stats.data.read_total / stats.data.delivered_total) * 100)}%`
+      : null;
+
+  if (campaigns.error) {
+    return <ErrorState error={campaigns.error} onRetry={campaigns.refetch} />;
   }
 
   return (
     <>
       <AdminPageHeader
         title="การแจ้งเตือน"
-        description="บันทึกการแจ้งเตือนที่ระบบส่งถึงผู้ใช้ทุกคน พร้อมช่องทางประกาศถึงทั้งแพลตฟอร์ม"
+        description="สร้าง ปรับแต่ง และจัดการการแจ้งเตือนที่ส่งถึงผู้ใช้ KawaiiBake"
         actions={
-          <Button size="sm" onClick={() => setComposing((open) => !open)}>
-            {composing ? "ปิดฟอร์มประกาศ" : "ประกาศถึงทุกคน"}
-          </Button>
+          <div className="flex gap-2">
+            <Link href="/admin/notifications/log">
+              <Button size="sm" variant="secondary">
+                บันทึกรายผู้รับ
+              </Button>
+            </Link>
+            <Link href="/admin/notifications/compose?kind=announcement">
+              <Button size="sm" variant="secondary">
+                ส่งประกาศ
+              </Button>
+            </Link>
+            <Link href="/admin/notifications/compose">
+              <Button size="sm">+ สร้างการแจ้งเตือน</Button>
+            </Link>
+          </div>
         }
       />
 
-      {composing ? (
-        <AdminPanel
-          title="ประกาศถึงทุกคน"
-          description="ส่งเข้ากล่องแจ้งเตือน in-app ของทุกบัญชีที่ใช้งานอยู่และเปิดรับ “ประกาศ”"
-          className="mb-4"
-        >
-          <form onSubmit={submitBroadcast} noValidate className="space-y-3 px-4 py-4">
-            <Field
-              label="หัวข้อ"
-              required
-              errors={titleError ? [titleError] : undefined}
+      <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+        <StatCard
+          label="แคมเปญที่ส่งแล้ว"
+          value={stats.data?.campaigns_sent}
+          loading={stats.loading}
+        />
+        <StatCard
+          label="ส่งวันนี้"
+          value={stats.data?.sent_today}
+          hint="รวมการแจ้งเตือนอัตโนมัติ"
+          loading={stats.loading}
+        />
+        <StatCard
+          label="ตั้งเวลาไว้"
+          value={stats.data?.scheduled}
+          loading={stats.loading}
+        />
+        <StatCard
+          label="ฉบับร่าง"
+          value={stats.data?.drafts}
+          loading={stats.loading}
+        />
+        <StatCard
+          label="อัตราการอ่าน"
+          value={readRate}
+          hint={
+            stats.data
+              ? `อ่าน ${stats.data.read_total.toLocaleString("th-TH")} จาก ${stats.data.delivered_total.toLocaleString("th-TH")}`
+              : undefined
+          }
+          loading={stats.loading}
+          unavailable={
+            stats.data && stats.data.delivered_total === 0
+              ? "ยังไม่มีการส่ง"
+              : undefined
+          }
+        />
+      </div>
+
+      <div
+        role="tablist"
+        aria-label="มุมมองการแจ้งเตือน"
+        className="mb-3 flex flex-wrap gap-1 border-b border-edge"
+      >
+        {TABS.map((item) => {
+          const count =
+            item.key === "draft"
+              ? stats.data?.drafts
+              : item.key === "scheduled"
+                ? stats.data?.scheduled
+                : item.key === "sent"
+                  ? stats.data?.campaigns_sent
+                  : item.key === "templates"
+                    ? templates.data?.length
+                    : undefined;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.key}
+              onClick={() => setTab(item.key)}
+              className={cn(
+                "-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm",
+                tab === item.key
+                  ? "border-accent font-medium text-fg"
+                  : "border-transparent text-fg-muted hover:text-fg",
+              )}
             >
-              {(control) => (
-                <Input
-                  {...control}
-                  value={title}
-                  maxLength={200}
-                  placeholder="เช่น ปิดปรับปรุงระบบคืนวันเสาร์"
-                  onChange={(event) => {
-                    setTitle(event.target.value);
-                    if (titleError) setTitleError(null);
-                  }}
-                />
-              )}
-            </Field>
-            <Field label="ข้อความ" hint="ไม่บังคับ ยาวได้ไม่เกิน 500 ตัวอักษร">
-              {(control) => (
-                <Textarea
-                  {...control}
-                  value={body}
-                  maxLength={500}
-                  rows={3}
-                  onChange={(event) => setBody(event.target.value)}
-                />
-              )}
-            </Field>
-            <Field label="ลิงก์" hint="ไม่บังคับ - เส้นทางในเว็บ เช่น /courses">
-              {(control) => (
-                <Input
-                  {...control}
-                  value={link}
-                  maxLength={300}
-                  placeholder="/courses"
-                  onChange={(event) => setLink(event.target.value)}
-                />
-              )}
-            </Field>
-            <div className="flex justify-end gap-2">
+              {item.label}
+              {count !== undefined ? (
+                <span className="ml-1.5 rounded-full bg-surface-sunken px-1.5 py-0.5 font-mono text-xs tabular-nums">
+                  {count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "templates" ? (
+        <AdminPanel>
+          <DataTableToolbar
+            actions={
               <Button
-                type="button"
                 size="sm"
-                variant="secondary"
-                onClick={() => setComposing(false)}
+                onClick={() => setTemplatePanel({ open: true, item: null })}
               >
-                ยกเลิก
+                + สร้างเทมเพลต
               </Button>
-              <Button type="submit" size="sm" loading={sending}>
-                ส่งประกาศ
-              </Button>
-            </div>
-          </form>
+            }
+          >
+            <span className="self-center text-xs text-fg-muted">
+              เทมเพลตคือจุดเริ่มต้นสำเร็จรูปของผู้ดูแล -
+              ไม่เกี่ยวกับการตั้งค่าการแจ้งเตือนของผู้ใช้
+            </span>
+          </DataTableToolbar>
+          <DataTable
+            caption="เทมเพลตการแจ้งเตือน"
+            loading={templates.loading}
+            rows={templates.data ?? []}
+            rowKey={(row) => row.id}
+            empty={
+              <AdminEmpty
+                title="ยังไม่มีเทมเพลต"
+                description="สร้างเทมเพลตเพื่อเริ่มแคมเปญซ้ำ ๆ ได้เร็วขึ้น"
+              />
+            }
+            columns={[
+              {
+                key: "name",
+                header: "เทมเพลต",
+                render: (row) => (
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span aria-hidden className="text-xl">
+                      {row.icon || "🔔"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 font-medium">{row.name}</p>
+                      <p className="line-clamp-1 text-xs text-fg-muted">
+                        {row.title}
+                      </p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "kind",
+                header: "ประเภท",
+                render: (row) => (
+                  <span className="whitespace-nowrap text-xs text-fg-muted">
+                    {kindLabel(row.kind)}
+                  </span>
+                ),
+              },
+              {
+                key: "state",
+                header: "สถานะ",
+                render: (row) =>
+                  row.is_archived ? (
+                    <Badge tone="neutral">เก็บแล้ว</Badge>
+                  ) : (
+                    <Badge tone="success">ใช้งาน</Badge>
+                  ),
+              },
+              {
+                key: "updated",
+                header: "แก้ไขล่าสุด",
+                render: (row) => (
+                  <span className="whitespace-nowrap text-xs text-fg-muted">
+                    {relativeThai(row.updated_at)}
+                  </span>
+                ),
+              },
+              {
+                key: "actions",
+                header: "การจัดการ",
+                className: "w-px",
+                render: (row) => (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          `/admin/notifications/compose?template=${row.id}`,
+                        )
+                      }
+                      className="whitespace-nowrap rounded border border-edge-strong/60 px-2.5 py-1 text-xs text-fg hover:bg-accent-subtle"
+                    >
+                      ใช้เทมเพลต
+                    </button>
+                    <Dropdown
+                      trigger={
+                        <span className="px-2 py-1 text-fg-muted">…</span>
+                      }
+                      items={[
+                        {
+                          key: "edit",
+                          label: "แก้ไข",
+                          onSelect: () =>
+                            setTemplatePanel({ open: true, item: row }),
+                        },
+                        {
+                          key: "duplicate",
+                          label: "ทำสำเนา",
+                          onSelect: () => void duplicateTemplate(row),
+                        },
+                        {
+                          key: "archive",
+                          label: row.is_archived
+                            ? "นำกลับมาใช้"
+                            : "เก็บเทมเพลต",
+                          onSelect: () => void toggleTemplateArchive(row),
+                        },
+                        {
+                          key: "delete",
+                          label: (
+                            <span className="text-danger">ลบเทมเพลต</span>
+                          ),
+                          onSelect: () => deleteTemplate(row),
+                          separator: true,
+                        },
+                      ]}
+                    />
+                  </div>
+                ),
+              },
+            ]}
+          />
         </AdminPanel>
+      ) : (
+        <AdminPanel>
+          <DataTableToolbar
+            actions={
+              <span className="self-center text-xs text-fg-muted">
+                ทั้งหมด{" "}
+                <span className="font-mono tabular-nums">
+                  {campaigns.count}
+                </span>{" "}
+                แคมเปญ
+              </span>
+            }
+          >
+            <SearchInput
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder="ค้นหาหัวข้อหรือข้อความ…"
+              label="ค้นหาแคมเปญ"
+            />
+          </DataTableToolbar>
+
+          <DataTable
+            caption="แคมเปญการแจ้งเตือน"
+            loading={campaigns.loading}
+            rows={campaigns.rows}
+            rowKey={(row) => row.id}
+            empty={
+              <AdminEmpty
+                title={
+                  tab === "all" && !search
+                    ? "ยังไม่มีแคมเปญ"
+                    : "ไม่พบแคมเปญที่ตรงกับเงื่อนไข"
+                }
+                description={
+                  tab === "all" && !search
+                    ? "กด “+ สร้างการแจ้งเตือน” เพื่อเริ่มแคมเปญแรก"
+                    : "ลองเปลี่ยนแท็บหรือล้างคำค้น"
+                }
+              />
+            }
+            columns={[
+              {
+                key: "title",
+                header: "การแจ้งเตือน",
+                render: (row) => (
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span
+                      aria-hidden
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-lg"
+                    >
+                      {row.icon || "🔔"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 font-medium">{row.title}</p>
+                      {row.body ? (
+                        <p className="line-clamp-1 text-xs text-fg-muted">
+                          {row.body}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "kind",
+                header: "ประเภท",
+                render: (row) => (
+                  <span className="whitespace-nowrap text-xs text-fg-muted">
+                    {kindLabel(row.kind)}
+                  </span>
+                ),
+              },
+              {
+                key: "audience",
+                header: "กลุ่มเป้าหมาย",
+                render: (row) => (
+                  <span className="whitespace-nowrap text-xs text-fg-muted">
+                    {audienceLabel(row.audience)}
+                  </span>
+                ),
+              },
+              {
+                key: "status",
+                header: "สถานะ",
+                render: (row) => <StatusBadgeFor campaign={row} />,
+              },
+              {
+                key: "reach",
+                header: "ผู้รับ / อ่าน",
+                render: (row) =>
+                  row.status === "sent" ? (
+                    <span className="whitespace-nowrap font-mono text-xs tabular-nums">
+                      {(row.recipients_count ?? 0).toLocaleString("th-TH")} ·
+                      อ่าน {row.read_count.toLocaleString("th-TH")}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-fg-subtle">-</span>
+                  ),
+              },
+              {
+                key: "created",
+                header: "สร้างโดย",
+                render: (row) => (
+                  <span className="whitespace-nowrap text-xs text-fg-muted">
+                    {row.created_by ? `@${row.created_by}` : "-"}
+                    <span className="text-fg-subtle">
+                      {" "}
+                      · {relativeThai(row.created_at)}
+                    </span>
+                  </span>
+                ),
+              },
+              {
+                key: "actions",
+                header: "การจัดการ",
+                className: "w-px",
+                render: (row) => (
+                  <div className="flex items-center gap-1.5">
+                    {row.status === "sent" ? (
+                      <button
+                        type="button"
+                        onClick={() => setAnalyticsFor(row)}
+                        className="whitespace-nowrap rounded border border-edge-strong/60 px-2.5 py-1 text-xs text-fg hover:bg-accent-subtle"
+                      >
+                        ดูสถิติ
+                      </button>
+                    ) : row.status === "draft" ||
+                      row.status === "scheduled" ? (
+                      <Link
+                        href={`/admin/notifications/compose?edit=${row.id}`}
+                        className="whitespace-nowrap rounded border border-edge-strong/60 px-2.5 py-1 text-xs text-fg hover:bg-accent-subtle"
+                      >
+                        แก้ไข
+                      </Link>
+                    ) : null}
+                    <Dropdown
+                      trigger={
+                        <span className="px-2 py-1 text-fg-muted">…</span>
+                      }
+                      items={campaignMenu(row)}
+                    />
+                  </div>
+                ),
+              },
+            ]}
+          />
+
+          <Pagination
+            page={campaigns.page}
+            pageSize={campaigns.pageSize}
+            count={campaigns.count}
+            onPage={campaigns.setPage}
+          />
+        </AdminPanel>
+      )}
+
+      {analyticsFor ? (
+        <CampaignAnalyticsPanel
+          campaign={analyticsFor}
+          onClose={() => setAnalyticsFor(null)}
+        />
       ) : null}
 
-      <AdminPanel>
-        <DataTableToolbar
-          actions={
-            <span className="self-center text-xs text-fg-muted">
-              ทั้งหมด{" "}
-              <span className="font-mono tabular-nums">{list.count}</span> รายการ
-            </span>
-          }
-        >
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder="ค้นหาหัวข้อ ข้อความ หรือผู้รับ…"
-            label="ค้นหาการแจ้งเตือน"
-          />
-          <FilterBar>
-            <FilterSelect
-              label="ประเภท"
-              value={eventType}
-              options={[
-                { value: "", label: "ทุกประเภท" },
-                ...EVENT_TYPES.map(({ value, label }) => ({ value, label })),
-              ]}
-              onChange={setEventType}
-            />
-            <FilterSelect
-              label="สถานะการอ่าน"
-              value={readState}
-              options={READ_STATES}
-              onChange={setReadState}
-            />
-          </FilterBar>
-        </DataTableToolbar>
-
-        <DataTable
-          caption="บันทึกการแจ้งเตือนทั้งแพลตฟอร์ม"
-          loading={list.loading}
-          rows={list.rows}
-          rowKey={(row) => row.id}
-          empty={
-            <AdminEmpty
-              title="ไม่พบการแจ้งเตือนที่ตรงกับเงื่อนไข"
-              description="ลองล้างคำค้นหรือเปลี่ยนตัวกรอง"
-            />
-          }
-          columns={[
-            {
-              key: "recipient",
-              header: "ผู้รับ",
-              render: (row) => (
-                <div className="min-w-0">
-                  <p className="line-clamp-1 font-medium">
-                    {row.recipient_display_name}
-                  </p>
-                  <p className="font-mono text-xs text-fg-subtle">
-                    @{row.recipient}
-                  </p>
-                </div>
-              ),
-            },
-            {
-              key: "type",
-              header: "ประเภท",
-              render: (row) => <EventTypeBadge eventType={row.event_type} />,
-            },
-            {
-              key: "message",
-              header: "ข้อความ",
-              render: (row) => (
-                <div className="min-w-0">
-                  <p className="line-clamp-1">{row.title}</p>
-                  {row.body ? (
-                    <p className="line-clamp-1 text-xs text-fg-muted">
-                      {row.body}
-                    </p>
-                  ) : null}
-                </div>
-              ),
-            },
-            {
-              key: "read",
-              header: "อ่านแล้ว",
-              render: (row) =>
-                row.read_at ? (
-                  <span className="whitespace-nowrap text-xs text-fg-muted">
-                    {relativeThai(row.read_at)}
-                  </span>
-                ) : (
-                  <Badge tone="warning" className="whitespace-nowrap">
-                    ยังไม่อ่าน
-                  </Badge>
-                ),
-            },
-            {
-              key: "created",
-              header: "เมื่อ",
-              render: (row) => (
-                <span className="whitespace-nowrap text-xs text-fg-muted">
-                  {relativeThai(row.created_at)}
-                </span>
-              ),
-            },
-          ]}
+      {templatePanel.open ? (
+        <TemplateForm
+          key={templatePanel.item?.id ?? "new"}
+          open
+          initial={templatePanel.item}
+          onClose={() => setTemplatePanel({ open: false, item: null })}
+          onSaved={() => templates.refetch()}
         />
-
-        <Pagination
-          page={list.page}
-          pageSize={list.pageSize}
-          count={list.count}
-          onPage={list.setPage}
-        />
-      </AdminPanel>
-
-      {/* The one honest gap: in-app only, so read receipts are the whole
-          delivery story - no email pipeline exists to report on. */}
-      <p className="mt-3 text-xs text-fg-muted">
-        ระบบแจ้งเตือนเป็น in-app เท่านั้น - ไม่มีการส่งอีเมล จึงไม่มีสถานะ
-        delivered/bounced ให้ติดตาม “อ่านแล้ว”
-        คือใบเสร็จเดียวที่ระบบยืนยันได้จริง
-      </p>
+      ) : null}
 
       {confirm.dialog}
     </>
