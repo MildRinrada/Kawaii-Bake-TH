@@ -1,6 +1,6 @@
 # ADR 0026 - Legal names, PDPA consent, and editable legal documents
 
-- **Status:** accepted
+- **Status:** accepted (decision 1 amended by [0035](0035-legal-name-at-issuance.md))
 - **Date:** 2026-08-10
 - **Phase:** legal & identity hardening
 

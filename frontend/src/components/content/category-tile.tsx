@@ -47,6 +47,9 @@ export function CategoryTile({
   href,
   active,
   onClick,
+  /** An empty category leads nowhere - the tile stays visible as
+   *  information but stops behaving like a control. */
+  disabled,
   /** Small fixed-width tile for a horizontal-scroll row (quick filters)
    *  instead of a full-width grid cell (the "explore" section). */
   compact,
@@ -69,6 +72,7 @@ export function CategoryTile({
   href?: Route;
   active?: boolean;
   onClick?: () => void;
+  disabled?: boolean;
   compact?: boolean;
   aspect?: "square" | "landscape";
   imageUrl?: string | null;
@@ -83,9 +87,11 @@ export function CategoryTile({
         draggable={false}
         className="absolute inset-0 size-full object-cover transition-transform duration-300 ease-out motion-safe:group-hover:scale-110 motion-safe:group-focus-visible:scale-110"
       />
+      {/* Strong enough that white text survives even a bright, busy
+          photo - the top half stays clear so the image still reads. */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0"
+        className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-black/0"
       />
       <span
         className={cn(
@@ -117,16 +123,28 @@ export function CategoryTile({
 
   const shared = cn(
     "group relative overflow-hidden rounded-surface shadow-raised transition-shadow duration-150",
-    "hover:shadow-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
     aspect === "landscape" ? "aspect-4/3" : "aspect-square",
     compact ? "w-20 shrink-0 snap-start sm:w-24" : "w-full",
+    disabled
+      ? "cursor-not-allowed opacity-40 shadow-none"
+      : "hover:shadow-overlay",
     active && "outline-2 outline-offset-2 outline-focus",
     className,
   );
 
   if (href) {
     return (
-      <Link href={href} aria-current={active ? "true" : undefined} className={shared}>
+      <Link
+        href={href}
+        aria-current={active ? "true" : undefined}
+        aria-disabled={disabled || undefined}
+        // A dead link is worse than no link: an empty category cannot
+        // be navigated into at all.
+        onClick={disabled ? (event) => event.preventDefault() : undefined}
+        tabIndex={disabled ? -1 : undefined}
+        className={shared}
+      >
         {content}
       </Link>
     );
@@ -135,6 +153,7 @@ export function CategoryTile({
     <button
       type="button"
       aria-pressed={active}
+      disabled={disabled}
       onClick={onClick}
       className={shared}
     >

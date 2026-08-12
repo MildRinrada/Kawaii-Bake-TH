@@ -22,7 +22,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { api } from "@/lib/api/client";
+import { api, type Paginated } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import type {
   AudienceEstimate,
@@ -37,9 +37,9 @@ import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Field } from "@/components/ui/field";
+import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
 import { AdminPanel, SearchInput, useConfirm } from "@/components/admin/primitives";
@@ -47,11 +47,11 @@ import { describeAdminError } from "@/components/admin/lifecycle";
 import { cn } from "@/lib/cn";
 
 import {
+  ANNOUNCEMENT_KIND_OPTIONS,
   AUDIENCE_KINDS,
-  KIND_BY_KEY,
-  KIND_CATEGORIES,
-  NOTIFICATION_KINDS,
+  DEFAULT_KIND,
   SKILL_LEVELS,
+  isKnownKind,
   VARIABLES,
   type AudienceDoc,
   unresolvableIn,
@@ -59,6 +59,43 @@ import {
 import { NotificationPreviewCard } from "../preview-card";
 
 type DeliveryMode = "now" | "schedule" | "draft";
+
+/** The card's own limits - mirrors the backend constants by the same
+    name (CAMPAIGN_TITLE_MAX_LENGTH / CAMPAIGN_BODY_MAX_LENGTH). */
+const TITLE_LIMIT = 60;
+const BODY_LIMIT = 120;
+
+/** In-app destinations an announcement may point at. Free text stays
+    available for one specific recipe or course. */
+const DESTINATIONS = [
+  { href: "/recipes", label: "สูตรขนมทั้งหมด" },
+  { href: "/courses", label: "คอร์สเรียนทั้งหมด" },
+  { href: "/community", label: "ชุมชน" },
+  { href: "/threads", label: "กระทู้ถาม-ตอบ" },
+  { href: "/recommendations", label: "แนะนำสำหรับคุณ" },
+  { href: "/achievements", label: "ความสำเร็จ" },
+  { href: "/support", label: "ศูนย์ช่วยเหลือ" },
+] as const;
+
+/** Whole days between an ISO timestamp and now. Client-only, like the
+    rest of this screen  the clock is never read on the server. */
+function wholeDaysSince(iso: string): number {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+}
+
+function CharCount({ value, limit }: { value: string; limit: number }) {
+  const used = value.length;
+  return (
+    <p
+      className={cn(
+        "mt-1 text-right text-xs tabular-nums",
+        used >= limit ? "text-warning" : "text-fg-subtle",
+      )}
+    >
+      {used}/{limit}
+    </p>
+  );
+}
 
 export function Composer({
   editId,
@@ -100,14 +137,24 @@ export function Composer({
     [templateId],
   );
 
+  // How recently the last announcement went out. Notification fatigue is
+  // the main reason people switch notifications off entirely, so the
+  // composer says it out loud rather than leaving the sender to guess.
+  const recentSends = useApiQuery(
+    (signal) =>
+      api.get<Paginated<NotificationCampaign>>(
+        "/admin/notifications/campaigns/",
+        { query: { status: "sent", page_size: 1 }, signal },
+      ),
+    [],
+  );
+  const lastSentAt = recentSends.data?.results[0]?.sent_at ?? null;
+  const daysSinceLastSend = lastSentAt ? wholeDaysSince(lastSentAt) : null;
+
   // ---- Form state ---------------------------------------------------
   const initialKind =
-    presetKind && KIND_BY_KEY.has(presetKind) ? presetKind : "custom";
-  const [category, setCategory] = useState(
-    KIND_BY_KEY.get(initialKind)?.category ?? "custom",
-  );
+    presetKind && isKnownKind(presetKind) ? presetKind : DEFAULT_KIND;
   const [kind, setKind] = useState(initialKind);
-  const [icon, setIcon] = useState(KIND_BY_KEY.get(initialKind)?.icon ?? "🍒");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [ctaText, setCtaText] = useState("");
@@ -125,6 +172,10 @@ export function Composer({
   const [busy, setBusy] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [compactPreview, setCompactPreview] = useState(false);
+  // Editing an already-sent campaign: content only - saving amends the
+  // delivered snapshots in every recipient's inbox (ADR 0030 amendment).
+  const [sentLocked, setSentLocked] = useState(false);
+  const [sentRecipients, setSentRecipients] = useState(0);
 
   // Seed once from the loaded source - the render-time pattern, so no
   // setState-in-effect.
@@ -144,9 +195,7 @@ export function Composer({
     const source = campaign ?? template;
     if (source) {
       setSeededFrom(sourceKey);
-      setKind(source.kind);
-      setCategory(KIND_BY_KEY.get(source.kind)?.category ?? "custom");
-      setIcon(source.icon);
+      setKind(isKnownKind(source.kind) ? source.kind : DEFAULT_KIND);
       setTitle(source.title);
       setBody(source.body);
       setCtaText(source.cta_text);
@@ -161,7 +210,10 @@ export function Composer({
         }
         if (audience.level) setLevel(audience.level);
         if (audience.usernames) setUsernamesText(audience.usernames.join(", "));
-        if (editing && campaign.status === "scheduled") {
+        if (editing && campaign.status === "sent") {
+          setSentLocked(true);
+          setSentRecipients(campaign.recipients_count ?? 0);
+        } else if (editing && campaign.status === "scheduled") {
           setMode("schedule");
           if (campaign.scheduled_at) {
             const at = new Date(campaign.scheduled_at);
@@ -228,7 +280,7 @@ export function Composer({
   }>({ forDoc: null, count: null, error: null, loading: false });
 
   useEffect(() => {
-    if (!docJson) return;
+    if (!docJson || sentLocked) return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setEstimate((state) => ({ ...state, loading: true }));
@@ -260,7 +312,7 @@ export function Composer({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [docJson]);
+  }, [docJson, sentLocked]);
 
   // ---- Variables ----------------------------------------------------
   const titleRef = useRef<HTMLInputElement>(null);
@@ -282,7 +334,6 @@ export function Composer({
   function buildPayload(status: "draft" | "scheduled", scheduledIso?: string) {
     return {
       kind,
-      icon,
       title: title.trim(),
       body: body.trim(),
       cta_text: ctaText.trim(),
@@ -316,6 +367,12 @@ export function Composer({
     }
     if (!doc) {
       setFieldError("กรุณากำหนดกลุ่มเป้าหมายให้ครบถ้วน");
+      return false;
+    }
+    if (!link.trim()) {
+      setFieldError(
+        "กรุณาเลือกลิงก์ปลายทาง  ประกาศที่กดแล้วไม่พาไปไหนคือประกาศที่ผู้ใช้ทำอะไรต่อไม่ได้",
+      );
       return false;
     }
     setFieldError(null);
@@ -356,6 +413,44 @@ export function Composer({
       toast(describeAdminError(error), "danger");
       setBusy(false);
     }
+  }
+
+  function amendSent() {
+    if (!title.trim()) {
+      setFieldError("กรุณากรอกหัวข้อการแจ้งเตือน");
+      return;
+    }
+    if (blocked.length > 0) {
+      setFieldError(
+        `ตัวแปรเหล่านี้ใช้กับกลุ่มเป้าหมายนี้ไม่ได้: ${blocked.map((name) => `{{${name}}}`).join(", ")}`,
+      );
+      return;
+    }
+    setFieldError(null);
+    confirm.ask({
+      title: "อัปเดตการแจ้งเตือนที่ส่งแล้ว?",
+      body: `ข้อความใหม่จะแทนที่ของเดิมในกล่องแจ้งเตือนของผู้รับทั้ง ${sentRecipients.toLocaleString("th-TH")} บัญชีทันที`,
+      confirmLabel: "บันทึกและอัปเดตผู้รับ",
+      action: async () => {
+        setBusy(true);
+        try {
+          await api.patch(`/admin/notifications/campaigns/${editId}/`, {
+            body: {
+              kind,
+              title: title.trim(),
+              body: body.trim(),
+              cta_text: ctaText.trim(),
+              link: link.trim(),
+            },
+          });
+          toast("อัปเดตเนื้อหาถึงผู้รับแล้ว", "success");
+          router.push("/admin/notifications");
+        } catch (error) {
+          toast(describeAdminError(error), "danger");
+          setBusy(false);
+        }
+      },
+    });
   }
 
   function sendNow() {
@@ -410,15 +505,21 @@ export function Composer({
     );
   }
 
-  const kindsInCategory = NOTIFICATION_KINDS.filter(
-    (item) => item.category === category,
-  );
-
   return (
     <>
       <AdminPageHeader
-        title={editing ? "แก้ไขการแจ้งเตือน" : "สร้างการแจ้งเตือน"}
-        description="เลือกประเภท เขียนเนื้อหา กำหนดกลุ่มเป้าหมาย แล้วส่งทันที ตั้งเวลา หรือเก็บเป็นฉบับร่าง"
+        title={
+          sentLocked
+            ? "แก้ไขการแจ้งเตือนที่ส่งแล้ว"
+            : editing
+              ? "แก้ไขการแจ้งเตือน"
+              : "สร้างการแจ้งเตือน"
+        }
+        description={
+          sentLocked
+            ? "แก้ได้เฉพาะเนื้อหา - บันทึกแล้วข้อความในกล่องแจ้งเตือนของผู้รับทุกคนจะอัปเดตทันที"
+            : "เลือกประเภท เขียนเนื้อหา กำหนดกลุ่มเป้าหมาย แล้วส่งทันที ตั้งเวลา หรือเก็บเป็นฉบับร่าง"
+        }
         actions={
           <Link href="/admin/notifications">
             <Button size="sm" variant="secondary">
@@ -432,101 +533,97 @@ export function Composer({
         <div className="space-y-4">
           {/* ---- 1 · Type ---- */}
           <AdminPanel
-            title="ประเภทการแจ้งเตือน"
-            description="ใช้จัดหมวดในหน้ารายการ - เพิ่มประเภทใหม่ได้จาก catalog ฝั่งหน้าเว็บ"
+            title="ประเภทประกาศ"
+            description="ตัวเลือกปิด - ประเภทเป็นตัวกำหนดไอคอนและสีที่ผู้รับเห็น ไม่ใช่แค่ป้ายจัดหมวด"
           >
-            <div className="space-y-3 px-4 py-3">
-              <div className="flex flex-wrap gap-1">
-                {KIND_CATEGORIES.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    aria-pressed={category === item.key}
-                    onClick={() => setCategory(item.key)}
+            <div className="grid gap-1.5 px-4 py-3 sm:grid-cols-2 lg:grid-cols-3">
+              {ANNOUNCEMENT_KIND_OPTIONS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-pressed={kind === item.key}
+                  onClick={() => setKind(item.key)}
+                  className={cn(
+                    "flex items-start gap-2.5 rounded-md border px-2.5 py-2 text-left",
+                    kind === item.key
+                      ? "border-accent bg-accent-subtle"
+                      : "border-edge bg-surface hover:border-edge-strong",
+                  )}
+                >
+                  {/* The real glyph and colour, not a stand-in: what the
+                      picker shows is what lands in the inbox. */}
+                  <span
+                    aria-hidden
                     className={cn(
-                      "rounded-full px-3 py-1 text-xs",
-                      category === item.key
-                        ? "bg-accent-subtle font-medium text-fg"
-                        : "bg-surface-sunken text-fg-muted hover:text-fg",
+                      "flex size-8 shrink-0 items-center justify-center rounded-full",
+                      item.tone,
                     )}
                   >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-              <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                {kindsInCategory.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    aria-pressed={kind === item.key}
-                    onClick={() => {
-                      const previousDefault = KIND_BY_KEY.get(kind)?.icon;
-                      setKind(item.key);
-                      if (!icon || icon === previousDefault) {
-                        setIcon(item.icon);
-                      }
-                    }}
-                    className={cn(
-                      "flex items-start gap-2 rounded-md border px-2.5 py-2 text-left",
-                      kind === item.key
-                        ? "border-accent bg-accent-subtle"
-                        : "border-edge bg-surface hover:border-edge-strong",
-                    )}
-                  >
-                    <span aria-hidden className="text-lg leading-none">
-                      {item.icon}
+                    <Icon tint name={`ui/${item.icon}`} className="size-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-fg">
+                      {item.label}
                     </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium text-fg">
-                        {item.label}
-                      </span>
-                      <span className="block text-xs text-fg-muted">
-                        {item.description}
-                      </span>
+                    <span className="block text-xs text-fg-muted">
+                      {item.description}
                     </span>
-                  </button>
-                ))}
-              </div>
+                  </span>
+                </button>
+              ))}
             </div>
           </AdminPanel>
 
           {/* ---- 2 · Content ---- */}
+          {daysSinceLastSend !== null && daysSinceLastSend < 7 ? (
+            <p
+              role="status"
+              className="rounded-md border border-warning/40 bg-warning-subtle px-3 py-2 text-sm text-fg"
+            >
+              ส่งประกาศล่าสุดไปเมื่อ{" "}
+              {daysSinceLastSend === 0
+                ? "วันนี้"
+                : `${daysSinceLastSend} วันก่อน`}{" "}
+              — ส่งถี่เกินสัปดาห์ละครั้งคือเหตุผลอันดับหนึ่งที่คนปิดการแจ้งเตือนทั้งหมด
+            </p>
+          ) : null}
+
           <AdminPanel title="เนื้อหา" required>
             <div className="space-y-3 px-4 py-3">
-              <div className="flex items-end gap-3">
-                <div className="space-y-1.5">
-                  <p className="text-sm font-medium text-fg">ไอคอน</p>
-                  <EmojiPicker value={icon} onPick={setIcon} />
-                </div>
-              </div>
-
+              {/* The reader's card is one headline and one line of
+                  text; these limits are the card's, not the column's. */}
               <Field label="หัวข้อ" required>
                 {(control) => (
-                  <Input
-                    {...control}
-                    ref={titleRef}
-                    value={title}
-                    maxLength={200}
-                    placeholder="เช่น 🎉 โพสต์ของคุณกำลังไวรัล!"
-                    onFocus={() => setLastFocus("title")}
-                    onChange={(event) => setTitle(event.target.value)}
-                  />
+                  <>
+                    <Input
+                      {...control}
+                      ref={titleRef}
+                      value={title}
+                      maxLength={TITLE_LIMIT}
+                      placeholder="เช่น สูตรใหม่ประจำสัปดาห์"
+                      onFocus={() => setLastFocus("title")}
+                      onChange={(event) => setTitle(event.target.value)}
+                    />
+                    <CharCount value={title} limit={TITLE_LIMIT} />
+                  </>
                 )}
               </Field>
 
-              <Field label="ข้อความ" hint="ยาวได้ไม่เกิน 500 ตัวอักษร">
+              <Field label="ข้อความ">
                 {(control) => (
-                  <Textarea
-                    {...control}
-                    ref={bodyRef}
-                    rows={3}
-                    value={body}
-                    maxLength={500}
-                    placeholder="เช่น {{user_name}} โพสต์ของคุณมีคนถูกใจมากกว่า {{like_count}} ครั้งแล้ว"
-                    onFocus={() => setLastFocus("body")}
-                    onChange={(event) => setBody(event.target.value)}
-                  />
+                  <>
+                    <Textarea
+                      {...control}
+                      ref={bodyRef}
+                      rows={3}
+                      value={body}
+                      maxLength={BODY_LIMIT}
+                      placeholder="เช่น สวัสดี {{user_name}} สัปดาห์นี้เรามีสูตรใหม่มาให้ลอง"
+                      onFocus={() => setLastFocus("body")}
+                      onChange={(event) => setBody(event.target.value)}
+                    />
+                    <CharCount value={body} limit={BODY_LIMIT} />
+                  </>
                 )}
               </Field>
 
@@ -586,22 +683,66 @@ export function Composer({
                     />
                   )}
                 </Field>
-                <Field label="ลิงก์ปลายทาง" hint="เส้นทางในเว็บ เช่น /community">
+                {/* Required, and chosen rather than typed: an
+                    announcement with nowhere to go is a notification the
+                    reader can do nothing about. */}
+                <Field label="ลิงก์ปลายทาง" required>
                   {(control) => (
-                    <Input
-                      {...control}
-                      value={link}
-                      maxLength={300}
-                      placeholder="/community"
-                      onChange={(event) => setLink(event.target.value)}
-                    />
+                    <>
+                      <select
+                        {...control}
+                        value={
+                          DESTINATIONS.some((item) => item.href === link)
+                            ? link
+                            : "custom"
+                        }
+                        onChange={(event) =>
+                          setLink(
+                            event.target.value === "custom"
+                              ? ""
+                              : event.target.value,
+                          )
+                        }
+                        className="h-10 w-full rounded-md border border-edge bg-surface px-3 text-sm"
+                      >
+                        {DESTINATIONS.map((item) => (
+                          <option key={item.href} value={item.href}>
+                            {item.label}
+                          </option>
+                        ))}
+                        <option value="custom">ระบุเส้นทางเอง…</option>
+                      </select>
+                      {!DESTINATIONS.some((item) => item.href === link) ? (
+                        <Input
+                          value={link}
+                          maxLength={300}
+                          placeholder="/recipes/choc-chip-cookies"
+                          aria-label="เส้นทางปลายทาง"
+                          className="mt-1.5"
+                          onChange={(event) => setLink(event.target.value)}
+                        />
+                      ) : null}
+                    </>
                   )}
                 </Field>
               </div>
             </div>
           </AdminPanel>
 
-          {/* ---- 3 · Audience ---- */}
+          {/* ---- 3 · Audience (locked after send) ---- */}
+          {sentLocked ? (
+            <AdminPanel title="กลุ่มเป้าหมายและการส่ง">
+              <p className="px-4 py-3 text-sm text-fg-muted">
+                แคมเปญนี้ส่งแล้วถึง{" "}
+                <span className="font-mono font-semibold tabular-nums">
+                  {sentRecipients.toLocaleString("th-TH")}
+                </span>{" "}
+                บัญชี - กลุ่มเป้าหมายและเวลาส่งเป็นประวัติ แก้ไขไม่ได้
+                หากต้องการถอนออกจากกล่องผู้รับ ใช้ “ลบและเรียกคืน”
+                จากหน้ารายการ
+              </p>
+            </AdminPanel>
+          ) : (
           <AdminPanel
             title="กลุ่มเป้าหมาย"
             description="ระบบประเมินจำนวนผู้รับด้วยเงื่อนไขเดียวกับการส่งจริง (หักผู้ที่ปิดรับประกาศแล้ว)"
@@ -760,8 +901,10 @@ export function Composer({
               </div>
             </div>
           </AdminPanel>
+          )}
 
-          {/* ---- 4 · Delivery ---- */}
+          {/* ---- 4 · Delivery (absent after send) ---- */}
+          {sentLocked ? null : (
           <AdminPanel title="การส่ง" required>
             <div className="space-y-3 px-4 py-3">
               <div
@@ -830,6 +973,7 @@ export function Composer({
               ) : null}
             </div>
           </AdminPanel>
+          )}
 
           {fieldError ? (
             <p role="alert" className="text-sm text-danger">
@@ -843,23 +987,35 @@ export function Composer({
                 ยกเลิก
               </Button>
             </Link>
-            {mode !== "draft" ? (
-              <Button variant="secondary" disabled={busy} onClick={saveDraft}>
-                บันทึกฉบับร่าง
-              </Button>
-            ) : null}
-            {mode === "now" ? (
-              <Button loading={busy} onClick={sendNow}>
-                ส่งตอนนี้
-              </Button>
-            ) : mode === "schedule" ? (
-              <Button loading={busy} onClick={schedule}>
-                ตั้งเวลาส่ง
+            {sentLocked ? (
+              <Button loading={busy} onClick={amendSent}>
+                บันทึกและอัปเดตผู้รับ
               </Button>
             ) : (
-              <Button loading={busy} onClick={saveDraft}>
-                บันทึกฉบับร่าง
-              </Button>
+              <>
+                {mode !== "draft" ? (
+                  <Button
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={saveDraft}
+                  >
+                    บันทึกฉบับร่าง
+                  </Button>
+                ) : null}
+                {mode === "now" ? (
+                  <Button loading={busy} onClick={sendNow}>
+                    ส่งตอนนี้
+                  </Button>
+                ) : mode === "schedule" ? (
+                  <Button loading={busy} onClick={schedule}>
+                    ตั้งเวลาส่ง
+                  </Button>
+                ) : (
+                  <Button loading={busy} onClick={saveDraft}>
+                    บันทึกฉบับร่าง
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -882,11 +1038,11 @@ export function Composer({
           >
             <div className="flex justify-center bg-surface-sunken/50 px-4 py-5">
               <NotificationPreviewCard
-                icon={icon}
                 title={title}
                 body={body}
                 ctaText={ctaText}
                 link={link}
+                kind={kind}
                 compact={compactPreview}
               />
             </div>

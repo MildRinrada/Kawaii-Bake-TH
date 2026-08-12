@@ -276,7 +276,9 @@ export function UserDetailPanel({
               ) : null}
             </dl>
 
-            <ActivitySummary username={account.username} />
+            <ActivitySummary account={account} />
+
+            <EmailActions account={account} saving={saving} />
 
             <section className="mt-5">
               <h3 className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
@@ -368,33 +370,49 @@ function useActivityCount(path: string, query: Record<string, string>) {
 }
 
 /**
- * What this account has done across the platform, as real counts with a
- * jump-off link per surface. Enrollments are absent on purpose: no
- * per-user enrollment endpoint exists, and a per-course walk would not
- * be an honest number.
+ * What this account has done across the platform - real counts only.
+ * Courses / recipes / posts ride on the roster's own annotations;
+ * reviews and certificates are one-row count fetches per surface.
  */
-function ActivitySummary({ username }: { username: string }) {
+function ActivitySummary({ account }: { account: AdminUser }) {
+  const username = account.username;
   const reviews = useActivityCount("/admin/reviews/", { username });
-  const posts = useActivityCount("/gallery/", { author: username });
   const certificates = useActivityCount("/admin/certificates/", { username });
 
   const rows: Array<{
     label: string;
     count: number | undefined;
     loading: boolean;
-    href: "/admin/reviews" | "/admin/posts" | "/admin/certificates";
+    href:
+      | "/admin/progress"
+      | "/admin/recipes"
+      | "/admin/posts"
+      | "/admin/reviews"
+      | "/admin/certificates";
   }> = [
+    {
+      label: "คอร์สที่เรียน",
+      count: account.courses_count,
+      loading: false,
+      href: "/admin/progress",
+    },
+    {
+      label: "สูตรที่สร้าง",
+      count: account.recipes_count,
+      loading: false,
+      href: "/admin/recipes",
+    },
+    {
+      label: "โพสต์ชุมชน",
+      count: account.posts_count,
+      loading: false,
+      href: "/admin/posts",
+    },
     {
       label: "รีวิวที่เขียน",
       count: reviews.data?.count,
       loading: reviews.loading,
       href: "/admin/reviews",
-    },
-    {
-      label: "โพสต์ชุมชน",
-      count: posts.data?.count,
-      loading: posts.loading,
-      href: "/admin/posts",
     },
     {
       label: "ใบประกาศที่ได้รับ",
@@ -409,7 +427,7 @@ function ActivitySummary({ username }: { username: string }) {
       <h3 className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
         กิจกรรมบนแพลตฟอร์ม
       </h3>
-      <dl className="mt-2 grid grid-cols-3 gap-2">
+      <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {rows.map((row) => (
           <div
             key={row.label}
@@ -428,6 +446,83 @@ function ActivitySummary({ username }: { username: string }) {
           </div>
         ))}
       </dl>
+    </section>
+  );
+}
+
+/**
+ * Staff-triggered account emails (ADR 0031): a password-reset link and
+ * a verification resend. Eligibility mirrors the backend rules so the
+ * buttons never promise an email the server would refuse.
+ */
+function EmailActions({
+  account,
+  saving,
+}: {
+  account: AdminUser;
+  saving: boolean;
+}) {
+  const { toast } = useToast();
+  const [sending, setSending] = useState<"reset" | "verify" | null>(null);
+
+  async function send(kind: "reset" | "verify") {
+    setSending(kind);
+    try {
+      await api.post(
+        kind === "reset"
+          ? `/admin/users/${account.id}/send-password-reset/`
+          : `/admin/users/${account.id}/resend-verification/`,
+      );
+      toast(
+        kind === "reset"
+          ? `ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลของ @${account.username} แล้ว`
+          : `ส่งอีเมลยืนยันไปที่ @${account.username} อีกครั้งแล้ว`,
+        "success",
+      );
+    } catch (error) {
+      toast(describeAdminError(error), "danger");
+    } finally {
+      setSending(null);
+    }
+  }
+
+  return (
+    <section className="mt-5 border-t border-edge pt-3">
+      <h3 className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
+        อีเมลถึงผู้ใช้
+      </h3>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={saving || sending !== null || !account.is_active}
+          loading={sending === "reset"}
+          onClick={() => void send("reset")}
+        >
+          ส่งลิงก์รีเซ็ตรหัสผ่าน
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={
+            saving ||
+            sending !== null ||
+            !account.is_active ||
+            account.is_email_verified
+          }
+          loading={sending === "verify"}
+          onClick={() => void send("verify")}
+        >
+          ส่งอีเมลยืนยันอีกครั้ง
+        </Button>
+      </div>
+      <p className="mt-1.5 text-xs text-fg-subtle">
+        {!account.is_active
+          ? "บัญชีที่ถูกระงับจะไม่ได้รับอีเมลใด ๆ"
+          : account.is_email_verified
+            ? "อีเมลนี้ยืนยันแล้ว - เหลือเฉพาะลิงก์รีเซ็ตรหัสผ่าน"
+            : "ระบบส่งไปที่อีเมลที่ลงทะเบียนไว้เท่านั้น"}
+      </p>
     </section>
   );
 }

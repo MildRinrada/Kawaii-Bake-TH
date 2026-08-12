@@ -9,7 +9,7 @@ from apps.users.selectors import user_selector
 
 
 def create_account(
-    *, email: str, username: str, password: str, **account_fields: object
+    *, email: str, username: str, password: str | None, **account_fields: object
 ) -> User:
     """Create a user account with its profile and preference rows.
 
@@ -19,7 +19,8 @@ def create_account(
     Args:
         email: The account email address.
         username: The public handle.
-        password: The raw password.
+        password: The raw password, or ``None`` for an account that signs
+            in through a provider and has no local password.
         **account_fields: Additional ``User`` column values collected at
             registration (legal name, consent timestamp).
 
@@ -28,6 +29,30 @@ def create_account(
     """
     return user_repository.create_user(
         email=email, username=username, password=password, **account_fields
+    )
+
+
+def set_legal_name(*, user: User, first_name: str, last_name: str) -> User:
+    """Record the legal name an account prints on its credentials.
+
+    Sign-up no longer asks for this (see
+    ``authentication.services.registration_service``); the name is
+    collected the first time a certificate is requested and kept, so the
+    second certificate does not ask again. Blank parts are allowed  a
+    mononym is a real kind of name  but the two together must not be
+    empty, which is the caller's rule to enforce.
+
+    Args:
+        user: The account being named.
+        first_name: Legal first name (or the whole name, for a mononym).
+        last_name: Legal last name, possibly empty.
+
+    Returns:
+        The updated user.
+    """
+    return user_repository.update_account_fields(
+        user=user,
+        changes={"first_name": first_name.strip(), "last_name": last_name.strip()},
     )
 
 

@@ -22,12 +22,16 @@ import { ApiError } from "@/lib/api/errors";
 import type { Certificate, MyCourseProgress } from "@/lib/api/models";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { RequireAuth } from "@/lib/auth/require-auth";
+import { useAuth } from "@/lib/auth/auth-context";
 import { useToast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { ErrorState } from "@/components/ui/error-state";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
@@ -237,6 +241,15 @@ function CertificateCard({
   );
 }
 
+/**
+ * The one moment the platform needs a learner's real name.
+ *
+ * Sign-up deliberately does not ask (a name for a document most people
+ * never claim is a field that costs sign-ups), so the first certificate
+ * asks instead - and the answer is stored, which is why the second one
+ * does not. `legal_name_required` from the server is the same question
+ * arriving the other way round, and opens the same dialog.
+ */
 function PendingCard({
   course,
   onIssued,
@@ -245,16 +258,33 @@ function PendingCard({
   onIssued: () => void;
 }) {
   const { toast } = useToast();
+  const { user, refresh } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
-  async function issue() {
+  const stored = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim();
+
+  async function issue(name?: { first_name: string; last_name: string }) {
     setBusy(true);
     try {
-      await api.post(`/courses/${course.slug}/certificate/`);
+      await api.post(
+        `/courses/${course.slug}/certificate/`,
+        name ? { body: name } : undefined,
+      );
+      setAsking(false);
       toast("ออกใบประกาศนียบัตรเรียบร้อย", "success");
+      // The account now carries the name; the next course will not ask.
+      if (name) await refresh();
       onIssued();
     } catch (error) {
-      if (error instanceof ApiError && error.code === "course_not_completed") {
+      if (error instanceof ApiError && error.code === "legal_name_required") {
+        setAsking(true);
+      } else if (
+        error instanceof ApiError &&
+        error.code === "course_not_completed"
+      ) {
         toast("ต้องเรียนให้ครบทุกบทก่อนนะ", "danger");
       } else {
         toast("ออกใบประกาศไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
@@ -282,11 +312,74 @@ function PendingCard({
           size="sm"
           loading={busy}
           className="mt-auto w-full"
-          onClick={() => void issue()}
+          onClick={() => (stored ? void issue() : setAsking(true))}
         >
           ขอรับใบประกาศนียบัตร
         </Button>
       </CardBody>
+
+      <Modal
+        open={asking}
+        onClose={() => setAsking(false)}
+        title="ชื่อที่จะพิมพ์บนใบประกาศ"
+      >
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void issue({
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+            });
+          }}
+        >
+          <p className="text-sm leading-relaxed text-fg-muted">
+            ใบประกาศพิมพ์ชื่อจริง ไม่ใช่ชื่อผู้ใช้
+            เราถามครั้งเดียวแล้วจำไว้ให้ ใบต่อไปไม่ต้องกรอกอีก
+            และชื่อบนใบที่ออกไปแล้วจะไม่เปลี่ยนตาม
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="ชื่อจริง" required>
+              {(control) => (
+                <Input
+                  {...control}
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                />
+              )}
+            </Field>
+            <Field label="นามสกุล">
+              {(control) => (
+                <Input
+                  {...control}
+                  autoComplete="family-name"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                />
+              )}
+            </Field>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setAsking(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              loading={busy}
+              disabled={!firstName.trim()}
+            >
+              ออกใบประกาศ
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </Card>
   );
 }

@@ -10,6 +10,11 @@ from apps.gallery.api.views.gallery_views import (
     GalleryImageDeleteView,
     GalleryListCreateView,
 )
+from apps.gallery.api.views.interaction_views import (
+    GalleryCommentDeleteView,
+    GalleryCommentListCreateView,
+    GalleryLikeView,
+)
 
 app_name = "gallery"
 
@@ -25,5 +30,18 @@ urlpatterns = [
         "<int:post_id>/images/<int:image_id>/",
         GalleryImageDeleteView.as_view(),
         name="image-delete",
+    ),
+    # Interactions (ADR 0032). `comments/<id>/` is routed before the
+    # post-scoped patterns cannot claim it - a comment id is global.
+    path("<int:post_id>/like/", GalleryLikeView.as_view(), name="like"),
+    path(
+        "<int:post_id>/comments/",
+        GalleryCommentListCreateView.as_view(),
+        name="comment-list",
+    ),
+    path(
+        "comments/<int:comment_id>/",
+        GalleryCommentDeleteView.as_view(),
+        name="comment-delete",
     ),
 ]

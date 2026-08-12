@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from apps.certificates.api.serializers import (
     AchievementSerializer,
     BadgeSerializer,
+    CertificateIssueSerializer,
     CertificateSerializer,
     CertificateVerificationSerializer,
 )
@@ -32,16 +33,27 @@ class CourseCertificateView(ServiceAPIView):
     permission_classes = (IsAuthenticated,)
 
     @extend_schema(
-        request=None,
+        request=CertificateIssueSerializer,
         responses={200: CertificateSerializer, 201: CertificateSerializer},
         tags=["certificates"],
     )
     def post(self, request: Request, slug: str) -> Response:
-        """Issue (201) or return the existing certificate (200)."""
+        """Issue (201) or return the existing certificate (200).
+
+        The body carries the name to print, and only matters the first
+        time an account asks: without a stored legal name the service
+        answers 409 ``legal_name_required``, which is the client's cue to
+        ask the learner and repeat the request.
+        """
+        serializer = CertificateIssueSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         certificate, created = certificate_service.issue_if_completed(
             user_id=request.user.id,
             course_slug=slug,
             viewer_is_staff=request.user.is_staff,
+            first_name=serializer.validated_data["first_name"],
+            last_name=serializer.validated_data["last_name"],
         )
         return Response(
             CertificateSerializer(certificate).data,

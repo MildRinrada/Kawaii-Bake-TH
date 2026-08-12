@@ -13,12 +13,17 @@ from rest_framework.response import Response
 from apps.authentication.api.credentials import get_credential_issuer
 from apps.authentication.api.serializers import (
     AuthenticatedResponseSerializer,
+    GoogleSignInSerializer,
     LoginSerializer,
     RegistrationSerializer,
     UsernameAvailabilityQuerySerializer,
     UsernameAvailabilityResponseSerializer,
 )
-from apps.authentication.services import login_service, registration_service
+from apps.authentication.services import (
+    login_service,
+    oauth_service,
+    registration_service,
+)
 from apps.common.api.views import CsrfProtectedAPIView, ServiceAPIView, client_ip
 from apps.users.api.serializers import MeSerializer
 from apps.users.selectors import user_selector
@@ -61,8 +66,6 @@ class RegistrationView(CsrfProtectedAPIView):
         user = registration_service.register_user(
             email=serializer.validated_data["email"],
             username=serializer.validated_data["username"],
-            first_name=serializer.validated_data["first_name"],
-            last_name=serializer.validated_data["last_name"],
             password=serializer.validated_data["password"],
             client_ip=client_ip(request),
         )
@@ -142,6 +145,56 @@ class LoginView(CsrfProtectedAPIView):
                 **credential.body,
             },
             status=status.HTTP_200_OK,
+        )
+        issuer.apply(response=response, credential=credential)
+        return response
+
+
+class GoogleSignInView(CsrfProtectedAPIView):
+    """Sign in (or sign up) with a Google ID token.
+
+    One endpoint for both, on purpose: the visitor pressed one button and
+    does not know or care whether an account already existed. The status
+    code is the only place the difference shows  201 when this call
+    created the account, 200 when it signed an existing one in.
+    """
+
+    authentication_classes = ()
+    permission_classes = (AllowAny,)
+
+    @extend_schema(
+        request=GoogleSignInSerializer,
+        responses={
+            200: AuthenticatedResponseSerializer,
+            201: AuthenticatedResponseSerializer,
+        },
+        tags=["auth"],
+    )
+    def post(self, request: Request) -> Response:
+        """Verify the provider credential, then issue one of our own."""
+        serializer = GoogleSignInSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user, created = oauth_service.sign_in_with_google(
+            credential=serializer.validated_data["credential"],
+            client_ip=client_ip(request),
+        )
+
+        issuer = get_credential_issuer()
+        credential = issuer.issue(
+            request=request._request, user=user, remember=True
+        )
+
+        payload = user_selector.get_me(user_id=user.pk)
+        response = Response(
+            {
+                "status": credential.status,
+                "user": MeSerializer(
+                    payload, context=self.get_serializer_context()
+                ).data,
+                **credential.body,
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
         issuer.apply(response=response, credential=credential)
         return response

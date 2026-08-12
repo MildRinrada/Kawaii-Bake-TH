@@ -8,7 +8,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 
 const STAFF = { email: "admin@kawaiibake.local", password: "Kawaii!Chef2026" };
@@ -296,11 +296,13 @@ try {
   await page.waitForURL("**/admin/questions");
   await expect(page, "text=คลังคำถาม", "question bank page renders");
 
-  /* ---------- Users: roster, staff edits, verified override ---------- */
+  /* ---------- Users: workspace - stats, bulk, actions, drawer ---------- */
   await page.click('a[href="/admin/users"]');
   await page.waitForURL("**/admin/users");
+  await expect(page, "text=ผู้ใช้ทั้งหมด", "summary cards render real roster stats");
+  await expect(page, 'button:has-text("+ เพิ่มผู้ใช้")', "staff account creation is offered");
   await expect(page, "tbody tr", "user roster renders");
-  await expect(page, "text=ปรับยอดคะแนนรางวัล", "staff-only reward adjustment survived the rebuild");
+  await expect(page, "text=ปรับยอดคะแนนรางวัล", "staff-only reward adjustment survived the redesign");
   // Emails are on this page BY DESIGN now: the roster is IsAdminUser-gated
   // PII. Passwords must still never appear anywhere.
   const usersBody = await page.textContent("body");
@@ -308,12 +310,28 @@ try {
     throw new Error("user roster leaked credential material");
   }
   ok("roster shows account PII to staff but never credentials");
+
+  // Selection summons the contextual bulk bar; clearing dismisses it.
+  await page.locator('tbody input[type="checkbox"]').first().check();
+  await expect(page, "text=เลือกแล้ว 1 คน", "bulk-action bar appears on selection");
+  await expect(page, 'button:has-text("ส่งอีเมลยืนยันอีกครั้ง")', "bulk actions are real endpoints only");
+  await page.click('button:has-text("ล้างการเลือก")');
+  ok("clearing the selection dismisses the bulk bar");
+
+  // The create panel is a real POST /admin/users/create/ form (not
+  // submitted here - pytest covers the write; e2e stays net-zero).
+  await page.click('button:has-text("+ เพิ่มผู้ใช้")');
+  await expect(page, "text=รหัสผ่านเริ่มต้น", "create-user form offers the initial password");
+  await page.keyboard.press("Escape");
+
   await page.fill('input[type="search"]', "mildbakes");
   await page.waitForTimeout(900);
   await expect(page, "text=@mildbakes", "server-side roster search finds the account");
   await page.locator("tbody tr").first().click();
-  await expect(page, 'dialog [role="switch"]', "detail panel offers the staff toggles");
+  await expect(page, 'dialog[open] [role="switch"]', "detail panel offers the staff toggles");
   await expect(page, "text=สำหรับกรณีฉุกเฉิน", "verified override is labelled as an emergency tool");
+  await expect(page, "text=คอร์สที่เรียน", "drawer shows real activity counts");
+  await expect(page, 'button:has-text("ส่งลิงก์รีเซ็ตรหัสผ่าน")', "staff reset-link action present");
   await page.keyboard.press("Escape");
   await page.screenshot({ path: `${SHOT_DIR}/55-admin-users.png`, fullPage: true });
 
@@ -372,9 +390,13 @@ try {
   // Compose a campaign: type → content with a variable → named audience
   // with a live estimate → save as draft.
   await page.goto(`${BASE}/admin/notifications/compose`);
-  await page.click('button:has-text("โซเชียล")');
-  await page.click('button:has-text("โพสต์กำลังไวรัล")');
-  await page.getByLabel("หัวข้อ").fill("🎉 ทดสอบแคมเปญถึง {{user_name}}");
+  // The kind is a closed set of six now (ADR 0036): no category tabs, and
+  // the card shows the glyph and colour the recipient will actually get.
+  await page.click('button:has-text("ฟีเจอร์ใหม่")');
+  // Titles are capped at the card's own 60 characters now, and every
+  // announcement must name a destination.
+  await page.getByLabel("หัวข้อ").fill("ทดสอบแคมเปญถึง {{user_name}}");
+  await page.getByLabel("ลิงก์ปลายทาง").selectOption("/community");
   await page.click('button:has-text("ระบุรายชื่อ")');
   await page.getByLabel("ชื่อผู้ใช้").fill("p16fan0");
   await page.waitForSelector("text=ผู้รับโดยประมาณ", { timeout: 15_000 });
@@ -391,7 +413,7 @@ try {
     .first();
   await draftRow.locator('button[aria-haspopup="menu"]').click();
   await page.click('button[role="menuitem"]:has-text("ส่งตอนนี้")');
-  await page.waitForSelector("text=ส่งแล้วเรียกคืนไม่ได้", { timeout: 10_000 });
+  await page.waitForSelector("text=จะเข้ากล่องของประมาณ", { timeout: 10_000 });
   await page.click('dialog[open] button:has-text("ส่งตอนนี้")');
   await page.waitForSelector("text=ส่งถึง 1 บัญชีแล้ว", { timeout: 15_000 });
   ok("draft sends to the named audience (1 account)");
@@ -403,10 +425,36 @@ try {
     .first();
   await sentRow.locator('button:has-text("ดูสถิติ")').click();
   await page.waitForSelector("text=อัตราการอ่าน", { timeout: 10_000 });
-  await expect(page, "text=ไม่มีการติดตามการคลิก CTA", "analytics disclose the no-click-tracking gap");
+  await expect(page, "text=อัตราการกดลิงก์", "analytics report the click rate");
+  await expect(
+    page,
+    "text=ตัวเลขนี้จึงเป็นค่าต่ำสุดที่เกิดขึ้นจริง",
+    "analytics say plainly that the click count is a floor",
+  );
   await page.keyboard.press("Escape");
   ok("sent campaign exposes read-receipt analytics");
   await page.screenshot({ path: `${SHOT_DIR}/59-admin-notif-hub.png`, fullPage: true });
+
+  // Amend the sent campaign - content edits reach delivered inboxes.
+  await sentRow.locator('button[aria-haspopup="menu"]').click();
+  await page.click('button[role="menuitem"]:has-text("แก้ไขเนื้อหา")');
+  await page.waitForSelector("text=แก้ไขการแจ้งเตือนที่ส่งแล้ว", { timeout: 15_000 });
+  await page.getByLabel("หัวข้อ").fill("🎉 ทดสอบแคมเปญ (ฉบับแก้) ถึง {{user_name}}");
+  await page.click('button:has-text("บันทึกและอัปเดตผู้รับ")');
+  await page.waitForSelector("text=จะแทนที่ของเดิมในกล่องแจ้งเตือน", { timeout: 10_000 });
+  await page.click('dialog[open] button:has-text("บันทึกและอัปเดตผู้รับ")');
+  await page.waitForSelector("text=อัปเดตเนื้อหาถึงผู้รับแล้ว", { timeout: 15_000 });
+  ok("amending a sent campaign updates the recipients' copies");
+
+  // Retract it - the inbox rows leave with the campaign (net-zero runs).
+  await page.click('button[role="tab"]:has-text("ส่งแล้ว")');
+  const amendedRow = page.locator("tbody tr", { hasText: "ฉบับแก้" }).first();
+  await amendedRow.locator('button[aria-haspopup="menu"]').click();
+  await page.click('button[role="menuitem"]:has-text("ลบและเรียกคืนจากผู้รับ")');
+  await page.waitForSelector("text=จะถูกลบออกจากกล่องแจ้งเตือน", { timeout: 10_000 });
+  await page.click('dialog[open] button:has-text("ลบและเรียกคืน")');
+  await page.waitForSelector("text=เรียกคืนการแจ้งเตือนแล้ว", { timeout: 15_000 });
+  ok("retracting a sent campaign removes it from recipient inboxes");
 
   // Templates: create, see it listed, delete again (net-zero per run).
   await page.click('button[role="tab"]:has-text("เทมเพลต")');

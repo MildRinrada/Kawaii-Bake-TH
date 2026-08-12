@@ -62,8 +62,6 @@ def register_user(
     *,
     email: str,
     username: str,
-    first_name: str,
-    last_name: str,
     password: str,
     client_ip: str = "",
 ) -> User:
@@ -72,6 +70,11 @@ def register_user(
     New accounts are active but unverified: ``is_active`` is the authentication
     kill-switch, while ``is_email_verified`` gates verified-only features.
 
+    The account starts with no legal name. Certificates need one, so
+    ``certificate_service`` asks for it at issuance and writes it back
+    through ``user_service.set_legal_name``  the one moment where the
+    name is the point of the request rather than a toll on the way in.
+
     The caller has already validated explicit terms consent (the API
     serializer rejects a payload without it), so reaching this function
     *is* the consent event  ``terms_accepted_at`` is stamped here.
@@ -79,8 +82,6 @@ def register_user(
     Args:
         email: The requested email address.
         username: The requested public handle.
-        first_name: Legal first name, printed on certificates.
-        last_name: Legal last name, printed on certificates.
         password: The raw password.
         client_ip: Caller IP, used for throttling.
 
@@ -107,8 +108,6 @@ def register_user(
             email=email,
             username=username,
             password=password,
-            first_name=first_name.strip(),
-            last_name=last_name.strip(),
             terms_accepted_at=timezone.now(),
         )
     except IntegrityError as exc:

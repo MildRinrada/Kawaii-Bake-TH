@@ -72,6 +72,31 @@ class NotificationReadView(ServiceAPIView):
         )
 
 
+class NotificationClickView(ServiceAPIView):
+    """Record that the caller followed a notification's link."""
+
+    permission_classes = (IsAuthenticated,)
+
+    @extend_schema(
+        request=None,
+        responses={200: NotificationSerializer},
+        tags=["notifications"],
+    )
+    def post(self, request: Request, notification_id: int) -> Response:
+        """Stamp ``clicked_at`` (and ``read_at``) once; repeats stay 200.
+
+        Called by the client as it navigates, so a click that never
+        reaches this endpoint is a click the platform simply does not
+        know about - see ``record_click``.
+        """
+        notification = notification_service.record_click(
+            notification_id=notification_id, user_id=request.user.id
+        )
+        return Response(
+            NotificationSerializer(notification).data, status=status.HTTP_200_OK
+        )
+
+
 class NotificationReadAllView(ServiceAPIView):
     """Mark everything read in one conditional bulk update."""
 

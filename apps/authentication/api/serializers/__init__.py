@@ -5,6 +5,7 @@ from __future__ import annotations
 from apps.authentication.api.serializers.auth_serializers import (
     AuthenticatedResponseSerializer,
     EmailVerificationConfirmSerializer,
+    GoogleSignInSerializer,
     LoginSerializer,
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
@@ -17,6 +18,7 @@ from apps.authentication.api.serializers.auth_serializers import (
 __all__ = [
     "AuthenticatedResponseSerializer",
     "EmailVerificationConfirmSerializer",
+    "GoogleSignInSerializer",
     "LoginSerializer",
     "PasswordChangeSerializer",
     "PasswordResetConfirmSerializer",

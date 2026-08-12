@@ -15,8 +15,9 @@ import { useState } from "react";
 import type { Route } from "next";
 
 import { BRAND_MARK } from "@/lib/assets";
+import { AssistantChatWidget } from "@/components/assistant/chat-widget";
 import { ArtIcon, Icon } from "@/components/ui/icon";
-import { LottieHover } from "@/components/ui/lottie-asset";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
@@ -29,6 +30,7 @@ const NAV_ITEMS: Array<{ href: Route; label: string }> = [
   { href: "/recipes", label: "สูตรขนม" },
   { href: "/courses", label: "คอร์สเรียน" },
   { href: "/community", label: "ชุมชน" },
+  { href: "/threads", label: "กระทู้ถาม-ตอบ" },
   { href: "/recommendations", label: "แนะนำสำหรับคุณ" },
   { href: "/assistant", label: "ผู้ช่วย AI" },
 ];
@@ -37,6 +39,7 @@ const FOOTER_LEARN: Array<{ href: Route; label: string }> = [
   { href: "/recipes", label: "สูตรขนมทั้งหมด" },
   { href: "/courses", label: "คอร์สเรียน" },
   { href: "/community", label: "ชุมชน" },
+  { href: "/threads", label: "กระทู้ถาม-ตอบ" },
   { href: "/recommendations", label: "แนะนำสำหรับคุณ" },
   { href: "/assistant", label: "ผู้ช่วย AI" },
 ];
@@ -47,6 +50,14 @@ const FOOTER_ACCOUNT: Array<{ href: Route; label: string }> = [
   { href: "/certificates", label: "ใบประกาศนียบัตร" },
   { href: "/achievements", label: "ความสำเร็จ" },
   { href: "/settings", label: "ตั้งค่า" },
+];
+
+const FOOTER_HELP: Array<{ href: Route; label: string }> = [
+  { href: "/qa", label: "คำถามที่พบบ่อย (FAQ)" },
+  { href: "/support", label: "ศูนย์ช่วยเหลือ / ติดต่อเรา" },
+  { href: "/legal?doc=terms" as Route, label: "ข้อตกลงการใช้งาน" },
+  { href: "/legal?doc=privacy" as Route, label: "นโยบายความเป็นส่วนตัว" },
+  { href: "/legal?doc=cookie" as Route, label: "นโยบายคุกกี้" },
 ];
 
 function NavLink({
@@ -118,16 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="ml-auto flex items-center gap-1.5">
             {status === "authenticated" && user ? (
               <>
-                <Link
-                  href="/notifications"
-                  aria-label="การแจ้งเตือน"
-                  className={cn(
-                    "flex size-10 items-center justify-center text-lg",
-                    pathname.startsWith("/notifications") && "",
-                  )}
-                >
-                  <LottieHover src="/lottie/Notification bell.lottie" className="size-10" />
-                </Link>
+                <NotificationBell />
                 <Dropdown
                   align="end"
                   trigger={
@@ -226,7 +228,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <footer className="mt-12 border-t border-edge bg-surface-sunken/60">
         <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
-          <div className="grid gap-8 sm:grid-cols-[2fr_1fr_1fr]">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
             <div>
               <p className="font-display flex items-center gap-2 text-base font-medium text-fg">
                 <ArtIcon src={BRAND_MARK} className="size-10" /> Kawaii
@@ -267,12 +269,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ))}
               </ul>
             </nav>
+            <nav aria-label="เมนูช่วยเหลือและนโยบาย">
+              <p className="mb-2.5 text-sm font-medium text-fg">
+                ช่วยเหลือและนโยบาย
+              </p>
+              <ul className="space-y-1.5 text-sm">
+                {FOOTER_HELP.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
           <p className="mt-8 border-t border-edge pt-5 text-center text-xs text-fg-subtle">
             © 2026 KawaiiBake | โปรเจกต์พอร์ตโฟลิโอ สร้างด้วย Django + Next.js
           </p>
         </div>
       </footer>
+
+      {/* Mounted once in the shell (not per page) so the widget's
+          in-memory conversation survives in-app navigation; it renders
+          nothing for anonymous visitors. */}
+      <AssistantChatWidget />
     </div>
   );
 }

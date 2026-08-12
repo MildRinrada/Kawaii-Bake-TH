@@ -15,8 +15,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANTS: Record<Variant, string> = {
+  // A disabled primary must not read as a *colour variant* of the brand
+  // pink - it goes grey, so "not yet" is never mistaken for "this is the
+  // button".
   primary:
-    "bg-accent text-fg-inverted shadow-raised hover:bg-accent-hover active:translate-y-px disabled:bg-fg-subtle disabled:shadow-none",
+    "bg-accent text-fg-inverted shadow-raised hover:bg-accent-hover active:translate-y-px disabled:bg-edge disabled:text-fg-subtle disabled:shadow-none",
   secondary:
     "border border-edge-strong/60 bg-surface text-fg hover:border-accent/50 hover:bg-accent-subtle hover:text-accent-hover active:translate-y-px disabled:text-fg-subtle",
   tertiary:
@@ -45,6 +48,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        // Spread first: `disabled` below must win, or a `disabled={false}`
+        // arriving in `rest` would un-disable a button that is loading.
+        {...rest}
         className={cn(
           "inline-flex items-center justify-center gap-2 rounded-full font-medium",
           "transition-[background-color,border-color,color,transform,box-shadow] duration-150",
@@ -56,7 +62,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         disabled={loading || rest.disabled}
         aria-busy={loading || undefined}
-        {...rest}
       >
         {loading ? (
           <span

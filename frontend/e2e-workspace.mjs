@@ -6,7 +6,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 const RECIPE = `${BASE}/recipes/choc-chip-cookies`;
 let passed = 0;
@@ -29,8 +29,8 @@ try {
   // ---------- Hero + workspace ----------
   await page.goto(RECIPE);
   await expect(page, "text=คุกกี้ช็อกโกแลตชิพนุ่มหนึบ", "hero renders");
-  await expect(page, "text=ไปที่สูตรเลย", "jump-to-recipe CTA present");
-  await expect(page, 'button:has-text("โหมดทำขนม")', "sticky bar with focus-mode entry renders");
+  await expect(page, "text=30 นาที", "hero states time, servings and step count");
+  await expect(page, 'button:has-text("เริ่มโหมดทำขนม")', "focus mode is the hero CTA");
   await expect(page, "text=โดคุกกี้", "ingredient groups render (โดคุกกี้)");
   await expect(page, "text=ช็อกโกแลตและตกแต่ง", "second ingredient group renders");
   await expect(page, "text=250 g", "base quantity shows (250 g flour)");
@@ -63,12 +63,27 @@ try {
     throw new Error("checklist state lost after reload");
   }
 
-  // ---------- Substitutions ----------
-  await page.click("text=ไม่มีวัตถุดิบครบ? ดูของทดแทน");
-  await expect(page, "text=→", "substitution options expand with ratios");
+  // ---------- Substitutions (per ingredient, and applyable) ----------
+  const subsToggle = page.locator('button:has-text("ของทดแทน")').first();
+  await subsToggle.click();
+  await expect(page, 'button:has-text("ใช้แทน")', "substitution options open under their own ingredient");
+  const swapName = await page
+    .locator('button:has-text("ใช้แทน")')
+    .first()
+    .evaluate((node) => node.closest("li").querySelector("p span:nth-child(2)").textContent.trim());
+  await page.locator('button:has-text("ใช้แทน")').first().click();
+  await expect(page, "text=คืนค่าเดิม", "applying a substitute rewrites the ingredient line");
+  const swapped = await page.locator("#ingredients").innerText();
+  if (!swapped.includes(swapName)) {
+    throw new Error(`ingredient list does not show the applied substitute ${swapName}`);
+  }
+  ok(`applied substitute appears in the list (${swapName})`);
+  await page.click('button:has-text("คืนค่าเดิม")');
+  await page.waitForSelector('button:has-text("คืนค่าเดิม")', { state: "detached" });
+  ok("substitution can be undone - net zero");
 
   // ---------- Step timer ----------
-  await page.click('button:has-text("⏲ จับเวลา 12 นาที")');
+  await page.click('button:has-text("จับเวลา 12 นาที")');
   await expect(page, 'div[role="timer"]', "timer dock appears");
   await expect(page, "text=11:5", "countdown is ticking", 15_000);
   await page.click('button[aria-label="พักเวลา"]');
@@ -77,13 +92,17 @@ try {
 
   // ---------- Step completion + active emphasis ----------
   await expect(page, "text=ขั้นตอนปัจจุบัน", "active step is emphasized");
-  const stepBox = page.locator('#steps input[type="checkbox"]').first();
-  await stepBox.check();
+  const stepBox = page.locator('#steps [role="checkbox"]').first();
+  await stepBox.click();
   await expect(page, "text=ทำแล้ว 1 จาก 3 ขั้น", "step progress updates");
+  if ((await stepBox.getAttribute("aria-checked")) !== "true") {
+    throw new Error("the step badge did not take the completed state");
+  }
+  ok("the tick lives in the step's number badge");
   await page.screenshot({ path: `${SHOT_DIR}/20-workspace-desktop.png`, fullPage: true });
 
   // ---------- Focus mode ----------
-  await page.click('button:has-text("โหมดทำขนม")');
+  await page.click('button:has-text("เริ่มโหมดทำขนม")');
   await expect(page, 'div[role="dialog"][aria-label="โหมดทำขนม"]', "focus mode opens");
   await expect(page, "text=ขั้นที่ 2 จาก 3", "focus mode resumes at the active step");
   await page.click('button:has-text("ทำเสร็จแล้ว → ขั้นถัดไป")');
@@ -142,8 +161,15 @@ try {
   await page.click('button[type="submit"]');
   await page.waitForSelector("header >> text=สูตรขนม");
   await page.goto(RECIPE);
+  await page.waitForSelector('button:has-text("เขียนรีวิว")');
+  ok("existing reviews lead; writing one is a button");
+  const submitBefore = page.locator('button:has-text("ส่งรีวิว")');
+  await page.click('button:has-text("เขียนรีวิว")');
   await page.waitForSelector("text=ทำสูตรนี้แล้วเป็นยังไงบ้าง?");
-  ok("review form renders for a signed-in member");
+  if (!(await submitBefore.isDisabled())) {
+    throw new Error("submit must stay disabled until a star is chosen");
+  }
+  ok("submit is genuinely disabled until a star is picked");
   await page.click('button[aria-label="4 ดาว"]');
   await page.fill('textarea[placeholder*="เล่าผลลัพธ์"]', "หนึบจริง อบตามเวลาพอดีเลย");
   await page.click('button:has-text("ส่งรีวิว")');
@@ -157,9 +183,9 @@ try {
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto(RECIPE);
   await mobile.waitForSelector("text=คุกกี้ช็อกโกแลตชิพนุ่มหนึบ");
-  await mobile.waitForSelector('button:has-text("โหมดทำขนม")');
-  ok("mobile workspace renders with sticky controls");
-  await mobile.click('button:has-text("โหมดทำขนม")');
+  await mobile.waitForSelector('button:has-text("เริ่มโหมดทำขนม")');
+  ok("mobile workspace renders with its controls");
+  await mobile.click('button:has-text("เริ่มโหมดทำขนม")');
   await mobile.waitForSelector('div[role="dialog"][aria-label="โหมดทำขนม"]');
   ok("mobile focus mode opens full-screen");
   await mobile.screenshot({ path: `${SHOT_DIR}/22-focus-mobile.png` });

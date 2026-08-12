@@ -12,7 +12,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 let passed = 0;
 

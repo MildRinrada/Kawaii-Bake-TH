@@ -150,24 +150,32 @@ export function CertificateDesigner({ slug }: { slug: string }) {
   const selected = doc?.elements.find((element) => element.id === selectedId) ?? null;
 
   // ---- fit-to-container zoom --------------------------------------
+  // Depends on the canvas *size* only: re-measuring on every document
+  // edit re-created the observer mid-drag for no reason. The stage also
+  // reserves its scrollbar gutter (see className) — without that, the
+  // scrollbar appearing shrinks clientWidth, which shrinks the scale,
+  // which hides the scrollbar, which grows the scale again: the frame
+  // visibly vibrates on resize. The dead-band below absorbs what's left
+  // (sub-pixel churn) so the scale never chases its own tail.
+  const canvasWidth = doc?.size.width ?? 0;
+  const canvasHeight = doc?.size.height ?? 0;
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage || !doc) return;
+    if (!stage || !canvasWidth || !canvasHeight) return;
     const measure = () => {
       const width = stage.clientWidth - 48;
       const height = stage.clientHeight - 48;
-      setFitScale(
-        Math.max(
-          0.1,
-          Math.min(width / doc.size.width, height / doc.size.height, 1),
-        ),
+      const next = Math.max(
+        0.1,
+        Math.min(width / canvasWidth, height / canvasHeight, 1),
       );
+      setFitScale((prev) => (Math.abs(prev - next) < 0.005 ? prev : next));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(stage);
     return () => observer.disconnect();
-  }, [doc]);
+  }, [canvasWidth, canvasHeight]);
 
   // ---- history helpers --------------------------------------------
   /** Replace the document; `commit` pushes the previous state as one undo step. */
@@ -860,7 +868,7 @@ export function CertificateDesigner({ slug }: { slug: string }) {
         {/* ---- Center: stage --------------------------------------- */}
         <div
           ref={stageRef}
-          className="relative min-w-0 flex-1 overflow-auto bg-surface-sunken p-6"
+          className="relative min-w-0 flex-1 overflow-auto bg-surface-sunken p-6 [scrollbar-gutter:stable]"
           onPointerMove={onStagePointerMove}
           onPointerUp={onStagePointerUp}
           onPointerDown={() => setSelectedId(null)}
@@ -922,10 +930,10 @@ export function CertificateDesigner({ slug }: { slug: string }) {
                 ),
               )}
               {guides.vertical ? (
-                <div className="pointer-events-none absolute inset-y-0 left-1/2 z-[999] w-px bg-accent" />
+                <div className="pointer-events-none absolute inset-y-0 left-1/2 z-999 w-px bg-accent" />
               ) : null}
               {guides.horizontal ? (
-                <div className="pointer-events-none absolute inset-x-0 top-1/2 z-[999] h-px bg-accent" />
+                <div className="pointer-events-none absolute inset-x-0 top-1/2 z-999 h-px bg-accent" />
               ) : null}
             </CertificateCanvas>
           </div>
@@ -1120,7 +1128,9 @@ function PropertiesPanel({
         />
         <p className="mt-1 text-[11px] text-fg-subtle">
           {element.kind === "field"
-            ? "ข้อมูลอัตโนมัติ — ระบบเติมค่าจริงตอนออกใบประกาศ"
+            ? element.text?.trim()
+              ? "กำหนดเอง — ทุกใบจะใช้ข้อความที่กรอกแทนข้อมูลจริง"
+              : "ข้อมูลอัตโนมัติ — ระบบเติมค่าจริงตอนออกใบประกาศ"
             : "องค์ประกอบดีไซน์ — ตายตัวบนใบประกาศทุกใบ"}
         </p>
       </div>
@@ -1188,15 +1198,27 @@ function PropertiesPanel({
             ตัวอักษร
           </h3>
           <div className="mt-1.5 space-y-1.5">
-            {element.kind === "text" ? (
+            {element.kind === "text" || element.kind === "field" ? (
               <label className="block text-xs text-fg-muted">
-                ข้อความ
+                {element.kind === "field" ? "ข้อความกำหนดเอง" : "ข้อความ"}
                 <textarea
                   value={element.text ?? ""}
                   onChange={(event) => onPatch({ text: event.target.value })}
                   rows={2}
+                  placeholder={
+                    element.kind === "field"
+                      ? "เช่น มอบโดย เชฟมิลด์ รินรดา"
+                      : undefined
+                  }
                   className="mt-0.5 w-full rounded-control border border-edge bg-surface px-1.5 py-1 text-xs text-fg"
                 />
+                {element.kind === "field" ? (
+                  <span className="mt-0.5 block text-[11px] text-fg-subtle">
+                    เว้นว่าง = ใช้ข้อมูลจริง
+                    {element.field ? ` (${FIELD_LABELS[element.field]})` : ""}
+                    {" "}· กรอกเพื่อกำหนดเอง เช่น ชื่อผู้มอบใบประกาศ
+                  </span>
+                ) : null}
               </label>
             ) : null}
             <label className="flex items-center justify-between gap-2 text-xs text-fg-muted">

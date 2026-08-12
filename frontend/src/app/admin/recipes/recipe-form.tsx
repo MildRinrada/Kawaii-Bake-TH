@@ -34,6 +34,8 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageCropper } from "@/components/ui/image-cropper";
+import { COVER_ASPECT } from "@/components/content/cover-frame";
 import { AdminPanel, useConfirm } from "@/components/admin/primitives";
 import { describeAdminError } from "@/components/admin/lifecycle";
 
@@ -154,6 +156,8 @@ export function RecipeForm({
     initial?.categories.map((item) => item.slug) ?? [],
   );
   const [cover, setCover] = useState<File | null>(null);
+  /** The file waiting to be framed. `null` closes the crop dialog. */
+  const [cropping, setCropping] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverProblem, setCoverProblem] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -185,8 +189,24 @@ export function RecipeForm({
       return;
     }
     setCoverProblem(null);
-    setCover(file);
-    setCoverPreview(URL.createObjectURL(file));
+    // Frame it before it is uploaded. Covers are shown at 4:3 on the
+    // card and on the recipe page, so the author decides what the crop
+    // keeps - not `object-fit` on whatever shape the file happened to
+    // be. This is the fix at the source; the layout only has to honour
+    // the same ratio.
+    setCropping(file);
+  }
+
+  /** Take the framed result as the cover, replacing whatever was there. */
+  function acceptCrop(blob: Blob) {
+    const source = cropping;
+    setCropping(null);
+    if (!source) return;
+    const name = `${source.name.replace(/\.[^.]+$/, "")}.jpg`;
+    const framed = new File([blob], name, { type: "image/jpeg" });
+    setCover(framed);
+    setCoverPreview(URL.createObjectURL(framed));
+    if (fileInput.current) fileInput.current.value = "";
   }
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>(
@@ -675,7 +695,7 @@ export function RecipeForm({
                 <img
                   src={coverPreview ?? initial?.cover_image_url ?? ""}
                   alt=""
-                  className="aspect-video w-full rounded border border-edge object-cover"
+                  className="aspect-4/3 w-full rounded border border-edge object-cover"
                 />
               ) : null}
 
@@ -715,7 +735,8 @@ export function RecipeForm({
                   onChange={(event) => chooseCover(event.target.files?.[0])}
                 />
                 <p className="mt-1.5 text-[11px] text-fg-subtle">
-                  รองรับ JPG · PNG · WebP · GIF (ไม่รองรับ .HEIC จาก iPhone)
+                  รองรับ JPG · PNG · WebP · GIF (ไม่รองรับ .HEIC จาก iPhone) ·
+                  เลือกรูปแล้วจะให้ครอบเป็นสัดส่วน 4:3 ก่อนอัปโหลด
                 </p>
               </div>
 
@@ -744,6 +765,16 @@ export function RecipeForm({
                     ✕
                   </button>
                 </p>
+              ) : null}
+
+              {cover ? (
+                <button
+                  type="button"
+                  onClick={() => setCropping(cover)}
+                  className="text-xs text-accent underline focus-visible:outline-2 focus-visible:outline-focus"
+                >
+                  ปรับกรอบรูปใหม่
+                </button>
               ) : null}
 
               {coverProblem ? (
@@ -910,6 +941,22 @@ export function RecipeForm({
       </div>
 
       {confirm.dialog}
+
+      <ImageCropper
+        file={cropping}
+        aspect={COVER_ASPECT}
+        title="ปรับกรอบรูปหน้าปก"
+        confirmLabel="ใช้รูปนี้"
+        helpText="กรอบนี้คือสิ่งที่จะเห็นทั้งในการ์ดและหน้าสูตร รูปจะถูกบันทึกเป็น JPG"
+        onCancel={() => setCropping(null)}
+        onConfirm={acceptCrop}
+        onUndecodable={() => {
+          setCropping(null);
+          setCoverProblem(
+            "เปิดไฟล์นี้เป็นรูปภาพไม่ได้  อาจเสียหายหรือเป็นไฟล์คนละชนิดกับนามสกุล ลองไฟล์อื่นนะ",
+          );
+        }}
+      />
     </form>
   );
 }

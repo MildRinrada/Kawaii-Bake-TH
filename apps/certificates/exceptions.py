@@ -49,6 +49,22 @@ class CourseNotCompletedError(DomainError):
     message = "Complete every lesson in the course to earn its certificate."
 
 
+class LegalNameRequiredError(DomainError):
+    """Raised when the account has no legal name to print.
+
+    409, not 400: the request is well-formed. Sign-up deliberately does
+    not collect a legal name, so this is the state the *first* issuance
+    of an account is expected to hit  the client answers it by asking
+    the learner for their name and repeating the request with it. A
+    certificate naming a handle is not a credential, so falling back to
+    the username is not an option.
+    """
+
+    code = "legal_name_required"
+    status_code = 409
+    message = "Provide the name to print on the certificate."
+
+
 class CertificateAlreadyRevokedError(DomainError):
     """Raised when revoking a certificate that is already revoked.
 

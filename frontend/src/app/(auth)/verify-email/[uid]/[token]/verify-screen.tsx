@@ -50,7 +50,7 @@ export function VerifyEmailScreen({
   }
 
   return (
-    <Card>
+    <Card className="w-full max-w-sm">
       <CardHeader title="ยืนยันอีเมล" />
       <CardBody className="space-y-4 text-center">
         <Icon name="ui/check-circle" className="mx-auto size-12" />

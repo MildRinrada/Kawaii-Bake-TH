@@ -68,6 +68,7 @@ change  no view, serializer, service, repository, selector or URL is touched.
 | POST | `/register/` |  | 201 | Returns the identity payload; does **not** sign in |
 | GET | `/username-available/` |  | 200 | `?username=` → `{username, available}`; advisory, rate limited per IP |
 | POST | `/login/` |  | 200 | `{status, user}`; sets `sessionid` |
+| POST | `/google/` |  | 201 / 200 | Google ID token in, session out. 201 created the account, 200 signed an existing one in. 503 `oauth_unavailable` where unconfigured |
 | POST | `/logout/` | session | 204 | POST-only; deletes the server-side session |
 | GET | `/me/` | optional | 200 | `{"user": …}` or `{"user": null}` |
 | POST | `/password-reset/` |  | **202 always** | Never reveals whether the account exists |
@@ -170,7 +171,7 @@ of what they decorate.
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
 | GET | `/recipes/{slug}/reviews/` · `/courses/{slug}/reviews/` | optional | 200 | Paginated **active** reviews, newest first, reviewer embedded |
-| POST | same | session | 201 | One active review per user per target; 400 `own_content`; 409 `already_reviewed` |
+| POST | same | session | 201 | One active review per user per target; 400 `own_content`; 409 `already_reviewed`. `comment` is optional, but a non-blank one must be ≥ 10 characters (same rule on PATCH)  a rating with no comment stays legal |
 | GET | `/recipes/{slug}/rating/` · `/courses/{slug}/rating/` | optional | 200 | `{average, count, distribution}`  computed, never stored |
 | PATCH | `/reviews/{id}/` | owner/admin | 200 | Owner edits `rating`/`comment`; `status` (active/hidden) is staff-only → 403 |
 | DELETE | `/reviews/{id}/` | owner/admin | 204 | **Soft** delete  history survives; the author may review again |
@@ -202,7 +203,7 @@ are rate-limited per user before the provider is called. See ADR 0013.
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
-| POST | `/courses/{slug}/certificate/` | session | 201 / 200 | Issue (201) or return existing (200); hidden ⇒ 404, not a student ⇒ 403 `enrollment_required`, incomplete ⇒ 409 `course_not_completed` |
+| POST | `/courses/{slug}/certificate/` | session | 201 / 200 | Issue (201) or return existing (200); optional `{first_name, last_name}`. Hidden ⇒ 404, not a student ⇒ 403 `enrollment_required`, incomplete ⇒ 409 `course_not_completed`, no name to print ⇒ 409 `legal_name_required` |
 | GET | `/me/certificates/` | session | 200 | Paginated, newest first, revoked included with `status` |
 | GET | `/certificates/{verification_token}/` | **anonymous** | 200 / 404 | Employer verification by UUID token; returns `valid`/`revoked`; never an email |
 | GET | `/me/achievements/` | session | 200 | Paginated earned achievements with bilingual badge metadata |
@@ -237,9 +238,21 @@ ADR 0015.
 |---|---|---|---|---|
 | GET | `/me/notifications/` | session | 200 | Paginated, newest first; `?unread=true`; body carries live `unread_count`; strictly the caller's own |
 | POST | `/me/notifications/{id}/read/` | session (owner) | 200 / 404 | Stamp-once `read_at`; repeat calls stay 200 with the same stamp |
+| POST | `/me/notifications/{id}/click/` | session (owner) | 200 / 404 / 409 | The recipient followed this row's link. Stamp-once `clicked_at`, and stamps `read_at` too (you cannot open what a notification points at without reading it). A row with no `link` ⇒ 409 `not_clickable`. Called by the client *as it navigates*, so the count is a **floor** - a middle-click or a copied link is a real click nobody records |
 | POST | `/me/notifications/read-all/` | session | 200 | One conditional bulk UPDATE; returns `{marked_read}`  rows newly stamped |
 | GET | `/me/notifications/preferences/` | session | 200 | Every supported event type; absent row resolves to `true` |
 | PATCH | `/me/notifications/preferences/` | session | 200 / 400 | Strict `{event_type: bool}` subset; unknown event types rejected |
+
+**Announcement kinds.** A staff announcement carries a `kind` from a
+closed set - `general`, `feature`, `event`, `maintenance`, `policy`,
+`alert` - and that value is what the reader's row is drawn with (one
+glyph and one colour per kind, defined once in the frontend's
+`ANNOUNCEMENT_KINDS`). It replaced a free slug plus an emoji field the
+sender typed and no reader ever saw. The kind is **copied** into each
+delivered snapshot, like every other field there: the row is what the
+recipient was told, and editing a campaign later must not silently
+rewrite history (the amend endpoint does that, deliberately and for
+every recipient at once).
 
 There is no create endpoint: notifications exist only because a producer
 service (reviews, courses, certificates) called the notification service
@@ -252,13 +265,18 @@ delivery is best-effort and never fails the producer. See ADR 0016.
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
-| GET | `/gallery/` | optional | 200 | Paginated feed, newest first; anon sees published, owners also their own; filters `recipe_id`, `course_id`, `category`, `author` |
+| GET | `/gallery/` | optional | 200 | Paginated feed, newest first; anon sees published, owners also their own; filters `recipe_id`, `course_id`, `category`, `author`; every post carries `like_count`, `comment_count`, `viewer_has_liked` (ADR 0032, aggregated live) |
 | POST | `/gallery/` | session | 201 | `{caption?, status?, recipe_id?, course_id?}`; references must be publicly listed ⇒ else 400 `invalid_reference` |
 | GET | `/gallery/{id}/` | optional | 200 / 404 | Same rule as the list; unpublished-and-not-yours ⇒ 404 |
 | PATCH | `/gallery/{id}/` | owner/admin | 200 / 404 | caption/status/references; `image_ids` (exact set) reorders  400 `invalid_order` otherwise |
 | DELETE | `/gallery/{id}/` | owner/admin | 204 / 404 | **Hard** delete; every stored image file is removed |
 | POST | `/gallery/{id}/images/` | owner/admin | 201 | One multipart image; byte-validated before storage; max 10/post |
 | DELETE | `/gallery/{id}/images/{image_id}/` | owner/admin | 204 / 404 | Row and file together |
+| POST | `/gallery/{id}/like/` | session | 200 / 404 | Idempotent; returns `{liked, like_count}`; hidden post ⇒ 404 |
+| DELETE | `/gallery/{id}/like/` | session | 200 / 404 | Idempotent unlike; same payload |
+| GET | `/gallery/{id}/comments/` | optional | 200 / 404 | Paginated, oldest first; hidden post ⇒ 404, never an empty page |
+| POST | `/gallery/{id}/comments/` | session | 201 / 404 | `{body}`; notifies the post's author (never yourself) |
+| DELETE | `/gallery/comments/{comment_id}/` | comment author / post owner / admin | 204 / 404 | Hard delete; anyone else ⇒ 404 |
 
 ### Q&A  `/api/v1/qa/`
 
@@ -267,14 +285,19 @@ item bank); see ADR 0017 §14.
 
 | Method | Path | Auth | Success | Notes |
 |---|---|---|---|---|
-| GET | `/qa/threads/` | optional | 200 | Paginated; filters `recipe_id`, `course_id`, `search` (title/body) |
+| GET | `/qa/threads/` | optional | 200 | Paginated; filters `recipe_id`, `course_id`, `search` (title/body), `resolved` (true/false), `target` (recipe/course), `category` (slug); `ordering` = `latest` (default) / `active` (last answer) / `popular` (readers) |
 | POST | `/qa/threads/` | session | 201 | `{target_type, target_slug, title, body?}`; hidden target ⇒ 404 |
-| GET | `/qa/threads/{id}/` | optional | 200 / 404 | Active public; hidden ⇒ author/staff only; deleted ⇒ 404 for everyone |
+| GET | `/qa/threads/{id}/` | optional | 200 / 404 | Active public; hidden ⇒ author/staff only; deleted ⇒ 404 for everyone. Records a `ThreadView` for signed-in readers (idempotent) |
 | PATCH | `/qa/threads/{id}/` | author/staff | 200 | title/body; `status` (hide/restore) is staff-only ⇒ 403 otherwise |
 | DELETE | `/qa/threads/{id}/` | author/staff | 204 | **Soft** delete  history survives, no API returns it again |
 | GET | `/qa/threads/{id}/answers/` | optional | 200 / 404 | Oldest first; hidden/deleted thread ⇒ 404, never an empty page |
 | POST | `/qa/threads/{id}/answers/` | session | 201 / 409 | Active threads only; notifies the asker (never yourself) |
 | POST | `/qa/threads/{id}/accept/` | thread author/staff | 200 | `{answer_id}`; replaces any previous accepted answer atomically; notifies the answerer |
+
+Every thread payload carries three aggregates computed at read time  no
+counter columns exist: `answer_count`, `view_count` (distinct signed-in
+readers) and `last_answer_at` (null when nobody has answered). See
+ADR 0033.
 | PATCH / DELETE | `/qa/answers/{id}/` | answer author/staff | 200 / 204 | Hard delete; deleting the accepted answer clears the thread's pointer |
 
 ### Rewards  `/api/v1/me/rewards/` and `/api/v1/rewards/`
@@ -346,11 +369,16 @@ they consent to at registration.
 
 ```json
 { "email": "baker@example.com", "username": "baker",
-  "first_name": "มินตรา", "last_name": "อบอุ่น",
   "password": "…", "password_confirm": "…", "accept_terms": true }
 ```
 
-`first_name`/`last_name` are required - certificates print them - and
+Four fields, and no legal name: certificates print one, but most accounts
+never ask for a certificate, so the name is collected at issuance instead
+(`POST /courses/{slug}/certificate/`) and stored on the account from
+there. Sending `first_name`/`last_name` here is a **400** - the strict
+serializer rejects unknown keys, so a field the form no longer shows
+cannot remain a way to write to the user row.
+
 `accept_terms` must be an explicit `true` (PDPA consent; the timestamp is
 stored on the account). Registration does **not** start a session: the
 account confirms its email first (`/verify-email/{uid}/{token}` on the
@@ -388,6 +416,41 @@ auth ships  the field exists now so that addition is not a breaking change.
 
 `remember_me: true` gives a 30-day session; omitted or `false` gives a session
 cookie that dies with the browser.
+
+### `POST /auth/google/`
+
+```json
+{ "credential": "<Google ID token>" }
+```
+
+```json
+{ "status": "authenticated", "user": { … } }   // 201 new account, 200 existing
+```
+
+One endpoint for sign-up and sign-in, because the visitor pressed one
+button and does not know which one they did; the status code is the only
+place the difference shows. The body carries **only** the ID token -
+anything else (address, name) would be an unsigned claim about who is
+calling.
+
+Server-side the token is verified with Google, then checked against three
+things: the audience is this deployment's `GOOGLE_OAUTH_CLIENT_ID` (a real
+token minted for a *different* app must not work here), the issuer is
+Google, and `email_verified` is true. Accounts are matched on the
+provider's subject id, never the address; the address is matched exactly
+once, when first linking a provider to an existing local account.
+
+New accounts get a verified email, an **unusable password** (so password
+reset never mails them), a handle derived from the address, and a consent
+timestamp - the button sits under a line saying that pressing it accepts
+the terms.
+
+| Code | Meaning |
+|---|---|
+| 401 `social_auth_failed` | Expired, forged, wrong audience, wrong issuer, or Google unreachable - one code, because the caller can do exactly one thing about all of them |
+| 400 `social_email_unverified` | Google itself has not confirmed the address |
+| 403 `account_disabled` | The linked account is deactivated |
+| 503 `oauth_unavailable` | This deployment has no `GOOGLE_OAUTH_CLIENT_ID`. The frontend hides the button in the same case, so this means the two halves disagree |
 
 ### `PATCH /users/profile/update/`
 
@@ -776,13 +839,23 @@ so stored content cannot rewrite the assistant's instructions.
 ### Issuance flow
 
 ```
-POST /courses/khanom-course/certificate/
+POST /courses/khanom-course/certificate/   {"first_name": "…", "last_name": "…"}
   404  course hidden from you            (existence layer, as everywhere)
   403  enrollment_required               (visible, but you are not a student)
   409  course_not_completed              (progress has not stamped completion)
+  409  legal_name_required               (no stored name, and none in the body)
   201  {certificate_number:"KB-2026-000001", verification_token:"…", …}
   200  same body on every later call     (idempotent  one active per course)
 ```
+
+The body is **optional and only matters once**. Sign-up does not collect a
+legal name, so the first issuance answers `legal_name_required`; the client
+asks the learner and repeats the request with the name, which is written to
+the account and reused by every later certificate. A submitted name never
+overwrites a stored one - two certificates of one learner naming two
+different people is not a thing the API will produce. `last_name` may be
+blank (a mononym is a name); both blank is what triggers the 409. Over
+`NAME_PART_MAX_LENGTH` (80) is a 400, not a truncated credential.
 
 The response carries the **printable snapshot**  `student_name`,
 `course_title`, `completed_at`, `certificate_number`  frozen at issuance.
@@ -1041,9 +1114,13 @@ standard envelope unless noted.
 
 | Method | Path | Success | Notes |
 |---|---|---|---|
-| GET | `/admin/users/` | 200 | Roster with profile joined. Filters `search` (username/email/legal name/display name), `status` (`active`/`suspended`), `verified`, `staff`; `ordering` ∈ `newest\|oldest\|username\|recently_active`. Rows carry PII (email, legal name) - staff-only by construction |
+| GET | `/admin/users/` | 200 | Roster with profile joined. Filters `search` (username/email/legal name/display name), `status` (`active`/`suspended`), `verified`, `staff`; `ordering` ∈ `newest\|oldest\|username\|recently_active`. Rows carry PII (email, legal name) - staff-only by construction - and real activity counts (`recipes_count`, `courses_count` (non-dropped enrollments), `posts_count`) |
+| GET | `/admin/users/stats/` | 200 | Summary cards: `total`, `active`, `pending` (active + unverified email), `suspended`, `staff`, `new_7d` |
 | GET | `/admin/users/{id}/` | 200 / 404 | One account |
 | PATCH | `/admin/users/{id}/` | 200 | Partial: `first_name`, `last_name`, `is_active` (maintains `deactivated_at` like self-service), `is_staff`, `is_email_verified` (emergency override; stamps/clears `email_verified_at` like the real flow). Editing your **own** access flags, or any flag of a superuser ⇒ 403 `protected_account` |
+| POST | `/admin/users/create/` | 201 / 400 / 409 | ADR 0031 (lives in `apps.authentication` - it mints credentials). Same validation as registration, minus rate limit and terms stamp (the member never consented). `verified: true` stamps the email; otherwise the normal verification email goes out |
+| POST | `/admin/users/{id}/send-password-reset/` | 200 / 404 / 409 | Emails the reset link. Unlike the anonymous endpoint, ineligibility is reported honestly: deactivated or password-less (OAuth-only) ⇒ 409 `not_applicable` |
+| POST | `/admin/users/{id}/resend-verification/` | 200 / 404 / 409 | Re-sends the verification email; deactivated or already-verified ⇒ 409 `not_applicable` |
 
 **Achievements - `/admin/achievements/`**
 
@@ -1113,12 +1190,12 @@ inflated by fuzzy search hits.
 |---|---|---|---|
 | GET | `/admin/notifications/` | 200 | Cross-user log with read state. Filters `search`, `event_type`, `unread` |
 | POST | `/admin/notifications/broadcast/` | 201 | `{title, body?, link?}` → `{recipients}`. Creates an `announcement` for every active account that has not opted out - the new sixth event type, same preference machinery as the rest. In-app only: there is no email channel, so no delivered/bounced status exists to report |
-| GET | `/admin/notifications/stats/` | 200 | Hub numbers: campaigns by status, snapshots created today, delivered/read totals (ADR 0030) |
+| GET | `/admin/notifications/stats/` | 200 | Hub numbers: campaigns by status, snapshots created today, delivered/read/clicked totals (ADR 0030) |
 | GET/POST | `/admin/notifications/campaigns/` | 200 / 201 / 400 | Staff campaigns. Filters `status`, `search`. Create as `draft` or `scheduled` (future `scheduled_at` else 400 `invalid_schedule`); `audience` is a closed JSON document validated server-side (400 `invalid_audience`) |
-| GET/PATCH/DELETE | `/admin/notifications/campaigns/{id}/` | 200 / 204 / 409 | Edit only `draft`/`scheduled`; delete only `draft`/`canceled`. Sent campaigns are immutable evidence - 409 `campaign_state` |
+| GET/PATCH/DELETE | `/admin/notifications/campaigns/{id}/` | 200 / 204 / 409 | Draft/scheduled accept every field. **Sent** accepts content-only PATCH (an amendment - delivered snapshots re-render per recipient in the same transaction); its audience/schedule are history (409). DELETE on sent **retracts**: the delivered snapshots leave every recipient's inbox with the campaign. Scheduled must be canceled before delete (409 `campaign_state`) |
 | POST | `/admin/notifications/campaigns/{id}/send/` | 200 / 400 / 409 | Deliver now: resolves the audience, drops announcement opt-outs, renders `{{user_name}}`/`{{course_name}}` per recipient, bulk-creates snapshots with a `campaign` backreference. Unresolvable variables → 400 `unresolvable_variables` |
 | POST | `/admin/notifications/campaigns/{id}/cancel/` | 200 / 409 | Call off a scheduled send |
-| GET | `/admin/notifications/campaigns/{id}/analytics/` | 200 / 404 | `recipients`, `delivered`, `read`, `unread`, `read_rate`, `sent_at` - real receipts only, no click tracking exists |
+| GET | `/admin/notifications/campaigns/{id}/analytics/` | 200 / 404 | `recipients`, `delivered`, `read`, `unread`, `read_rate`, `clicked`, `click_rate`, `sent_at`. Both rates are over **delivered**, not recipients. `clicked` is client-reported (see `/me/notifications/{id}/click/`) and the panel labels it as a floor |
 | POST | `/admin/notifications/audience/estimate/` | 200 / 400 | `{audience}` → `{count}` via the same resolve-then-drop-opt-outs pipeline a send uses |
 | GET/POST | `/admin/notifications/templates/` | 200 / 201 | Reusable composer templates (admin-side config, never user preferences) |
 | PATCH/DELETE | `/admin/notifications/templates/{id}/` | 200 / 204 / 404 | Edit fields or toggle `is_archived`; delete is allowed - templates are config, not history |

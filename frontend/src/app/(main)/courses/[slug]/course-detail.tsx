@@ -24,7 +24,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LessonCard } from "@/components/content/lesson-card";
-import { MediaFrame } from "@/components/content/media-frame";
+import { CoverFrame } from "@/components/content/cover-frame";
 import { Icon } from "@/components/ui/icon";
 
 type CourseProgress = components["schemas"]["CourseProgress"];
@@ -95,14 +95,19 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
 
   return (
     <PageContainer>
-      <div className="overflow-hidden rounded-surface border border-edge shadow-raised">
-        <div className="aspect-[21/8] w-full">
-          <MediaFrame src={data.thumbnail_url} seed={data.slug} alt={data.title} />
-        </div>
-      </div>
+      {/* Same hero contract as a recipe: the thumbnail keeps the card's
+          4:3 (3:4 if the file is portrait) instead of being sliced into a
+          21:8 strip, and the title sits beside it rather than under 440px
+          of banner. */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
+        <CoverFrame
+          src={data.thumbnail_url}
+          seed={data.slug}
+          alt={data.title}
+          kind="course"
+        />
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.7fr_1fr]">
-        <div>
+        <div className="min-w-0">
           <div className="mb-2 flex flex-wrap gap-1.5">
             <DifficultyBadge level={data.difficulty} />
             <Badge tone="lavender">{data.lesson_count} บทเรียน</Badge>
@@ -124,13 +129,18 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
             />
             สอนโดย {data.instructor.display_name || data.instructor.username}
           </p>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1.7fr_1fr]">
+        <div>
           {data.description ? (
-            <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-fg">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg">
               {data.description}
             </p>
           ) : null}
 
-          <h2 className="font-display mb-4 mt-8 text-xl font-medium text-fg">
+          <h2 className="font-display mb-4 mt-8 text-xl font-medium text-fg first:mt-0">
             บทเรียนในคอร์ส
           </h2>
           {syllabus.loading ? (

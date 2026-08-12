@@ -34,6 +34,7 @@ import type {
   MySettings,
   RecipeListItem,
 } from "@/lib/api/models";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { RequireAuth } from "@/lib/auth/require-auth";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -61,6 +62,33 @@ import { CoverEditor } from "./cover-editor";
 import { EXPERIENCE_LABELS, EditProfileDialog } from "./edit-profile-dialog";
 
 const PREVIEW_LIMIT = 6;
+const ACTIVITY_PAGE = 5;
+
+/** `profile_completion.missing` ships raw field names; humans read Thai. */
+const COMPLETION_LABELS: Record<string, string> = {
+  bio: "คำแนะนำตัว",
+  location: "ที่อยู่",
+  birthday: "วันเกิด",
+  favorite_categories: "หมวดที่สนใจ",
+  avatar: "รูปโปรไฟล์",
+  display_name: "ชื่อที่แสดง",
+  experience_level: "ระดับฝีมือ",
+  website: "เว็บไซต์",
+};
+
+/** "วันนี้" / "เมื่อวาน" / "N วันที่แล้ว" - the timeline's day buckets. */
+function dayBucket(iso: string): string {
+  const start = (value: Date) =>
+    new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+  const days = Math.round(
+    (start(new Date()) - start(new Date(iso))) / 86_400_000,
+  );
+  if (days <= 0) return "วันนี้";
+  if (days === 1) return "เมื่อวาน";
+  if (days < 7) return `${days} วันที่แล้ว`;
+  if (days < 30) return `${Math.floor(days / 7)} สัปดาห์ที่แล้ว`;
+  return monthYearThai(iso);
+}
 
 /* ------------------------------------------------------------------ */
 /* Section shell                                                       */
@@ -148,7 +176,7 @@ function buildActivity(
     if (recipe) {
       events.push({
         at: favorite.favorited_at,
-        icon: { kind: "ui", name: "heart-filled" },
+        icon: { kind: "ui", name: "heart" },
         text: `บันทึกสูตร ${recipe.title}`,
         href: `/recipes/${recipe.slug}`,
       });
@@ -176,9 +204,23 @@ function buildActivity(
     });
   }
 
-  return events
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-    .slice(0, 8);
+  return events.sort(
+    (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+  );
+}
+
+/** The timeline, cut into day buckets in the order they occurred. */
+function groupByDay(
+  events: ActivityEvent[],
+): Array<{ bucket: string; items: ActivityEvent[] }> {
+  const groups: Array<{ bucket: string; items: ActivityEvent[] }> = [];
+  for (const event of events) {
+    const bucket = dayBucket(event.at);
+    const last = groups[groups.length - 1];
+    if (last && last.bucket === bucket) last.items.push(event);
+    else groups.push({ bucket, items: [event] });
+  }
+  return groups;
 }
 
 /* ------------------------------------------------------------------ */
@@ -189,6 +231,7 @@ function ProfileContent() {
   const { refresh } = useAuth();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
+  const [activityShown, setActivityShown] = useState(ACTIVITY_PAGE);
 
   const settings = useApiQuery(
     (signal) => api.get<MySettings>("/me/settings/", { signal }),
@@ -285,7 +328,7 @@ function ProfileContent() {
     { label: "คอร์สที่เรียนจบ", value: completedCourses.length, icon: "graduation" as UiIconName },
     { label: "กำลังเรียน", value: learning.length, icon: "book-open" as UiIconName },
     { label: "ใบประกาศนียบัตร", value: issued.length, icon: "scroll" as UiIconName },
-    { label: "สูตรที่บันทึกไว้", value: savedRecipes.data?.count ?? 0, icon: "heart-filled" as UiIconName },
+    { label: "สูตรที่บันทึกไว้", value: savedRecipes.data?.count ?? 0, icon: "heart" as UiIconName },
     { label: "คอร์สที่บันทึกไว้", value: savedCourses.data?.count ?? 0, icon: "bookmark" as UiIconName },
     { label: "ความสำเร็จ", value: badges.length, icon: "trophy" as UiIconName },
   ].filter((metric) => metric.value > 0);
@@ -321,12 +364,40 @@ function ProfileContent() {
           </Button>
         </CardBody>
         <CardBody className="border-t border-edge pt-4">
+          {/* The learning identity lives with the identity, not in a row
+              of six cards: five one-digit numbers never needed a grid. */}
+          {metrics.length > 0 ? (
+            <p className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-muted">
+              {metrics.map((metric, index) => (
+                <span key={metric.label} className="flex items-center gap-1.5">
+                  {index > 0 ? (
+                    <span aria-hidden className="text-fg-subtle">
+                      ·
+                    </span>
+                  ) : null}
+                  <Icon
+                    tint
+                    name={`ui/${metric.icon}`}
+                    className="size-4 text-fg-subtle"
+                  />
+                  <strong className="font-medium text-fg">{metric.value}</strong>
+                  {metric.label}
+                </span>
+              ))}
+            </p>
+          ) : null}
           {profile.bio ? (
             <p className="whitespace-pre-wrap text-sm text-fg">{profile.bio}</p>
           ) : (
-            <p className="text-sm text-fg-subtle">
+            // Grey, not pink: an unwritten bio is an invitation, not a
+            // validation error - and the invitation opens the editor.
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="rounded-control text-left text-sm text-fg-subtle underline decoration-dotted underline-offset-4 hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+            >
               ยังไม่มีคำแนะนำตัวเลย เล่าให้เราฟังหน่อยว่าคุณชอบอบอะไร
-            </p>
+            </button>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <Badge tone="lavender">
@@ -350,22 +421,13 @@ function ProfileContent() {
         </CardBody>
       </Card>
 
-      {/* 2  Learning identity --------------------------------------- */}
-      {metrics.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {metrics.map((metric) => (
-            <Card key={metric.label} className="px-4 py-3 text-center">
-              <Icon name={`ui/${metric.icon}`} className="mx-auto size-5 text-fg-muted" />
-              <p className="font-display text-xl font-medium text-fg">
-                {metric.value}
-              </p>
-              <p className="text-xs text-fg-muted">{metric.label}</p>
-            </Card>
-          ))}
-        </div>
-      ) : null}
+      {/* Two columns from directly under the cover: everything the page
+          says about *doing* on the left, everything it says about *being*
+          on the right. Nothing below has to span the full width alone. */}
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="space-y-8 lg:col-span-2">
 
-      {/* 3  Currently learning -------------------------------------- */}
+      {/* 1  Currently learning -------------------------------------- */}
       <Section
         title="กำลังเรียนอยู่"
         hint={
@@ -379,7 +441,7 @@ function ProfileContent() {
         ) : learning.length === 0 ? (
           <Card>
             <EmptyState
-              icon={<Icon name="ui/book" className="size-8 text-fg-subtle" />}
+              icon={<Icon tint name="ui/book" className="size-8 text-fg-subtle" />}
               title="ยังไม่มีคอร์สที่กำลังเรียน"
               description="เริ่มคอร์สแรกเพื่อเริ่มต้นเส้นทางการอบของคุณ"
               action={
@@ -390,26 +452,30 @@ function ProfileContent() {
             />
           </Card>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          // One course in progress gets the full width as a wide row;
+          // two or more share the two-up grid.
+          <div className={cn("grid gap-4", learning.length > 1 && "lg:grid-cols-2")}>
             {learning.map((course) => (
               <Card key={course.slug} className="flex gap-4 overflow-hidden">
-                <div className="w-24 shrink-0">
+                <div className={cn("shrink-0", learning.length > 1 ? "w-24" : "w-32 sm:w-44")}>
                   <MediaFrame src={null} seed={course.slug} />
                 </div>
                 <div className="min-w-0 flex-1 py-3 pr-4">
                   <h3 className="font-display truncate font-medium text-fg">
                     {course.title}
                   </h3>
+                  {/* Says the same thing as the percentage - "บทที่ 1
+                      จาก 2" next to 0% read as a contradiction. */}
                   <p className="mt-0.5 text-xs text-fg-muted">
                     {course.total_lessons > 0
-                      ? `บทที่ ${Math.min(course.completed_lessons + 1, course.total_lessons)} จาก ${course.total_lessons}`
+                      ? `เรียนจบแล้ว ${course.completed_lessons} จาก ${course.total_lessons} บท`
                       : "ยังไม่มีบทเรียน"}
                   </p>
                   <div className="mt-2 flex items-center gap-3">
                     <ProgressBar
                       percent={course.percentage}
                       label={`ความคืบหน้า ${course.title}`}
-                      className="h-2"
+                      className="h-2 flex-1"
                     />
                     <span className="shrink-0 text-xs font-medium text-fg-muted">
                       {course.percentage}%
@@ -430,7 +496,114 @@ function ProfileContent() {
         )}
       </Section>
 
-      {/* 4  Certificates preview ------------------------------------ */}
+      {/* 2  Community creations -------------------------------------
+          Sits high on purpose: what the baker *made* outranks what they
+          merely saved. Each post is a real card - cover, title, date,
+          the recipe it was baked from - and the section is always
+          present so "share your first bake" is reachable. */}
+      <Section
+        title="ผลงานที่แชร์ไว้"
+        hint={
+          myPosts.length > 0
+            ? `${posts.data?.count ?? myPosts.length} ชิ้นในแกลเลอรีของชุมชน`
+            : "รูปขนมที่คุณแชร์ให้ชุมชนดู"
+        }
+        action={
+          myPosts.length > 0 && username ? (
+            <Link
+              href={`/community?author=${username}` as "/community"}
+              className="text-sm text-fg-muted hover:text-fg"
+            >
+              จัดการโพสต์ทั้งหมด →
+            </Link>
+          ) : null
+        }
+      >
+        {posts.loading ? (
+          <Skeleton className="h-44 w-full rounded-surface" />
+        ) : myPosts.length === 0 ? (
+          <Card>
+            <EmptyState
+              icon={<Icon tint name="ui/camera" className="size-8 text-fg-subtle" />}
+              title="ยังไม่เคยแชร์ผลงาน"
+              description="ถ่ายรูปขนมที่เพิ่งอบเสร็จมาอวดชุมชน แล้วมันจะมาอยู่ตรงนี้"
+              action={
+                <Link href="/community/create">
+                  <Button>
+                    <Icon name="ui/plus" className="size-4" /> แชร์ผลงาน
+                  </Button>
+                </Link>
+              }
+            />
+          </Card>
+        ) : (
+          <ul
+            className={cn(
+              "grid gap-4",
+              myPosts.length > 1 && "sm:grid-cols-2 xl:grid-cols-3",
+            )}
+          >
+            {myPosts.slice(0, PREVIEW_LIMIT).map((post) => {
+              const horizontal = myPosts.length === 1;
+              return (
+                <li key={post.id}>
+                  <Link
+                    href={`/community/posts/${post.id}`}
+                    className="group block h-full rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  >
+                    <Card
+                      className={cn(
+                        "flex h-full overflow-hidden transition-[transform,box-shadow] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-overlay",
+                        horizontal ? "flex-col sm:flex-row" : "flex-col",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "aspect-4/3 w-full shrink-0 overflow-hidden",
+                          horizontal && "sm:w-2/5",
+                        )}
+                      >
+                        <MediaFrame
+                          src={post.images[0]?.url}
+                          seed={String(post.id)}
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-1.5 p-4">
+                        <h3 className="font-display line-clamp-2 font-medium text-fg group-hover:text-accent-hover">
+                          {/* A caption is optional; the recipe it was
+                              baked from is the honest fallback title. */}
+                          {post.caption?.trim() ||
+                            post.recipe?.title ||
+                            "ผลงานของฉัน"}
+                        </h3>
+                        <p className="flex flex-wrap items-center gap-x-2 text-xs text-fg-subtle">
+                          <span>{relativeThai(post.created_at)}</span>
+                          {post.images.length > 1 ? (
+                            <span>· {post.images.length} รูป</span>
+                          ) : null}
+                          {post.status !== "active" ? (
+                            <Badge tone="butter">ซ่อนอยู่</Badge>
+                          ) : null}
+                        </p>
+                        {post.recipe || post.course ? (
+                          <p className="mt-auto pt-1 text-xs text-fg-muted">
+                            จาก{post.recipe ? "สูตร" : "คอร์ส"}{" "}
+                            <span className="text-fg">
+                              {post.recipe?.title ?? post.course?.title}
+                            </span>
+                          </p>
+                        ) : null}
+                      </div>
+                    </Card>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Section>
+
+      {/* 3  Certificates preview ------------------------------------ */}
       <Section
         title="ใบประกาศนียบัตรของฉัน"
         hint={
@@ -441,7 +614,7 @@ function ProfileContent() {
         action={
           <Link
             href="/certificates"
-            className="text-sm text-accent hover:text-accent-hover"
+            className="text-sm text-fg-muted hover:text-fg"
           >
             ดูทั้งหมด →
           </Link>
@@ -452,7 +625,7 @@ function ProfileContent() {
         ) : issued.length === 0 ? (
           <Card>
             <EmptyState
-              icon={<Icon name="ui/scroll" className="size-8 text-fg-subtle" />}
+              icon={<Icon tint name="ui/scroll" className="size-8 text-fg-subtle" />}
               title="ยังไม่มีใบประกาศนียบัตร"
               description="เรียนจบคอร์สให้ครบทุกบทเพื่อรับใบประกาศใบแรกของคุณ"
               action={
@@ -463,25 +636,54 @@ function ProfileContent() {
             />
           </Card>
         ) : (
-          <ul className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2">
+          // A single certificate lies down (sheet left, details right)
+          // instead of leaving two thirds of the row empty.
+          <ul
+            className={cn(
+              issued.length === 1
+                ? "block"
+                : "-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2",
+            )}
+          >
             {issued.slice(0, PREVIEW_LIMIT).map((certificate) => (
               <li
                 key={certificate.id}
-                className="w-72 shrink-0 snap-start sm:w-80"
+                className={cn(
+                  issued.length === 1
+                    ? "w-full"
+                    : "w-72 shrink-0 snap-start sm:w-80",
+                )}
               >
                 <Link
                   href="/certificates"
-                  className="group block rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  className={cn(
+                    "group rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                    issued.length === 1
+                      ? "flex flex-col gap-4 sm:flex-row sm:items-center"
+                      : "block",
+                  )}
                 >
-                  <div className="transition-transform duration-150 group-hover:-translate-y-0.5">
+                  <div
+                    className={cn(
+                      "transition-transform duration-150 group-hover:-translate-y-0.5",
+                      issued.length === 1 && "w-full shrink-0 sm:w-80",
+                    )}
+                  >
                     <CertificateSheet certificate={certificate} />
                   </div>
-                  <p className="font-display mt-2 truncate text-sm font-medium text-fg">
-                    {certificate.course_title}
-                  </p>
-                  <p className="text-xs text-fg-subtle">
-                    ออกให้ {formatThaiDate(certificate.issued_at)}
-                  </p>
+                  <div className={cn(issued.length === 1 ? "min-w-0" : "")}>
+                    <p className="font-display mt-2 truncate text-sm font-medium text-fg sm:mt-0">
+                      {certificate.course_title}
+                    </p>
+                    <p className="text-xs text-fg-subtle">
+                      ออกให้ {formatThaiDate(certificate.issued_at)}
+                    </p>
+                    {issued.length === 1 ? (
+                      <p className="mt-2 text-sm text-fg-muted">
+                        เรียนจบครบทุกบทแล้ว ดาวน์โหลดหรือแชร์ใบนี้ได้ที่หน้าใบประกาศนียบัตร
+                      </p>
+                    ) : null}
+                  </div>
                 </Link>
               </li>
             ))}
@@ -489,9 +691,7 @@ function ProfileContent() {
         )}
       </Section>
 
-      {/* 5–8  Saved content + secondary column ----------------------- */}
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="space-y-8 lg:col-span-2">
+      {/* 4  Saved content ------------------------------------------- */}
           {/* Saved recipes */}
           <Section
             title="สูตรที่บันทึกไว้"
@@ -504,7 +704,7 @@ function ProfileContent() {
               recipeFavorites.length > 0 ? (
                 <Link
                   href="/favorites"
-                  className="text-sm text-accent hover:text-accent-hover"
+                  className="text-sm text-fg-muted hover:text-fg"
                 >
                   ดูรายการโปรดทั้งหมด →
                 </Link>
@@ -512,7 +712,7 @@ function ProfileContent() {
             }
           >
             {savedRecipes.loading ? (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]">
                 {Array.from({ length: 3 }, (_, index) => (
                   <Skeleton key={index} className="h-64 rounded-surface" />
                 ))}
@@ -520,7 +720,7 @@ function ProfileContent() {
             ) : recipeFavorites.length === 0 ? (
               <Card>
                 <EmptyState
-                  icon={<Icon name="ui/heart" className="size-8 text-fg-subtle" />}
+                  icon={<Icon tint name="ui/heart" className="size-8 text-fg-subtle" />}
                   title="ยังไม่มีสูตรที่บันทึกไว้"
                   description="กดหัวใจในสูตรที่อยากอบไว้ทีหลัง แล้วมันจะมารออยู่ตรงนี้"
                   action={
@@ -531,7 +731,7 @@ function ProfileContent() {
                 />
               </Card>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]">
                 {recipeFavorites
                   .slice(0, PREVIEW_LIMIT)
                   .map((favorite, index) => (
@@ -552,7 +752,7 @@ function ProfileContent() {
               courseFavorites.length > 0 ? (
                 <Link
                   href="/favorites"
-                  className="text-sm text-accent hover:text-accent-hover"
+                  className="text-sm text-fg-muted hover:text-fg"
                 >
                   ดูรายการโปรดทั้งหมด →
                 </Link>
@@ -560,7 +760,7 @@ function ProfileContent() {
             }
           >
             {savedCourses.loading ? (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]">
                 {Array.from({ length: 3 }, (_, index) => (
                   <Skeleton key={index} className="h-64 rounded-surface" />
                 ))}
@@ -568,7 +768,7 @@ function ProfileContent() {
             ) : courseFavorites.length === 0 ? (
               <Card>
                 <EmptyState
-                  icon={<Icon name="ui/bookmark" className="size-8 text-fg-subtle" />}
+                  icon={<Icon tint name="ui/bookmark" className="size-8 text-fg-subtle" />}
                   title="ยังไม่มีคอร์สที่บันทึกไว้"
                   description="เจอคอร์สที่น่าสนใจแต่ยังไม่พร้อมเรียน? กดหัวใจเก็บไว้ก่อนได้"
                   action={
@@ -579,7 +779,7 @@ function ProfileContent() {
                 />
               </Card>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]">
                 {courseFavorites
                   .slice(0, PREVIEW_LIMIT)
                   .map((favorite, index) => (
@@ -592,53 +792,13 @@ function ProfileContent() {
             )}
           </Section>
 
-          {/* Community creations  only when the user actually posted.
-              Each tile opens its post, and the section links to the
-              feed's "my posts" view where hide/edit/delete live. */}
-          {myPosts.length > 0 ? (
-            <Section
-              title="ผลงานที่แชร์ไว้"
-              hint={`${posts.data?.count ?? myPosts.length} ชิ้นในแกลเลอรีของชุมชน`}
-            >
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {myPosts.slice(0, 4).map((post) => (
-                  <li key={post.id}>
-                    <Link
-                      href={`/community/posts/${post.id}`}
-                      className="block rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    >
-                      <div className="aspect-square overflow-hidden rounded-surface border border-edge">
-                        <MediaFrame
-                          src={post.images[0]?.url}
-                          seed={String(post.id)}
-                        />
-                      </div>
-                      {post.caption ? (
-                        <p className="mt-1 line-clamp-1 text-xs text-fg-muted">
-                          {post.caption}
-                        </p>
-                      ) : null}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              {username ? (
-                <div className="mt-3">
-                  <Link
-                    href={`/community?author=${username}` as "/community"}
-                    className="text-sm font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-focus"
-                  >
-                    จัดการโพสต์ทั้งหมดของฉัน →
-                  </Link>
-                </div>
-              ) : null}
-            </Section>
-          ) : null}
         </div>
 
-        {/* Secondary column ----------------------------------------- */}
-        <aside className="space-y-6">
-          {/* Recent activity */}
+        {/* Secondary column: who this baker is. Sticky on desktop so it
+            stays with the reader down a long left column. */}
+        <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+          {/* Recent activity - grouped by day and cut to five, because
+              eight undifferentiated rows read as noise. */}
           <Card>
             <CardHeader title="ความเคลื่อนไหวล่าสุด" />
             <CardBody>
@@ -647,43 +807,69 @@ function ProfileContent() {
                   ยังไม่มีความเคลื่อนไหว  ความสำเร็จของคุณจะมาปรากฏที่นี่
                 </p>
               ) : (
-                <ol className="space-y-3">
-                  {activity.map((event) => (
-                    <li
-                      key={`${event.at}-${event.text}`}
-                      className="flex gap-3 text-sm"
-                    >
-                      <span
-                        aria-hidden
-                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken"
-                      >
-                        {event.icon.kind === "ui" ? (
-                          <Icon name={`ui/${event.icon.name}`} className="size-4 text-fg-muted" />
-                        ) : (
-                          <ArtIcon src={badgeArt(event.icon.slug, true)} className="size-5" />
-                        )}
-                      </span>
-                      <div className="min-w-0">
-                        {event.href ? (
-                          <Link
-                            href={event.href as "/certificates"}
-                            className="line-clamp-2 text-fg hover:text-accent-hover"
-                          >
-                            {event.text}
-                          </Link>
-                        ) : (
-                          <p className="line-clamp-2 text-fg">{event.text}</p>
-                        )}
-                        <time
-                          dateTime={event.at}
-                          className="text-xs text-fg-subtle"
-                        >
-                          {relativeThai(event.at)}
-                        </time>
+                <>
+                  <div className="space-y-4">
+                    {groupByDay(activity.slice(0, activityShown)).map((group) => (
+                      <div key={group.bucket}>
+                        <p className="mb-1.5 text-xs font-medium text-fg-subtle">
+                          {group.bucket}
+                        </p>
+                        <ol className="space-y-3">
+                          {group.items.map((event) => (
+                            <li
+                              key={`${event.at}-${event.text}`}
+                              className="flex gap-3 text-sm"
+                            >
+                              <span
+                                aria-hidden
+                                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken"
+                              >
+                                {event.icon.kind === "ui" ? (
+                                  <Icon
+                                    tint
+                                    name={`ui/${event.icon.name}`}
+                                    className="size-4 text-fg-muted"
+                                  />
+                                ) : (
+                                  <ArtIcon src={badgeArt(event.icon.slug, true)} className="size-5" />
+                                )}
+                              </span>
+                              <div className="min-w-0">
+                                {event.href ? (
+                                  <Link
+                                    href={event.href as "/certificates"}
+                                    className="line-clamp-2 text-fg hover:text-accent-hover"
+                                  >
+                                    {event.text}
+                                  </Link>
+                                ) : (
+                                  <p className="line-clamp-2 text-fg">{event.text}</p>
+                                )}
+                                <time
+                                  dateTime={event.at}
+                                  className="text-xs text-fg-subtle"
+                                >
+                                  {relativeThai(event.at)}
+                                </time>
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
                       </div>
-                    </li>
-                  ))}
-                </ol>
+                    ))}
+                  </div>
+                  {activity.length > activityShown ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActivityShown((shown) => shown + ACTIVITY_PAGE)
+                      }
+                      className="mt-3 text-sm text-fg-muted underline hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+                    >
+                      ดูเพิ่ม ({activity.length - activityShown})
+                    </button>
+                  ) : null}
+                </>
               )}
             </CardBody>
           </Card>
@@ -696,7 +882,7 @@ function ProfileContent() {
                 actions={
                   <Link
                     href="/achievements"
-                    className="text-sm text-accent hover:text-accent-hover"
+                    className="text-sm text-fg-muted hover:text-fg"
                   >
                     ดูทั้งหมด →
                   </Link>
@@ -757,8 +943,21 @@ function ProfileContent() {
                   </span>
                 </div>
                 {completion.missing.length > 0 ? (
-                  <p className="mt-1 text-xs text-fg-muted">
-                    ยังขาด: {completion.missing.join(", ")}
+                  // Field names translated, and each one opens the
+                  // editor - naming a gap without a way to fill it is
+                  // just nagging.
+                  <p className="mt-1 flex flex-wrap items-center gap-1 text-xs text-fg-muted">
+                    ยังขาด:
+                    {completion.missing.map((field) => (
+                      <button
+                        key={field}
+                        type="button"
+                        onClick={() => setEditing(true)}
+                        className="rounded-full bg-surface-sunken px-2 py-0.5 text-fg-muted underline decoration-dotted underline-offset-2 hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+                      >
+                        {COMPLETION_LABELS[field] ?? field}
+                      </button>
+                    ))}
                   </p>
                 ) : (
                   <p className="mt-1 flex items-center gap-1 text-xs text-fg-muted"><Icon name="ui/party" className="size-3.5" /> ครบแล้ว</p>

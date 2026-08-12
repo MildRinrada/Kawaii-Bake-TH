@@ -9,9 +9,14 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
+# Staff-only aggregation seam: the roster annotates activity counts over
+# other apps' reverse relations (recipes / enrollments / gallery posts).
+# Constants only cross the boundary - no other app's queryset is built
+# here, and nothing outside the IsAdminUser views renders these numbers.
+from apps.courses.constants import EnrollmentStatus
 from apps.users.models import User
 
 ROSTER_ORDERINGS: dict[str, tuple[str, ...]] = {
@@ -20,6 +25,28 @@ ROSTER_ORDERINGS: dict[str, tuple[str, ...]] = {
     "username": ("username",),
     "recently_active": ("-last_login", "-created_at"),
 }
+
+
+def _with_activity(queryset: QuerySet[User]) -> QuerySet[User]:
+    """Annotate the activity counts the roster row displays.
+
+    ``distinct`` keeps each count honest across the multi-join: without
+    it, a user with 3 recipes and 2 enrollments would report 6 of each.
+    """
+    return queryset.annotate(
+        recipes_count=Count("recipes", distinct=True),
+        courses_count=Count(
+            "enrollments",
+            filter=Q(
+                enrollments__status__in=(
+                    EnrollmentStatus.ACTIVE,
+                    EnrollmentStatus.COMPLETED,
+                )
+            ),
+            distinct=True,
+        ),
+        posts_count=Count("gallery_posts", distinct=True),
+    )
 
 
 def list_users(
@@ -46,7 +73,7 @@ def list_users(
     Returns:
         A lazy queryset of users with ``profile`` selected.
     """
-    queryset = User.objects.select_related("profile")
+    queryset = _with_activity(User.objects.select_related("profile"))
 
     cleaned = search.strip()
     if cleaned:
@@ -84,4 +111,31 @@ def get_user(*, user_id: int) -> User | None:
     Returns:
         The user, or ``None`` when absent.
     """
-    return User.objects.select_related("profile").filter(pk=user_id).first()
+    return (
+        _with_activity(User.objects.select_related("profile"))
+        .filter(pk=user_id)
+        .first()
+    )
+
+
+def roster_stats() -> dict[str, int]:
+    """Headline account numbers for the roster's summary cards.
+
+    "Pending" is honest to what the platform records: an active account
+    whose email is still unverified.
+
+    Returns:
+        Mapping with ``total``, ``active``, ``pending``, ``suspended``,
+        ``staff`` and ``new_7d`` counts.
+    """
+    week_ago = timezone.now() - timedelta(days=7)
+    return User.objects.aggregate(
+        total=Count("id"),
+        active=Count("id", filter=Q(is_active=True)),
+        pending=Count(
+            "id", filter=Q(is_active=True, is_email_verified=False)
+        ),
+        suspended=Count("id", filter=Q(is_active=False)),
+        staff=Count("id", filter=Q(is_staff=True)),
+        new_7d=Count("id", filter=Q(created_at__gte=week_ago)),
+    )

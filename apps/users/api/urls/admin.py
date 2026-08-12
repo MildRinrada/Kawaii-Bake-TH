@@ -12,11 +12,13 @@ from django.urls import path
 from apps.users.api.views.admin_views import (
     AdminUserDetailView,
     AdminUserListView,
+    AdminUserStatsView,
 )
 
 app_name = "users_admin"
 
 urlpatterns = [
     path("", AdminUserListView.as_view(), name="list"),
+    path("stats/", AdminUserStatsView.as_view(), name="stats"),
     path("<int:user_id>/", AdminUserDetailView.as_view(), name="detail"),
 ]

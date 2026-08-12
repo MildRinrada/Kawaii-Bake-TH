@@ -12,21 +12,22 @@ from typing import Any
 from rest_framework import serializers
 
 from apps.common.api.serializers import StrictSerializer
-from apps.users.constants import (
-    NAME_PART_MAX_LENGTH,
-    USERNAME_MAX_LENGTH,
-    USERNAME_MIN_LENGTH,
-)
+from apps.users.constants import USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH
 from apps.users.validators.user_validator import validate_username
 
 
 class RegistrationSerializer(StrictSerializer):
     """Validates a sign-up payload.
 
-    The legal name is mandatory: certificates print it, and a certificate
-    naming a handle is not a credential. ``accept_terms`` must be an
-    explicit ``true``  PDPA consent is an action the user takes, never a
-    default the form ships with.
+    Sign-up asks for identity and nothing else. The legal name printed on
+    certificates is **not** collected here: most accounts never request a
+    certificate, and a field two thirds of readers must fill for a
+    document they will never claim is a field that costs sign-ups. It is
+    asked for once, at issuance, where it is the subject of the request
+    (``POST /courses/{slug}/certificate/``).
+
+    ``accept_terms`` must be an explicit ``true``  PDPA consent is an
+    action the user takes, never a default the form ships with.
     """
 
     email = serializers.EmailField(max_length=254)
@@ -37,8 +38,6 @@ class RegistrationSerializer(StrictSerializer):
         # translate its Django ValidationError into a clean 400.
         validators=[validate_username],
     )
-    first_name = serializers.CharField(max_length=NAME_PART_MAX_LENGTH)
-    last_name = serializers.CharField(max_length=NAME_PART_MAX_LENGTH)
     password = serializers.CharField(write_only=True, trim_whitespace=False)
     password_confirm = serializers.CharField(write_only=True, trim_whitespace=False)
     accept_terms = serializers.BooleanField()
@@ -80,6 +79,20 @@ class UsernameAvailabilityResponseSerializer(serializers.Serializer):
 
     username = serializers.CharField(read_only=True)
     available = serializers.BooleanField(read_only=True)
+
+
+class GoogleSignInSerializer(StrictSerializer):
+    """Validates a Google Identity Services callback payload.
+
+    One field: the ID token the button hands back. Everything about the
+    person  address, name, whether the address is confirmed  is inside
+    it, signed; accepting any of those as separate fields would be
+    accepting them unsigned.
+    """
+
+    # A Google ID token is a JWT of roughly 1 KB; the cap is a sanity
+    # bound on the body, not a protocol rule.
+    credential = serializers.CharField(max_length=4096, trim_whitespace=True)
 
 
 class LoginSerializer(StrictSerializer):

@@ -6,7 +6,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 let passed = 0;
 
@@ -29,16 +29,29 @@ try {
   await expect(page, "text=/ทั้งหมด \\d+ คอร์ส/", "header shows real course count");
   await expect(page, 'button:has-text("เริ่มต้นได้เลย")', "learning-path level tiles render");
   await expect(page, "text=/\\d+ คอร์ส/", "level tiles show real per-level counts");
-  await expect(page, "text=คอร์สแนะนำ", "featured course renders with extra weight");
+  // The featured hero + recommendation shelf only render over a big
+  // catalogue (>= 6 courses) - below that they would repeat the same
+  // cards down one page. Assert whichever state the data dictates.
+  const catalogTotal = await page.evaluate(async () => {
+    const response = await fetch(
+      "http://localhost:8000/api/v1/courses/?page_size=1",
+    );
+    return (await response.json()).count;
+  });
+  if (catalogTotal >= 6) {
+    await expect(page, "text=คอร์สแนะนำ", "featured course renders over a big catalogue");
+    await expect(page, "text=รู้จักแป้งและยีสต์", "featured curriculum preview lists real lesson titles", 15_000).catch(async () => {
+      await expect(page, "text=1.", "featured curriculum preview lists numbered lessons");
+    });
+  } else {
+    if (await page.locator('section[aria-label="คอร์สแนะนำ"]').count()) {
+      throw new Error("featured hero rendered over a tiny catalogue - it would just repeat the cards below");
+    }
+    ok(`catalogue has ${catalogTotal} courses (<6), featured hero correctly absent`);
+  }
   await expect(page, "text=ฟรี", "access label (ฟรี) is visible without opening the course");
   await expect(page, "text=สอนโดย", "instructor identity shows on cards");
   await page.screenshot({ path: `${SHOT_DIR}/27-courses-anon.png`, fullPage: true });
-
-  // Featured curriculum preview comes from the real syllabus
-  await expect(page, "text=รู้จักแป้งและยีสต์", "featured curriculum preview lists real lesson titles", 15_000).catch(async () => {
-    // featured may be the other course  accept its lesson instead
-    await expect(page, "text=1.", "featured curriculum preview lists numbered lessons");
-  });
 
   // ---------- Level tile filters ----------
   await page.click('button:has-text("เริ่มต้นได้เลย") >> nth=0');
@@ -51,15 +64,15 @@ try {
   await page.waitForURL("**search=**");
   await expect(page, "text=พบ 1 คอร์ส", "debounced search hits the server and narrows the count");
   await expect(page, "text=พื้นฐานการอบขนมปังสำหรับมือใหม่", "matching course remains visible");
-  await page.click('button:has-text("ล้าง")');
+  await page.click('[aria-label="ล้างคำค้น"]');
   await page.waitForURL(`${BASE}/courses`);
-  ok("clear-search action resets");
+  ok("in-field clear action resets the search");
 
   // Search matches course DESCRIPTION server-side (not just titles)
   await page.fill('input[aria-label="ค้นหาคอร์สเรียน"]', "ยีสต์");
   await page.waitForURL("**search=**");
   await expect(page, "text=พื้นฐานการอบขนมปังสำหรับมือใหม่", "search matches text inside the course description");
-  await page.click('button:has-text("ล้าง")');
+  await page.click('[aria-label="ล้างคำค้น"]');
 
   // ---------- Stored aggregates on cards (no N+1) ----------
   await expect(page, "text=40 นาที", "total duration from the list payload shows on the card");
@@ -132,9 +145,16 @@ try {
   await mobile.waitForSelector('h1:has-text("คอร์สเรียน")');
   await mobile.waitForSelector('button:has-text("เริ่มต้นได้เลย")');
   ok("mobile renders level tiles");
-  await mobile.click('button:has-text("ตัวกรอง")');
-  await expect(mobile, 'div[role="dialog"][aria-label="ตัวกรองคอร์ส"]', "mobile bottom-sheet filter opens");
-  await mobile.click('div[role="dialog"] button:has-text("ดูผลลัพธ์")');
+  // ระดับ lives on the tiles now, so an anonymous visitor of a
+  // one-teacher school has no extra facets - and no filter button.
+  const filterButton = mobile.locator('button:has-text("ตัวกรอง")');
+  if (await filterButton.count()) {
+    await filterButton.click();
+    await expect(mobile, 'div[role="dialog"][aria-label="ตัวกรองคอร์ส"]', "mobile bottom-sheet filter opens");
+    await mobile.click('div[role="dialog"] button:has-text("ดูผลลัพธ์")');
+  } else {
+    ok("no extra facets for this visitor - filter button correctly absent");
+  }
   await mobile.screenshot({ path: `${SHOT_DIR}/29-courses-mobile.png`, fullPage: true });
   await mobile.close();
 

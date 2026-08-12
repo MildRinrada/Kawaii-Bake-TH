@@ -188,7 +188,10 @@ def get_campaign(*, campaign_id: int) -> NotificationCampaign | None:
         .annotate(
             read_count=Count(
                 "deliveries", filter=Q(deliveries__read_at__isnull=False)
-            )
+            ),
+            click_count=Count(
+                "deliveries", filter=Q(deliveries__clicked_at__isnull=False)
+            ),
         )
         .filter(pk=campaign_id)
         .first()
@@ -196,22 +199,31 @@ def get_campaign(*, campaign_id: int) -> NotificationCampaign | None:
 
 
 def campaign_delivery_stats(*, campaign_id: int) -> dict[str, int]:
-    """Honest delivery analytics: rows created, rows read.
+    """Honest delivery analytics: rows created, read, and followed.
 
-    In-app only, so "delivered" means the snapshot exists and
-    ``read_at`` is the only receipt the platform can report - there is
-    no click tracking to pretend at.
+    In-app only, so "delivered" means the snapshot exists. ``read`` is a
+    real receipt (the reader opened the centre or the bell panel).
+    ``clicked`` is reported by the recipient's browser as it navigates,
+    which makes it a **floor**: a middle-click, a copied link or a
+    blocked script is a click nobody records. The panel labels it that
+    way rather than presenting it as a measurement.
 
     Args:
         campaign_id: Primary key of the campaign.
 
     Returns:
-        Mapping with ``delivered`` and ``read`` counts.
+        Mapping with ``delivered``, ``read`` and ``clicked`` counts.
     """
     row = Notification.objects.filter(campaign_id=campaign_id).aggregate(
-        delivered=Count("id"), read=Count("id", filter=Q(read_at__isnull=False))
+        delivered=Count("id"),
+        read=Count("id", filter=Q(read_at__isnull=False)),
+        clicked=Count("id", filter=Q(clicked_at__isnull=False)),
     )
-    return {"delivered": row["delivered"], "read": row["read"]}
+    return {
+        "delivered": row["delivered"],
+        "read": row["read"],
+        "clicked": row["clicked"],
+    }
 
 
 def list_templates(
@@ -262,7 +274,9 @@ def admin_stats() -> dict[str, int]:
         hour=0, minute=0, second=0, microsecond=0
     )
     receipts = Notification.objects.aggregate(
-        delivered=Count("id"), read=Count("id", filter=Q(read_at__isnull=False))
+        delivered=Count("id"),
+        read=Count("id", filter=Q(read_at__isnull=False)),
+        clicked=Count("id", filter=Q(clicked_at__isnull=False)),
     )
     return {
         "campaigns_sent": by_status.get(CampaignStatus.SENT, 0),
@@ -273,4 +287,5 @@ def admin_stats() -> dict[str, int]:
         ).count(),
         "delivered_total": receipts["delivered"],
         "read_total": receipts["read"],
+        "clicked_total": receipts["clicked"],
     }

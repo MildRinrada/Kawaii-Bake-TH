@@ -162,7 +162,9 @@ class AdminCertificateApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.staff = create_user(is_staff=True)
-        self.student = create_user(username="certholder")
+        self.student = create_user(
+            username="certholder", first_name="ชนิดา", last_name="พรหมมา"
+        )
         instructor = create_user()
         from apps.certificates.services import certificate_service
         from apps.certificates.tests.factories import build_completed_course
@@ -381,6 +383,28 @@ class CertificateTemplateApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_field_custom_override_saves_and_is_length_capped(self) -> None:
+        """A field may carry a staff override text ("มอบโดย …") — stored
+        verbatim within the same cap as free text."""
+        self.client.force_login(self.staff)
+
+        design = self._design()
+        design["elements"][0]["text"] = "มอบโดย เชฟมิลด์ รินรดา"
+        saved = self.client.put(
+            self.detail_url, {"design": design}, format="json"
+        )
+        self.assertEqual(saved.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            saved.json()["draft_design"]["elements"][0]["text"],
+            "มอบโดย เชฟมิลด์ รินรดา",
+        )
+
+        design["elements"][0]["text"] = "ก" * 501
+        rejected = self.client.put(
+            self.detail_url, {"design": design}, format="json"
+        )
+        self.assertEqual(rejected.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_malformed_documents_are_rejected(self) -> None:
         self.client.force_login(self.staff)

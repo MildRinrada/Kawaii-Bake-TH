@@ -30,6 +30,18 @@ class InvalidGalleryReferenceError(DomainError):
     message = "The referenced content does not exist or is not public."
 
 
+class GalleryCommentNotFoundError(DomainError):
+    """Raised when a comment is absent, or not the caller's to remove.
+
+    Not-yours and nonexistent are again the same 404: a stranger must not
+    learn that a comment id exists by the shape of the refusal.
+    """
+
+    code = "not_found"
+    status_code = 404
+    message = "Comment not found."
+
+
 class InvalidImageOrderError(DomainError):
     """Raised when a reorder payload is not exactly the post's image set."""
 

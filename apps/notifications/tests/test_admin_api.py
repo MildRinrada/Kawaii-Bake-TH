@@ -17,7 +17,8 @@ from apps.notifications.models import (
     NotificationPreference,
     NotificationTemplate,
 )
-from apps.notifications.services import campaign_service
+from apps.notifications.services import campaign_service, notification_service
+from apps.notifications.tests.factories import create_notification
 from apps.users.tests.factories import create_user
 
 
@@ -100,7 +101,11 @@ class AdminBroadcastApiTests(TestCase):
 
         response = self.client.post(
             self.url,
-            {"title": "ปิดปรับปรุงระบบคืนนี้", "body": "ตีสองถึงตีสาม"},
+            {
+                "title": "ปิดปรับปรุงระบบคืนนี้",
+                "body": "ตีสองถึงตีสาม",
+                "link": "/support",
+            },
             format="json",
         )
 
@@ -161,8 +166,7 @@ class CampaignApiTests(TestCase):
         created = self.client.post(
             self.url,
             {
-                "kind": "announcement",
-                "icon": "🎉",
+                "kind": "feature",
                 "title": "สวัสดี {{user_name}}!",
                 "body": "มีของใหม่มาฝาก {{user_name}} ด้วยนะ",
                 "cta_text": "ดูเลย",
@@ -184,32 +188,47 @@ class CampaignApiTests(TestCase):
 
         row = Notification.objects.get(recipient=self.fan)
         self.assertEqual(row.title, "สวัสดี p16fanmail!")
-        self.assertEqual(row.icon, "🎉")
+        # The kind travels into the snapshot: it is what the recipient's
+        # row draws its glyph and colour from.
+        self.assertEqual(row.kind, "feature")
         self.assertEqual(row.cta_text, "ดูเลย")
         self.assertEqual(row.campaign_id, campaign_id)
         self.assertEqual(
             row.event_type, NotificationEventType.ANNOUNCEMENT
         )
 
-    def test_sent_campaigns_are_immutable_and_undeletable(self) -> None:
+    def test_amending_a_sent_campaign_updates_delivered_snapshots(self) -> None:
+        """Content edits propagate to every recipient's inbox; the
+        audience and schedule stay history."""
         self.client.force_login(self.staff)
         campaign = campaign_service.create_campaign(
             actor_id=self.staff.id,
             audience={"kind": "specific_users", "usernames": ["bakerbelle"]},
-            title="ล็อกแล้ว",
+            title="ประกาศเดิม {{user_name}}",
+            kind="maintenance",
         )
         campaign_service.send_campaign(
             campaign_id=campaign.pk, actor_id=self.staff.id
         )
 
+        amended = self.client.patch(
+            self._detail(campaign.pk),
+            {"title": "ประกาศแก้แล้วถึง {{user_name}}", "kind": "alert"},
+            format="json",
+        )
+        self.assertEqual(amended.status_code, status.HTTP_200_OK)
+        row = Notification.objects.get(recipient=self.baker)
+        self.assertEqual(row.title, "ประกาศแก้แล้วถึง bakerbelle")
+        self.assertEqual(row.kind, "alert")
+
+        # Audience/schedule of a sent campaign are untouchable, and a
+        # sent campaign still cannot be sent again.
         self.assertEqual(
             self.client.patch(
-                self._detail(campaign.pk), {"title": "แก้"}, format="json"
+                self._detail(campaign.pk),
+                {"audience": {"kind": "all"}},
+                format="json",
             ).status_code,
-            status.HTTP_409_CONFLICT,
-        )
-        self.assertEqual(
-            self.client.delete(self._detail(campaign.pk)).status_code,
             status.HTTP_409_CONFLICT,
         )
         self.assertEqual(
@@ -221,6 +240,32 @@ class CampaignApiTests(TestCase):
             status.HTTP_409_CONFLICT,
         )
 
+    def test_deleting_a_sent_campaign_retracts_its_deliveries(self) -> None:
+        """In-app rows make retraction real: the snapshots leave the
+        recipients' inboxes together with the campaign."""
+        self.client.force_login(self.staff)
+        campaign = campaign_service.create_campaign(
+            actor_id=self.staff.id,
+            audience={"kind": "specific_users", "usernames": ["bakerbelle"]},
+            title="ส่งผิด ขออภัย",
+        )
+        campaign_service.send_campaign(
+            campaign_id=campaign.pk, actor_id=self.staff.id
+        )
+        self.assertEqual(
+            Notification.objects.filter(recipient=self.baker).count(), 1
+        )
+
+        deleted = self.client.delete(self._detail(campaign.pk))
+
+        self.assertEqual(deleted.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            Notification.objects.filter(recipient=self.baker).count(), 0
+        )
+        self.assertFalse(
+            NotificationCampaign.objects.filter(pk=campaign.pk).exists()
+        )
+
     def test_schedule_cancel_and_dispatch(self) -> None:
         self.client.force_login(self.staff)
         future = (timezone.now() + timedelta(hours=2)).isoformat()
@@ -229,6 +274,7 @@ class CampaignApiTests(TestCase):
             self.url,
             {
                 "title": "นัดหมาย",
+                "link": "/recipes",
                 "audience": {"kind": "all"},
                 "status": "scheduled",
                 "scheduled_at": future,
@@ -266,9 +312,15 @@ class CampaignApiTests(TestCase):
         past = (timezone.now() - timedelta(hours=1)).isoformat()
 
         for payload in (
-            {"title": "x", "audience": {"kind": "all"}, "status": "scheduled"},
             {
                 "title": "x",
+                "link": "/recipes",
+                "audience": {"kind": "all"},
+                "status": "scheduled",
+            },
+            {
+                "title": "x",
+                "link": "/recipes",
                 "audience": {"kind": "all"},
                 "status": "scheduled",
                 "scheduled_at": past,
@@ -289,6 +341,7 @@ class CampaignApiTests(TestCase):
             self.url,
             {
                 "title": "คอร์ส {{course_name}} อัปเดตแล้ว",
+                "link": "/courses",
                 "audience": {"kind": "all"},
             },
             format="json",
@@ -490,10 +543,9 @@ class TemplateApiTests(TestCase):
         created = self.client.post(
             self.url,
             {
-                "name": "โพสต์กำลังไวรัล",
-                "kind": "post_viral",
-                "icon": "🔥",
-                "title": "🎉 โพสต์ของคุณกำลังไวรัล!",
+                "name": "ปิดปรับปรุงระบบ",
+                "kind": "maintenance",
+                "title": "ระบบจะปิดปรับปรุงคืนนี้",
                 "body": "{{user_name}} โพสต์ของคุณมีคนถูกใจมากมาย",
             },
             format="json",
@@ -503,7 +555,7 @@ class TemplateApiTests(TestCase):
 
         rows = self.client.get(self.url).json()
         self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["icon"], "🔥")
+        self.assertEqual(rows[0]["kind"], "maintenance")
 
         archived = self.client.patch(
             reverse(
@@ -529,3 +581,129 @@ class TemplateApiTests(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class AnnouncementKindTests(TestCase):
+    """The kind is a closed set, and it travels to the recipient."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.staff = create_user(is_staff=True, username="kindstaff")
+        self.reader = create_user(username="kindreader")
+        self.client.force_login(self.staff)
+        self.url = reverse("notifications_admin:campaigns")
+
+    def _payload(self, **overrides: object) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "kind": "maintenance",
+            "title": "ระบบจะปิดปรับปรุงคืนนี้",
+            "body": "ตี 1 ถึงตี 3 ใช้งานไม่ได้ชั่วคราว",
+            "link": "/support",
+            "audience": {"kind": "specific_users", "usernames": ["kindreader"]},
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_an_unknown_kind_is_rejected(self) -> None:
+        # The kind picks the glyph and colour the recipient sees, so a
+        # value no client can draw is not a value.
+        response = self.client.post(
+            self.url, self._payload(kind="post_viral"), format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("kind", response.json()["error"]["details"])
+
+    def test_the_kind_defaults_rather_than_going_blank(self) -> None:
+        payload = self._payload()
+        del payload["kind"]
+
+        response = self.client.post(self.url, payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()["kind"], "general")
+
+    def test_the_kind_reaches_the_recipients_snapshot(self) -> None:
+        created = self.client.post(self.url, self._payload(), format="json")
+        campaign_id = created.json()["id"]
+
+        self.client.post(
+            reverse("notifications_admin:campaign-send", args=[campaign_id])
+        )
+
+        row = Notification.objects.get(recipient=self.reader)
+        self.assertEqual(row.kind, "maintenance")
+        # And it is a copy, not a join: editing the campaign later must
+        # not rewrite what a recipient was told (that is what the amend
+        # endpoint is for, deliberately).
+        self.assertEqual(row.campaign_id, campaign_id)
+
+    def test_no_free_form_glyph_can_be_smuggled_in(self) -> None:
+        response = self.client.post(
+            self.url, self._payload(icon="🔥"), format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class CampaignClickAnalyticsTests(TestCase):
+    """Click receipts, and the rates they feed."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.staff = create_user(is_staff=True, username="clickstaff")
+        self.readers = [
+            create_user(username=f"clickreader{index}") for index in range(3)
+        ]
+        self.client.force_login(self.staff)
+
+    def test_analytics_report_clicks_and_the_rate(self) -> None:
+        campaign = campaign_service.create_campaign(
+            actor_id=self.staff.id,
+            audience={
+                "kind": "specific_users",
+                "usernames": [user.username for user in self.readers],
+            },
+            title="ลองสูตรใหม่",
+            link="/recipes",
+        )
+        campaign_service.send_campaign(
+            campaign_id=campaign.pk, actor_id=self.staff.id
+        )
+
+        # One of the three follows the link; another only opens the list.
+        clicker, reader, _ignorer = self.readers
+        notification_service.record_click(
+            notification_id=Notification.objects.get(recipient=clicker).pk,
+            user_id=clicker.id,
+        )
+        notification_service.mark_read(
+            notification_id=Notification.objects.get(recipient=reader).pk,
+            user_id=reader.id,
+        )
+
+        response = self.client.get(
+            reverse(
+                "notifications_admin:campaign-analytics", args=[campaign.pk]
+            )
+        )
+
+        body = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(body["delivered"], 3)
+        self.assertEqual(body["read"], 2)  # the click counts as a read
+        self.assertEqual(body["clicked"], 1)
+        self.assertAlmostEqual(body["click_rate"], 1 / 3, places=4)
+        self.assertAlmostEqual(body["read_rate"], 2 / 3, places=4)
+
+    def test_the_hub_counts_clicks_platform_wide(self) -> None:
+        notification = create_notification(
+            recipient=self.readers[0], link="/recipes"
+        )
+        notification_service.record_click(
+            notification_id=notification.pk, user_id=self.readers[0].id
+        )
+
+        stats = self.client.get(reverse("notifications_admin:stats")).json()
+
+        self.assertEqual(stats["clicked_total"], 1)

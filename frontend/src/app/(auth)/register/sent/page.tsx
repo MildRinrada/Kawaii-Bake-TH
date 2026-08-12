@@ -22,7 +22,7 @@ function SentContent() {
   const email = useSearchParams().get("email");
 
   return (
-    <Card>
+    <Card className="w-full max-w-sm">
       <CardHeader title="เช็คอีเมลของคุณ" />
       <CardBody className="space-y-4 text-center">
         <Icon name="ui/bell" className="mx-auto size-12" />

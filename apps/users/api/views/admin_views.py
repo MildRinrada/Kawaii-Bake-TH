@@ -17,10 +17,24 @@ from apps.common.api.views import PaginatedServiceAPIView, ServiceAPIView
 from apps.users.api.serializers.admin_serializers import (
     AdminUserFilterSerializer,
     AdminUserSerializer,
+    AdminUserStatsSerializer,
     AdminUserUpdateSerializer,
 )
 from apps.users.selectors import admin_user_selector
 from apps.users.services import admin_user_service
+
+
+class AdminUserStatsView(ServiceAPIView):
+    """Headline account numbers for the roster's summary cards."""
+
+    permission_classes = (IsAdminUser,)
+
+    @extend_schema(
+        responses={200: AdminUserStatsSerializer}, tags=["users-admin"]
+    )
+    def get(self, request: Request) -> Response:
+        """Return total/active/pending/suspended/staff/new counts."""
+        return Response(admin_user_selector.roster_stats())
 
 
 class AdminUserListView(PaginatedServiceAPIView):

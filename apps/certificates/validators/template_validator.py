@@ -125,7 +125,10 @@ def validate_design(document: Any) -> None:
 
         if kind == "field" and element.get("field") not in FIELD_KEYS:
             raise ValidationError(f"Unknown field key: {element.get('field')!r}.")
-        if kind == "text":
+        if kind in ("text", "field"):
+            # On a field element, a non-blank ``text`` is the staff
+            # override ("มอบโดย …") that replaces the automatic value on
+            # every certificate — same length cap as free text.
             _require_short_text(
                 element.get("text", ""), key="text", limit=MAX_TEXT_LENGTH
             )

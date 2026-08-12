@@ -185,8 +185,13 @@ AUTHENTICATION_BACKENDS = [
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {
+        # Eight, the figure people have been trained on everywhere else.
+        # Length past that is bought by the strength meter on the sign-up
+        # form (advice), not by a refusal: a stricter minimum than the
+        # rest of the web mostly buys "Password1!" written on a sticky
+        # note. The other three validators still do the real work.
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 10},
+        "OPTIONS": {"min_length": 8},
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -365,6 +370,17 @@ EMAIL_VERIFICATION_TIMEOUT = env_int("EMAIL_VERIFICATION_TIMEOUT", 60 * 60 * 24 
 # When True, unverified users cannot sign in at all. When False (default) they
 # may sign in but verified-only areas remain gated by permissions.
 REQUIRE_VERIFIED_EMAIL_TO_LOGIN = env_bool("REQUIRE_VERIFIED_EMAIL_TO_LOGIN", False)
+
+# --------------------------------------------------------------------------
+# Google sign-in (apps.authentication.services.oauth_service)
+# --------------------------------------------------------------------------
+# The OAuth 2.0 **Web application** client id from Google Cloud Console. No
+# client *secret* is involved: the browser flow returns a signed ID token,
+# which is verified against this audience. Empty (the default) disables the
+# feature - the endpoint answers 503 `oauth_unavailable` and the frontend,
+# reading its own NEXT_PUBLIC_GOOGLE_CLIENT_ID, shows no button at all
+# rather than one that cannot work.
+GOOGLE_OAUTH_CLIENT_ID = env("GOOGLE_OAUTH_CLIENT_ID", "")
 
 
 # --------------------------------------------------------------------------

@@ -5,6 +5,7 @@ from __future__ import annotations
 from apps.certificates.api.serializers.certificate_serializers import (
     AchievementSerializer,
     BadgeSerializer,
+    CertificateIssueSerializer,
     CertificateSerializer,
     CertificateVerificationSerializer,
 )
@@ -12,6 +13,7 @@ from apps.certificates.api.serializers.certificate_serializers import (
 __all__ = [
     "AchievementSerializer",
     "BadgeSerializer",
+    "CertificateIssueSerializer",
     "CertificateSerializer",
     "CertificateVerificationSerializer",
 ]

@@ -10,8 +10,10 @@
  * NOT the user's notification-preferences page - that stays in
  * `/settings`.
  *
- * Every number here is a real count from the API; sent campaigns are
- * immutable and only expose duplicate + analytics.
+ * Every number here is a real count from the API. Sent campaigns can be
+ * amended (content only - the delivered copies update too) or deleted,
+ * which **retracts** them: in-app rows make un-sending real (ADR 0030
+ * amendment). Audience and schedule stay history once sent.
  */
 
 import Link from "next/link";
@@ -52,9 +54,35 @@ import {
 import { describeAdminError } from "@/components/admin/lifecycle";
 import { cn } from "@/lib/cn";
 
+import { Icon } from "@/components/ui/icon";
+import { announcementStyle } from "@/lib/notifications";
+
 import { CAMPAIGN_STATUS, audienceLabel, kindLabel } from "./kinds";
 import { NotificationPreviewCard } from "./preview-card";
 import { TemplateForm } from "./template-form";
+
+/**
+ * The announcement's kind, drawn the way its recipients will see it.
+ *
+ * Staff used to pick an emoji here and readers never saw it; now the
+ * kind picks one glyph and one colour for both sides, so a row in this
+ * table looks like the row that landed in the inbox.
+ */
+function KindGlyph({ kind }: { kind: string }) {
+  const style = announcementStyle(kind);
+  return (
+    <span
+      aria-hidden
+      title={style.label}
+      className={cn(
+        "flex size-9 shrink-0 items-center justify-center rounded-full",
+        style.tone,
+      )}
+    >
+      <Icon tint name={`ui/${style.icon}`} className="size-4.5" />
+    </span>
+  );
+}
 
 const TABS = [
   { key: "all", label: "ทั้งหมด" },
@@ -95,6 +123,39 @@ function StatusBadgeFor({ campaign }: { campaign: NotificationCampaign }) {
   );
 }
 
+/** One labelled rate, drawn as a bar. */
+function RateBar({
+  label,
+  percent,
+  tone = "bg-accent",
+}: {
+  label: string;
+  percent: number;
+  tone?: string;
+}) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-sm">
+        <span className="text-fg-muted">{label}</span>
+        <span className="font-mono font-semibold tabular-nums">{percent}%</span>
+      </div>
+      <div
+        role="progressbar"
+        aria-valuenow={percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={label}
+        className="h-2 overflow-hidden rounded-full bg-surface-sunken"
+      >
+        <div
+          className={cn("h-full rounded-full", tone)}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 /** Analytics slide-over for one (usually sent) campaign. */
 function CampaignAnalyticsPanel({
   campaign,
@@ -112,16 +173,17 @@ function CampaignAnalyticsPanel({
     [campaign.id],
   );
   const percent = data ? Math.round(data.read_rate * 100) : 0;
+  const clickPercent = data ? Math.round(data.click_rate * 100) : 0;
 
   return (
     <DetailPanel open title={`สถิติ: ${campaign.title}`} onClose={onClose}>
       <div className="space-y-4">
         <NotificationPreviewCard
-          icon={campaign.icon}
           title={campaign.title}
           body={campaign.body}
           ctaText={campaign.cta_text}
           link={campaign.link}
+          kind={campaign.kind}
         />
 
         {loading ? (
@@ -135,28 +197,29 @@ function CampaignAnalyticsPanel({
               <StatCard label="ส่งถึงแล้ว" value={data.delivered} />
               <StatCard label="อ่านแล้ว" value={data.read} />
               <StatCard label="ยังไม่อ่าน" value={data.unread} />
+              <StatCard label="กดลิงก์" value={data.clicked} />
+              <StatCard
+                label="อ่านแต่ไม่กด"
+                value={Math.max(0, data.read - data.clicked)}
+              />
             </div>
-            <div>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="text-fg-muted">อัตราการอ่าน</span>
-                <span className="font-mono font-semibold tabular-nums">
-                  {percent}%
-                </span>
-              </div>
-              <div
-                role="progressbar"
-                aria-valuenow={percent}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="อัตราการอ่าน"
-                className="h-2 overflow-hidden rounded-full bg-surface-sunken"
-              >
-                <div
-                  className="h-full rounded-full bg-accent"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-            </div>
+            <RateBar label="อัตราการอ่าน" percent={percent} />
+            {campaign.link ? (
+              <RateBar
+                label="อัตราการกดลิงก์"
+                percent={clickPercent}
+                tone="bg-lavender-ink"
+              />
+            ) : null}
+            {/* The click count comes from the reader's browser as it
+                navigates, so a middle-click or a blocked script is a
+                real click nobody counted. Saying so is the difference
+                between a number and a number people trust. */}
+            <p className="text-xs leading-relaxed text-fg-muted">
+              ยอดกดลิงก์นับจากการกดในแอปเท่านั้น
+              การเปิดลิงก์ในแท็บใหม่หรือคัดลอกลิงก์ไปเปิดเองจะไม่ถูกนับ
+              ตัวเลขนี้จึงเป็นค่าต่ำสุดที่เกิดขึ้นจริง
+            </p>
             <div className="rounded-md border border-edge">
               <DetailRow label="กลุ่มเป้าหมาย">
                 {audienceLabel(campaign.audience)}
@@ -170,9 +233,9 @@ function CampaignAnalyticsPanel({
                 {campaign.created_by ? `@${campaign.created_by}` : "-"}
               </DetailRow>
             </div>
-            <p className="text-xs text-fg-muted">
+            <p className="text-xs leading-relaxed text-fg-muted">
               ระบบแจ้งเตือนเป็น in-app เท่านั้น “อ่านแล้ว”
-              คือใบเสร็จเดียวที่ยืนยันได้จริง - ไม่มีการติดตามการคลิก CTA
+              คือใบเสร็จที่ยืนยันได้จริง ไม่มีอีเมลหรือ push ให้ติดตามสถานะ
             </p>
           </>
         ) : null}
@@ -239,8 +302,8 @@ export default function AdminNotificationsPage() {
       title: `ส่ง “${campaign.title}” ตอนนี้?`,
       body:
         estimated === null
-          ? "ไม่สามารถประเมินจำนวนผู้รับได้ - ระบบจะตรวจสอบกลุ่มเป้าหมายอีกครั้งตอนส่ง ส่งแล้วเรียกคืนไม่ได้"
-          : `การแจ้งเตือนจะถูกส่งถึงประมาณ ${estimated.toLocaleString("th-TH")} บัญชี - ส่งแล้วเรียกคืนไม่ได้`,
+          ? "ไม่สามารถประเมินจำนวนผู้รับได้ - ระบบจะตรวจสอบกลุ่มเป้าหมายอีกครั้งตอนส่ง"
+          : `การแจ้งเตือนจะเข้ากล่องของประมาณ ${estimated.toLocaleString("th-TH")} บัญชีทันที (เรียกคืนภายหลังได้ด้วย “ลบและเรียกคืน”)`,
       confirmLabel: "ส่งตอนนี้",
       action: async () => {
         try {
@@ -276,15 +339,23 @@ export default function AdminNotificationsPage() {
   }
 
   function deleteCampaign(campaign: NotificationCampaign) {
+    const retracting = campaign.status === "sent";
     confirm.ask({
-      title: `ลบ “${campaign.title}”?`,
-      body: "ลบได้เฉพาะฉบับร่างและแคมเปญที่ยกเลิกแล้ว - ลบแล้วกู้คืนไม่ได้",
-      confirmLabel: "ลบแคมเปญ",
+      title: retracting
+        ? `ลบและเรียกคืน “${campaign.title}”?`
+        : `ลบ “${campaign.title}”?`,
+      body: retracting
+        ? `การแจ้งเตือนนี้จะถูกลบออกจากกล่องแจ้งเตือนของผู้รับทั้ง ${(campaign.recipients_count ?? 0).toLocaleString("th-TH")} บัญชีทันที - เรียกคืนแล้วกู้กลับไม่ได้`
+        : "ลบแล้วกู้คืนไม่ได้",
+      confirmLabel: retracting ? "ลบและเรียกคืน" : "ลบแคมเปญ",
       danger: true,
       action: async () => {
         try {
           await api.delete(`/admin/notifications/campaigns/${campaign.id}/`);
-          toast("ลบแคมเปญแล้ว", "success");
+          toast(
+            retracting ? "เรียกคืนการแจ้งเตือนแล้ว" : "ลบแคมเปญแล้ว",
+            "success",
+          );
           refresh();
         } catch (error) {
           toast(describeAdminError(error), "danger");
@@ -299,7 +370,6 @@ export default function AdminNotificationsPage() {
         body: {
           name: `${item.name} (สำเนา)`,
           kind: item.kind,
-          icon: item.icon,
           title: item.title,
           body: item.body,
           cta_text: item.cta_text,
@@ -374,6 +444,18 @@ export default function AdminNotificationsPage() {
         label: "ดูสถิติ",
         onSelect: () => setAnalyticsFor(row),
       });
+      items.push({
+        key: "amend",
+        label: "แก้ไขเนื้อหา (อัปเดตถึงผู้รับ)",
+        onSelect: () =>
+          router.push(`/admin/notifications/compose?edit=${row.id}`),
+      });
+      items.push({
+        key: "retract",
+        label: <span className="text-danger">ลบและเรียกคืนจากผู้รับ</span>,
+        onSelect: () => deleteCampaign(row),
+        separator: true,
+      });
     }
     if (row.status === "scheduled") {
       items.push({
@@ -397,6 +479,10 @@ export default function AdminNotificationsPage() {
   const readRate =
     stats.data && stats.data.delivered_total > 0
       ? `${Math.round((stats.data.read_total / stats.data.delivered_total) * 100)}%`
+      : null;
+  const clickRate =
+    stats.data && stats.data.delivered_total > 0
+      ? `${Math.round((stats.data.clicked_total / stats.data.delivered_total) * 100)}%`
       : null;
 
   if (campaigns.error) {
@@ -427,7 +513,7 @@ export default function AdminNotificationsPage() {
         }
       />
 
-      <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+      <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-6">
         <StatCard
           label="แคมเปญที่ส่งแล้ว"
           value={stats.data?.campaigns_sent}
@@ -457,6 +543,17 @@ export default function AdminNotificationsPage() {
               ? `อ่าน ${stats.data.read_total.toLocaleString("th-TH")} จาก ${stats.data.delivered_total.toLocaleString("th-TH")}`
               : undefined
           }
+          loading={stats.loading}
+          unavailable={
+            stats.data && stats.data.delivered_total === 0
+              ? "ยังไม่มีการส่ง"
+              : undefined
+          }
+        />
+        <StatCard
+          label="อัตราการกดลิงก์"
+          value={clickRate}
+          hint="นับเฉพาะการกดในแอป จึงเป็นค่าต่ำสุด"
           loading={stats.loading}
           unavailable={
             stats.data && stats.data.delivered_total === 0
@@ -541,9 +638,7 @@ export default function AdminNotificationsPage() {
                 header: "เทมเพลต",
                 render: (row) => (
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <span aria-hidden className="text-xl">
-                      {row.icon || "🔔"}
-                    </span>
+                    <KindGlyph kind={row.kind} />
                     <div className="min-w-0">
                       <p className="line-clamp-1 font-medium">{row.name}</p>
                       <p className="line-clamp-1 text-xs text-fg-muted">
@@ -683,12 +778,7 @@ export default function AdminNotificationsPage() {
                 header: "การแจ้งเตือน",
                 render: (row) => (
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <span
-                      aria-hidden
-                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-lg"
-                    >
-                      {row.icon || "🔔"}
-                    </span>
+                    <KindGlyph kind={row.kind} />
                     <div className="min-w-0">
                       <p className="line-clamp-1 font-medium">{row.title}</p>
                       {row.body ? (

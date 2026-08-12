@@ -51,6 +51,15 @@
   --kb-mint-soft: #e3f6ec;
   --kb-mint-ink: #2e7d54;
 
+  /* Rating stars. Butter-ink (#96700f) is a text colour — as a filled
+     shape it reads olive and lifeless, which is why ratings looked dull
+     everywhere. A star is one of the few marks that should be genuinely
+     bright, so it gets its own pair: a warm gold gradient for the earned
+     part and a pale track for the rest, mirroring the progress bar. */
+  --kb-star: #ffc53d;
+  --kb-star-deep: #f59f0b;
+  --kb-star-empty: #f0dfc9;
+
   /* Status */
   --kb-danger: #cd4f57;
   --kb-danger-subtle: #fdecec;

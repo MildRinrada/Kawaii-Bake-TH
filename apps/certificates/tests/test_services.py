@@ -10,8 +10,9 @@ from apps.certificates.exceptions import (
     CertificateEnrollmentRequiredError,
     CertificateNotFoundError,
     CourseNotCompletedError,
+    LegalNameRequiredError,
 )
-from apps.certificates.models import Achievement
+from apps.certificates.models import Achievement, Certificate
 from apps.certificates.services import achievement_service, certificate_service
 from apps.certificates.tests.factories import build_completed_course
 from apps.courses.tests.factories import create_published_course, enroll_user
@@ -23,7 +24,9 @@ class IssuanceGateTests(TestCase):
     """404 → 403 → 409 in order, then idempotent success."""
 
     def setUp(self) -> None:
-        self.student = create_user(username="issuer")
+        self.student = create_user(
+            username="issuer", first_name="มินตรา", last_name="อบอุ่น"
+        )
         self.instructor = create_user(username="issuerinst")
 
     def test_hidden_course_is_404(self) -> None:
@@ -63,43 +66,83 @@ class IssuanceGateTests(TestCase):
 
         self.assertTrue(created)
         self.assertRegex(certificate.certificate_number, r"^KB-\d{4}-\d{6}$")
-        # No display name was ever set on this profile, so the snapshot
-        # falls back to the handle.
-        self.assertEqual(certificate.student_name, self.student.username)
+        self.assertEqual(certificate.student_name, "มินตรา อบอุ่น")
         self.assertEqual(certificate.course_title, course.title)
         self.assertIsNotNone(certificate.completed_at)
         self.assertIsNotNone(certificate.issued_at)
 
-    def test_the_snapshot_prefers_the_real_name_over_the_handle(self) -> None:
-        self.student.profile.display_name = "สมชาย ใจดี"
-        self.student.profile.save(update_fields=["display_name"])
+    def test_issuance_without_any_name_is_409(self) -> None:
+        # Sign-up does not ask for a legal name, so the first issuance is
+        # where the question lands. Printing the handle instead would put
+        # "@nameless" on a credential.
+        nameless = create_user(username="nameless")
         course = build_completed_course(
-            student=self.student, instructor=self.instructor
+            student=nameless, instructor=self.instructor
         )
+        with self.assertRaises(LegalNameRequiredError):
+            certificate_service.issue_if_completed(
+                user_id=nameless.id, course_slug=course.slug
+            )
 
-        certificate, _created = certificate_service.issue_if_completed(
-            user_id=self.student.id, course_slug=course.slug
-        )
+        self.assertFalse(Certificate.objects.filter(user=nameless).exists())
 
-        self.assertEqual(certificate.student_name, "สมชาย ใจดี")
-
-    def test_the_snapshot_prefers_the_legal_name_above_everything(self) -> None:
-        # Registration collects the legal name for exactly this line: it
-        # outranks even a display name the learner set themselves.
-        self.student.first_name = "มินตรา"
-        self.student.last_name = "อบอุ่น"
-        self.student.save(update_fields=["first_name", "last_name"])
-        self.student.profile.display_name = "MildBakes"
-        self.student.profile.save(update_fields=["display_name"])
+    def test_a_display_name_does_not_stand_in_for_a_legal_name(self) -> None:
+        # A handle-shaped nickname is not what a credential prints, and
+        # accepting one would silently defeat the question above.
+        nameless = create_user(username="nicknamed")
+        nameless.profile.display_name = "MildBakes"
+        nameless.profile.save(update_fields=["display_name"])
         course = build_completed_course(
-            student=self.student, instructor=self.instructor
+            student=nameless, instructor=self.instructor
         )
 
+        with self.assertRaises(LegalNameRequiredError):
+            certificate_service.issue_if_completed(
+                user_id=nameless.id, course_slug=course.slug
+            )
+
+    def test_the_name_is_asked_once_and_then_remembered(self) -> None:
+        learner = create_user(username="asksonce")
+        first_course = build_completed_course(
+            student=learner, instructor=self.instructor
+        )
+        certificate_service.issue_if_completed(
+            user_id=learner.id,
+            course_slug=first_course.slug,
+            first_name="  มินตรา ",
+            last_name=" อบอุ่น ",
+        )
+
+        learner.refresh_from_db()
+        self.assertEqual(learner.first_name, "มินตรา")
+        self.assertEqual(learner.last_name, "อบอุ่น")
+
+        # A second course needs no body at all - and a name submitted
+        # anyway never overwrites the one earlier certificates carry.
+        second_course = build_completed_course(
+            student=learner, instructor=self.instructor
+        )
         certificate, _created = certificate_service.issue_if_completed(
-            user_id=self.student.id, course_slug=course.slug
+            user_id=learner.id,
+            course_slug=second_course.slug,
+            first_name="สมชาย",
+            last_name="ใจดี",
         )
 
         self.assertEqual(certificate.student_name, "มินตรา อบอุ่น")
+        learner.refresh_from_db()
+        self.assertEqual(learner.first_name, "มินตรา")
+
+    def test_a_mononym_is_a_name(self) -> None:
+        learner = create_user(username="mononym")
+        course = build_completed_course(
+            student=learner, instructor=self.instructor
+        )
+        certificate, _created = certificate_service.issue_if_completed(
+            user_id=learner.id, course_slug=course.slug, first_name="เจน"
+        )
+
+        self.assertEqual(certificate.student_name, "เจน")
 
     def test_duplicate_issue_returns_the_same_certificate(self) -> None:
         course = build_completed_course(
@@ -124,7 +167,9 @@ class RevocationAndVerificationTests(TestCase):
     """The stamp-once revoke and the public token lookup."""
 
     def setUp(self) -> None:
-        self.student = create_user(username="verifier")
+        self.student = create_user(
+            username="verifier", first_name="วิภา", last_name="เกษมสุข"
+        )
         self.instructor = create_user(username="verifierinst")
         course = build_completed_course(
             student=self.student, instructor=self.instructor
@@ -176,7 +221,9 @@ class AchievementServiceTests(TestCase):
     """Course-completion awards, thresholds and recalculation."""
 
     def setUp(self) -> None:
-        self.student = create_user(username="achsvc")
+        self.student = create_user(
+            username="achsvc", first_name="อชิ", last_name="ตั้งใจ"
+        )
         self.instructor = create_user(username="achsvcinst")
 
     def _complete_and_issue(self) -> None:

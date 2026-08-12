@@ -1,83 +1,66 @@
 /**
- * The notification-composer catalog: what a notification can be about,
+ * The notification-composer catalog: what an announcement can be about,
  * who it can target, and which `{{variables}}` are honest to use.
  *
- * Everything here is presentation data. The backend keeps the real
- * contracts: `kind` is a free (validated) slug so new types are a
- * catalog entry, not a migration; audiences and variables are closed
- * server-side and this file only mirrors those rules for the UI.
+ * Everything here is admin-side copy over closed server-side sets:
+ * `kind`, audiences and variables are all enumerated in
+ * `apps/notifications`, and this file only supplies Thai wording (and,
+ * for kinds, re-exports the drawing the recipient sees).
  */
 
-export type KindCategory = {
-  key: string;
-  label: string;
+import {
+  ANNOUNCEMENT_KINDS,
+  ANNOUNCEMENT_KIND_ORDER,
+} from "@/lib/notifications";
+import type { UiIconName } from "@/components/ui/icon";
+
+const KIND_DESCRIPTIONS: Record<string, string> = {
+  general: "ข่าวสารทั่วไปถึงผู้ใช้",
+  feature: "ฟีเจอร์ใหม่หรือการปรับปรุงที่ผู้ใช้ได้ประโยชน์",
+  event: "กิจกรรม ชาเลนจ์ หรือแคมเปญที่ชวนเข้าร่วม",
+  maintenance: "ช่วงเวลาที่ระบบจะใช้งานไม่ได้",
+  policy: "การเปลี่ยนแปลงข้อตกลงหรือนโยบายความเป็นส่วนตัว",
+  alert: "เรื่องด่วนที่ต้องให้ผู้ใช้รู้ทันที",
 };
 
-export type NotificationKind = {
+export type AnnouncementKindOption = {
   key: string;
-  category: string;
   label: string;
   description: string;
-  icon: string;
+  icon: UiIconName;
+  /** The same bubble/badge classes the recipient's row uses. */
+  tone: string;
 };
 
-export const KIND_CATEGORIES: KindCategory[] = [
-  { key: "social", label: "โซเชียล" },
-  { key: "learning", label: "การเรียน" },
-  { key: "recipe", label: "สูตรอาหาร" },
-  { key: "community", label: "ชุมชน" },
-  { key: "achievement", label: "ความสำเร็จ" },
-  { key: "system", label: "ระบบ" },
-  { key: "custom", label: "กำหนดเอง" },
-];
-
 /**
- * The kind catalog. Add entries freely - the backend accepts any
- * `[a-z0-9_]+` slug, so a new type is one line here.
+ * The kinds a staff announcement can be - the closed set the backend
+ * enforces (`AnnouncementKind`), drawn exactly as the recipient will see
+ * it.
+ *
+ * It replaced an open catalog of 26 slugs with an emoji each. Two
+ * problems with that: the emoji never reached anybody (the reader's row
+ * has drawn its own glyph since the notification rework), and a free
+ * slug meant the sender could invent a category no client knows how to
+ * render. The sender now picks a category; the design system picks the
+ * picture, and the picker shows that picture so there is no surprise.
  */
-export const NOTIFICATION_KINDS: NotificationKind[] = [
-  // Social
-  { key: "post_liked", category: "social", label: "มีคนถูกใจโพสต์", description: "โพสต์ของผู้ใช้ได้รับการถูกใจ", icon: "💖" },
-  { key: "post_commented", category: "social", label: "มีคอมเมนต์ใหม่", description: "มีคนคอมเมนต์โพสต์ของผู้ใช้", icon: "💬" },
-  { key: "post_bookmarked", category: "social", label: "โพสต์ถูกบันทึก", description: "มีคนบันทึกโพสต์เก็บไว้", icon: "🔖" },
-  { key: "new_follower", category: "social", label: "มีผู้ติดตามใหม่", description: "มีคนติดตามผู้ใช้", icon: "✨" },
-  { key: "post_viral", category: "social", label: "โพสต์กำลังไวรัล", description: "โพสต์ได้รับความนิยมสูงผิดปกติ", icon: "🎉" },
-  { key: "comment_replied", category: "social", label: "มีคนตอบคอมเมนต์", description: "คอมเมนต์ของผู้ใช้ได้รับการตอบกลับ", icon: "↩️" },
-  // Learning
-  { key: "course_update", category: "learning", label: "คอร์สอัปเดต", description: "เนื้อหาในคอร์สมีการเปลี่ยนแปลง", icon: "📚" },
-  { key: "new_lesson", category: "learning", label: "บทเรียนใหม่", description: "คอร์สเพิ่มบทเรียนใหม่", icon: "🆕" },
-  { key: "quiz_result", category: "learning", label: "ผลแบบทดสอบ", description: "ประกาศผลแบบทดสอบ", icon: "📝" },
-  { key: "course_completed", category: "learning", label: "เรียนจบคอร์ส", description: "แสดงความยินดีกับผู้เรียนจบ", icon: "🎓" },
-  { key: "certificate_ready", category: "learning", label: "ใบประกาศพร้อมแล้ว", description: "ใบประกาศนียบัตรพร้อมให้ดาวน์โหลด", icon: "📜" },
-  { key: "learning_reminder", category: "learning", label: "เตือนกลับมาเรียน", description: "ชวนผู้เรียนกลับมาเรียนต่อ", icon: "⏰" },
-  // Recipe
-  { key: "new_recipe", category: "recipe", label: "สูตรใหม่", description: "มีสูตรอาหารใหม่น่าสนใจ", icon: "🧁" },
-  { key: "recipe_updated", category: "recipe", label: "สูตรอัปเดต", description: "สูตรที่ติดตามมีการปรับปรุง", icon: "🔄" },
-  { key: "recipe_featured", category: "recipe", label: "สูตรถูกแนะนำ", description: "สูตรของผู้ใช้ถูกคัดเป็นสูตรเด่น", icon: "🌟" },
-  { key: "recipe_recommendation", category: "recipe", label: "สูตรแนะนำสำหรับคุณ", description: "แนะนำสูตรที่น่าจะถูกใจ", icon: "🍰" },
-  // Community
-  { key: "community_announcement", category: "community", label: "ประกาศชุมชน", description: "ข่าวสารถึงสมาชิกชุมชน", icon: "📣" },
-  { key: "community_event", category: "community", label: "กิจกรรมชุมชน", description: "ชวนร่วมกิจกรรมหรือชาเลนจ์", icon: "🎪" },
-  { key: "qa_activity", category: "community", label: "ความเคลื่อนไหวถามตอบ", description: "มีความเคลื่อนไหวในกระทู้ถามตอบ", icon: "❓" },
-  { key: "moderation_notice", category: "community", label: "แจ้งจากทีมดูแล", description: "การแจ้งเตือนจากทีมดูแลชุมชน", icon: "🛡️" },
-  // Achievement
-  { key: "achievement_unlocked", category: "achievement", label: "ปลดล็อกความสำเร็จ", description: "ผู้ใช้ทำภารกิจสำเร็จ", icon: "🏆" },
-  { key: "new_badge", category: "achievement", label: "ได้รับเหรียญใหม่", description: "มีเหรียญตราใหม่ในคอลเลกชัน", icon: "🎖️" },
-  { key: "milestone_reached", category: "achievement", label: "ถึงหมุดหมายสำคัญ", description: "ครบยอดสำคัญ เช่น สูตรที่ 100", icon: "🚩" },
-  // System
-  { key: "platform_update", category: "system", label: "แพลตฟอร์มอัปเดต", description: "ฟีเจอร์ใหม่หรือการเปลี่ยนแปลงระบบ", icon: "🛠️" },
-  { key: "maintenance", category: "system", label: "ปิดปรับปรุงระบบ", description: "แจ้งช่วงเวลาปิดปรับปรุง", icon: "🚧" },
-  { key: "announcement", category: "system", label: "ประกาศสำคัญ", description: "ประกาศถึงผู้ใช้ทั้งแพลตฟอร์ม", icon: "📢" },
-  // Custom
-  { key: "custom", category: "custom", label: "กำหนดเอง", description: "เขียนการแจ้งเตือนอิสระ", icon: "🍒" },
-];
+export const ANNOUNCEMENT_KIND_OPTIONS: AnnouncementKindOption[] =
+  ANNOUNCEMENT_KIND_ORDER.map((key) => ({
+    key,
+    label: ANNOUNCEMENT_KINDS[key].label,
+    icon: ANNOUNCEMENT_KINDS[key].icon,
+    tone: ANNOUNCEMENT_KINDS[key].tone,
+    description: KIND_DESCRIPTIONS[key],
+  }));
 
-export const KIND_BY_KEY = new Map(
-  NOTIFICATION_KINDS.map((kind) => [kind.key, kind]),
-);
+export const DEFAULT_KIND = "general";
 
 export function kindLabel(key: string): string {
-  return KIND_BY_KEY.get(key)?.label ?? key;
+  return ANNOUNCEMENT_KINDS[key]?.label ?? key;
+}
+
+export function isKnownKind(key: string): boolean {
+  return key in ANNOUNCEMENT_KINDS;
 }
 
 /* ------------------------------------------------------------------ */

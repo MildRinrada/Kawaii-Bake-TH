@@ -48,6 +48,12 @@ class ThreadSerializer(serializers.Serializer):
     accepted_answer = AnswerSerializer(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+    # Annotated by the selector, never stored  the three numbers a
+    # reader uses to choose a thread. Every read goes through
+    # ``qa_selector``, so they are always present.
+    answer_count = serializers.IntegerField(read_only=True)
+    view_count = serializers.IntegerField(read_only=True)
+    last_answer_at = serializers.DateTimeField(read_only=True, allow_null=True)
 
 
 class ThreadCreateSerializer(StrictSerializer):

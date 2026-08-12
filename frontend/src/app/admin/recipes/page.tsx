@@ -638,7 +638,7 @@ export default function AdminRecipesPage() {
                     onChange={togglePage}
                     className="size-3.5 accent-(--color-accent)"
                   />
-                ) as unknown as string,
+                ),
                 render: (row) => (
                   <input
                     type="checkbox"

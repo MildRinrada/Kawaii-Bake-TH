@@ -13,7 +13,7 @@ import { writeFileSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 const STAFF = { email: "admin@kawaiibake.local", password: "Kawaii!Chef2026" };
 const TITLE = `ทดสอบรูปปก ${Date.now() % 100000}`;
@@ -76,19 +76,73 @@ try {
   if (creates !== before) throw new Error("a request was made for a refused file");
   ok("no request is made for a file the server cannot decode");
 
-  /* ---------- 2. Server-side rejection must not duplicate the recipe --- */
+  /* ---------- 2. A mislabelled file cannot even be framed ------------- */
   await page.locator("form input").first().fill(TITLE);
   // The description textarea (nth 1; nth 0 is the summary) - required by
-  // the client gate, which must NOT swallow this server-rejection test.
+  // the client gate, which must NOT swallow the rejection tests below.
   await page.locator("form textarea").nth(1).fill("ทดสอบไฟล์รูปที่เซิร์ฟเวอร์ปฏิเสธ");
   await page.fill('input[aria-label="ชื่อวัตถุดิบรายการที่ 1"]', "แป้ง");
   await page.fill('textarea[aria-label="เนื้อหาขั้นตอนที่ 1"]', "ผสมให้เข้ากัน");
-  // Bypass the client check the way a mislabelled file would.
+  // Says .png, is not a png. The crop dialog cannot decode it, so the
+  // refusal now happens before any request instead of after a round trip.
   await page.setInputFiles('input[aria-label="เลือกรูปหน้าปก"]', {
     name: "cover.png",
     mimeType: "image/png",
     buffer: Buffer.from("this is not a png"),
   });
+  await expect(
+    page,
+    "text=/เปิดไฟล์นี้เป็นรูปภาพไม่ได้/",
+    "an undecodable file is refused while framing, in Thai",
+  );
+  if (creates !== before) throw new Error("a request was made for a file that could not be decoded");
+  ok("nothing is uploaded for a file the browser cannot open");
+
+  /* ---------- 2b. A cover the *server* refuses must not duplicate ------
+     The client now catches unreadable files, so the server-side refusal
+     is provoked directly: the multipart PATCH that carries the cover is
+     answered once with the exact body Django's ImageField produces. The
+     create call itself is untouched and real. */
+  // In the create flow the only PATCH is the one carrying the cover, so
+  // the first one is it. (Matching on the multipart content-type is not
+  // reliable here: the browser sets that boundary header after the route
+  // handler has already seen the request.)
+  let coverRefused = false;
+  await page.route("**/api/v1/recipes/**", async (route) => {
+    const request = route.request();
+    if (!coverRefused && request.method() === "PATCH") {
+      coverRefused = true;
+      await route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        // The page is on :3000 and the API on :8000, so a fulfilled
+        // response still has to carry the CORS headers the real server
+        // sends, or the browser discards it before the form sees it.
+        headers: {
+          "access-control-allow-origin": BASE,
+          "access-control-allow-credentials": "true",
+        },
+        // The project's single error envelope (ADR 0008 family), with
+        // the exact message Django's ImageField produces.
+        body: JSON.stringify({
+          error: {
+            code: "validation_error",
+            message: "ข้อมูลไม่ถูกต้อง",
+            details: {
+              cover_image: [
+                "Upload a valid image. The file you uploaded was either not an image or a corrupted image.",
+              ],
+            },
+          },
+        }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+  await page.setInputFiles('input[aria-label="เลือกรูปหน้าปก"]', jpegPath);
+  await page.waitForSelector('button:has-text("ใช้รูปนี้")');
+  await page.click('button:has-text("ใช้รูปนี้")');
   await page.click('button[type="submit"]:has-text("สร้างเป็นฉบับร่าง")');
   await expect(
     page,
@@ -112,7 +166,9 @@ try {
   /* ---------- 3. Retry with a valid JPEG: update, never a second POST -- */
   await page.click('button[aria-label="เอารูปที่เลือกออก"]').catch(() => {});
   await page.setInputFiles('input[aria-label="เลือกรูปหน้าปก"]', jpegPath);
-  await expect(page, "text=cover.jpg", "the chosen file name and size are shown");
+  await page.waitForSelector('button:has-text("ใช้รูปนี้")');
+  await page.click('button:has-text("ใช้รูปนี้")');
+  await expect(page, "text=cover.jpg", "the framed file name and size are shown");
   await page.click('button[type="submit"]:has-text("สร้างเป็นฉบับร่าง")');
   await page.waitForURL("**/admin/recipes/**/edit", { timeout: 15_000 });
   slug = decodeURIComponent(page.url().split("/admin/recipes/")[1].replace("/edit", ""));

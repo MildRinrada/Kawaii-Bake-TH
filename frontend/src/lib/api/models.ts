@@ -65,6 +65,7 @@ export type ProgressSummary = Schemas["ProgressSummary"];
 export type CourseStatRow = Schemas["CourseStatRow"];
 export type LearnerRow = Schemas["LearnerRow"];
 export type AdminCertificate = Schemas["AdminCertificate"];
+export type AdminUserStats = Schemas["AdminUserStats"];
 export type AdminNotification = Schemas["AdminNotification"];
 export type BroadcastResult = Schemas["BroadcastResult"];
 export type NotificationCampaign = Schemas["Campaign"];

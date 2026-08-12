@@ -189,3 +189,63 @@ class PrivacyTests(TestCase):
         self.assertNotIn(self.reviewer.email, payload)
         self.assertNotIn(self.author.email, payload)
         self.assertIn("privreviewer", payload)  # the public handle only
+
+
+class ClickTrackingTests(TestCase):
+    """`POST /me/notifications/{id}/click/` - the only click signal there is."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = create_user(username="clickuser")
+        self.stranger = create_user(username="clickstranger")
+
+    def _click(self, notification_id: int):
+        return self.client.post(
+            f"/api/v1/me/notifications/{notification_id}/click/"
+        )
+
+    def test_click_stamps_once_and_implies_read(self) -> None:
+        notification = create_notification(
+            recipient=self.user, link="/recipes/khanom-chan/"
+        )
+        self.client.force_login(self.user)
+
+        first = self._click(notification.pk)
+        self.assertEqual(first.status_code, 200)
+        body = first.json()
+        self.assertIsNotNone(body["clicked_at"])
+        # Opening what a notification points at *is* reading it, so one
+        # call settles both and the client needs one round trip.
+        self.assertIsNotNone(body["read_at"])
+
+        again = self._click(notification.pk)
+        self.assertEqual(again.status_code, 200)
+        self.assertEqual(again.json()["clicked_at"], body["clicked_at"])
+
+    def test_a_notification_with_no_link_cannot_be_clicked(self) -> None:
+        # Accepting it would put clicks in the analytics that no
+        # recipient could have made.
+        notification = create_notification(recipient=self.user, link="")
+        self.client.force_login(self.user)
+
+        response = self._click(notification.pk)
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()["error"]["code"], "not_clickable")
+
+    def test_someone_elses_notification_is_404(self) -> None:
+        notification = create_notification(
+            recipient=self.stranger, link="/recipes/x/"
+        )
+        self.client.force_login(self.user)
+
+        response = self._click(notification.pk)
+
+        self.assertEqual(response.status_code, 404)
+        notification.refresh_from_db()
+        self.assertIsNone(notification.clicked_at)
+
+    def test_anonymous_is_denied(self) -> None:
+        notification = create_notification(recipient=self.user, link="/x/")
+
+        self.assertEqual(self._click(notification.pk).status_code, 401)

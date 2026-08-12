@@ -35,11 +35,11 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { PageContainer } from "@/components/ui/page-container";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { Rating } from "@/components/ui/rating";
+import { Rating, StarPicker } from "@/components/ui/rating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Icon } from "@/components/ui/icon";
-import { MediaFrame } from "@/components/content/media-frame";
+import { CoverFrame } from "@/components/content/cover-frame";
 import { RecipeCard } from "@/components/content/recipe-card";
 import { CommunityPostCard } from "@/components/community/post-card";
 import { cn } from "@/lib/cn";
@@ -53,6 +53,7 @@ type RatingSummary = components["schemas"]["RatingSummary"];
 type Ingredient = components["schemas"]["RecipeIngredient"];
 type Step = components["schemas"]["RecipeStep"];
 type IngredientSubstitution = components["schemas"]["IngredientSubstitution"];
+type SubstitutionOption = IngredientSubstitution["substitutions"][number];
 
 /* ------------------------------------------------------------------ */
 /* Quantity scaling + unit conversion                                  */
@@ -114,6 +115,8 @@ interface BakeSession {
   checked: number[];
   done: number[];
   notes: string;
+  /** Ingredient index → the substitute the baker chose to use instead. */
+  swaps: Record<string, SubstitutionOption>;
 }
 
 function loadSession(slug: string, fallbackServings: number): BakeSession {
@@ -123,6 +126,7 @@ function loadSession(slug: string, fallbackServings: number): BakeSession {
     checked: [],
     done: [],
     notes: "",
+    swaps: {},
   };
   if (typeof window === "undefined") return empty;
   try {
@@ -193,9 +197,9 @@ function TimerDock({
               type="button"
               onClick={() => onToggle(timer.id)}
               aria-label={timer.running ? "พักเวลา" : "จับเวลาต่อ"}
-              className="flex size-13 items-center justify-center rounded-full bg-surface-sunken hover:bg-edge focus-visible:outline-2 focus-visible:outline-focus"
+              className="rounded-full bg-surface-sunken px-3 py-1.5 text-xs font-medium text-fg-muted hover:bg-edge focus-visible:outline-2 focus-visible:outline-focus"
             >
-              <span aria-hidden>{timer.running ? "⏸" : "▶"}</span>
+              {timer.running ? "พัก" : "ต่อ"}
             </button>
           ) : null}
           <button
@@ -204,7 +208,7 @@ function TimerDock({
             aria-label="ปิดตัวจับเวลา"
             className="flex size-13 items-center justify-center rounded-full hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
           >
-            <Icon name="ui/close" className="size-4" />
+            <Icon name="ui/close" tint className="size-4" />
           </button>
         </div>
       ))}
@@ -243,12 +247,9 @@ function FavoriteButton({ slug }: { slug: string }) {
   }
 
   return (
-    <Button
-      variant={favorited ? "secondary" : "primary"}
-      loading={busy}
-      onClick={() => void toggle()}
-    >
+    <Button variant="secondary" loading={busy} onClick={() => void toggle()}>
       <Icon
+        tint
         name={favorited ? "ui/heart-filled-2" : "ui/heart"}
         className="size-4"
       />
@@ -273,7 +274,7 @@ function ShareButton() {
   }
   return (
     <Button variant="secondary" onClick={() => void share()}>
-      <Icon name="ui/share" className="size-4" /> แชร์
+      <Icon name="ui/share" tint className="size-4" /> แชร์
     </Button>
   );
 }
@@ -282,21 +283,24 @@ function ShareButton() {
 /* Review form                                                         */
 /* ------------------------------------------------------------------ */
 
-function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) {
-  const { status } = useAuth();
+function ReviewForm({
+  slug,
+  onPosted,
+  onCancel,
+}: {
+  slug: string;
+  onPosted: () => void;
+  onCancel: () => void;
+}) {
   const { toast } = useToast();
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  if (status !== "authenticated") return null;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (stars === 0) {
-      setError("เลือกจำนวนดาวก่อนนะ");
-      return;
-    }
+    if (stars === 0) return;
     setBusy(true);
     setError(null);
     try {
@@ -321,30 +325,18 @@ function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) 
   }
 
   return (
-    <form onSubmit={submit} className="mb-5 rounded-control bg-surface-sunken/70 p-4">
+    <form
+      onSubmit={submit}
+      className="mt-5 rounded-control border border-edge bg-surface-sunken/60 p-4"
+    >
       <p className="mb-2 text-sm font-medium text-fg">ทำสูตรนี้แล้วเป็นยังไงบ้าง?</p>
       {error ? (
         <p role="alert" className="mb-2 text-sm text-danger">
           {error}
         </p>
       ) : null}
-      <div role="radiogroup" aria-label="ให้คะแนน" className="mb-3 flex gap-1">
-        {[1, 2, 3, 4, 5].map((value) => (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={stars === value}
-            aria-label={`${value} ดาว`}
-            onClick={() => setStars(value)}
-            className="rounded-full p-1 text-butter-ink focus-visible:outline-2 focus-visible:outline-focus"
-          >
-            <Icon
-              name="ui/star"
-              className={cn("size-13", value > stars && "opacity-30")}
-            />
-          </button>
-        ))}
+      <div className="mb-3">
+        <StarPicker value={stars} onChange={setStars} />
       </div>
       <Textarea
         value={comment}
@@ -352,9 +344,20 @@ function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) 
         placeholder="เล่าผลลัพธ์ เคล็ดลับ หรือสิ่งที่ปรับ…"
         rows={2}
       />
-      <Button type="submit" size="sm" loading={busy} className="mt-3">
-        ส่งรีวิว
-      </Button>
+      <div className="mt-3 flex items-center gap-2">
+        {/* Full-strength primary, and genuinely disabled until a star is
+            picked — the washed-out pink used to *look* disabled while
+            being clickable, which is the worst of both. */}
+        <Button type="submit" loading={busy} disabled={stars === 0}>
+          ส่งรีวิว
+        </Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          ยกเลิก
+        </Button>
+        {stars === 0 ? (
+          <span className="text-xs text-fg-subtle">เลือกดาวก่อนส่งได้</span>
+        ) : null}
+      </div>
     </form>
   );
 }
@@ -364,6 +367,10 @@ function ReviewForm({ slug, onPosted }: { slug: string; onPosted: () => void }) 
 /* ------------------------------------------------------------------ */
 
 export function RecipeDetailScreen({ slug }: { slug: string }) {
+  const { status } = useAuth();
+  const [writing, setWriting] = useState(false);
+  /** Bumped by the hero CTA; the workspace opens focus mode on change. */
+  const [focusRequest, setFocusRequest] = useState(0);
   const recipe = useApiQuery(
     (signal) => api.get<RecipeDetail>(`/recipes/${slug}/`, { signal }),
     [slug],
@@ -388,16 +395,31 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
       ),
     [slug],
   );
+  // Related recipes, with the reason stated. Same category first; when
+  // the catalogue has no sibling there, same difficulty - and the
+  // heading says which of the two it is, so a suggestion is never an
+  // unexplained assertion.
   const relatedCategory = recipe.data?.categories[0]?.slug ?? "";
+  const relatedDifficulty = recipe.data?.difficulty ?? "";
   const related = useApiQuery(
-    (signal) =>
-      relatedCategory
-        ? api.get<Paginated<RecipeListItem>>("/recipes/", {
-            query: { category: relatedCategory, page_size: 4 },
-            signal,
-          })
-        : Promise.resolve(null),
-    [relatedCategory],
+    async (signal) => {
+      if (relatedCategory) {
+        const byCategory = await api.get<Paginated<RecipeListItem>>("/recipes/", {
+          query: { category: relatedCategory, page_size: 4 },
+          signal,
+        });
+        if (byCategory.results.some((item) => item.slug !== slug)) {
+          return { reason: "category" as const, page: byCategory };
+        }
+      }
+      if (!relatedDifficulty) return null;
+      const byDifficulty = await api.get<Paginated<RecipeListItem>>("/recipes/", {
+        query: { difficulty: relatedDifficulty, page_size: 4 },
+        signal,
+      });
+      return { reason: "difficulty" as const, page: byDifficulty };
+    },
+    [relatedCategory, relatedDifficulty, slug],
   );
 
   if (recipe.loading) {
@@ -417,21 +439,30 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
     );
   }
   const data = recipe.data;
-  const relatedItems = (related.data?.results ?? [])
+  const relatedItems = (related.data?.page.results ?? [])
     .filter((item) => item.slug !== slug)
     .slice(0, 3);
+  const relatedReason =
+    related.data?.reason === "difficulty"
+      ? "ระดับความยากใกล้เคียงกัน"
+      : `อยู่ในหมวด ${data.categories[0]?.name ?? ""} เหมือนกัน`;
 
   return (
     <PageContainer>
-      {/* ---------- Hero ---------- */}
-      <div className="overflow-hidden rounded-surface border border-edge shadow-raised">
-        <div className="aspect-21/9 w-full">
-          <MediaFrame src={data.cover_image_url} seed={data.slug} alt={data.title} />
-        </div>
-      </div>
+      {/* ---------- Hero ----------
+          Two columns rather than a full-width banner. The cover keeps the
+          card's 4:3 (or 3:4 for a phone photo), so the picture the author
+          framed is the picture shown — a 21:9 strip cut a plate of food
+          down to its middle band — and the actions come up beside the
+          title instead of below a 400px image. */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
+        <CoverFrame
+          src={data.cover_image_url}
+          seed={data.slug}
+          alt={data.title}
+        />
 
-      <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
+        <div id="overview" className="min-w-0 scroll-mt-32">
           <div className="mb-2 flex flex-wrap gap-1.5">
             <DifficultyBadge level={data.difficulty} />
             {data.categories.map((category) => (
@@ -443,7 +474,21 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
           <h1 className="font-display text-2xl font-medium text-fg sm:text-3xl">
             {data.title}
           </h1>
-          <p className="mt-2 max-w-2xl text-fg-muted">{data.summary}</p>
+          <p className="mt-2 text-fg-muted">{data.summary}</p>
+          <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-fg-muted">
+            {(
+              [
+                { icon: "clock", text: `${data.total_minutes} นาที` },
+                { icon: "plate", text: `${data.servings} ที่` },
+                { icon: "scroll", text: `${data.steps.length} ขั้นตอน` },
+              ] as const
+            ).map((item) => (
+              <li key={item.icon} className="flex items-center gap-1.5">
+                <Icon name={`ui/${item.icon}`} tint className="size-4 text-fg-subtle" />
+                {item.text}
+              </li>
+            ))}
+          </ul>
           <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-fg-muted">
             <span className="flex items-center gap-2">
               <Avatar
@@ -454,40 +499,37 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
               {data.author.display_name || data.author.username}
             </span>
             {rating.data ? (
-              <Rating average={rating.data.average} count={rating.data.count} />
+              <a
+                href="#reviews"
+                className="rounded-full hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+              >
+                <Rating average={rating.data.average} count={rating.data.count} />
+              </a>
             ) : null}
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2.5">
-          <FavoriteButton slug={slug} />
-          <ShareButton />
-          <a href="#workspace">
-            <Button variant="secondary"><Icon name="ui/arrow-down" className="size-4" /> ไปที่สูตรเลย</Button>
-          </a>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            {/* The page's best feature is the CTA, not a button that
+                scrolls the page for you. */}
+            <Button
+              onClick={() => setFocusRequest((count) => count + 1)}
+              title="ทีละขั้นตอน ตัวใหญ่ พร้อมตัวจับเวลา  เหมาะกับตอนมือเลอะแป้ง"
+            >
+              <Icon name="ui/chef-hat" tint className="size-4" /> เริ่มโหมดทำขนม
+            </Button>
+            <FavoriteButton slug={slug} />
+            <ShareButton />
+          </div>
+          <p className="mt-2 text-xs text-fg-subtle">
+            โหมดทำขนมจะแสดงทีละขั้นตอนตัวใหญ่ กดจับเวลาได้ในหน้าเดียว
+          </p>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" id="overview">
-        {(
-          [
-            { icon: "timer", label: "เตรียม", value: `${data.prep_minutes} นาที` },
-            { icon: "fire", label: "อบ/ทำ", value: `${data.cook_minutes} นาที` },
-            { icon: "clock", label: "รวม", value: `${data.total_minutes} นาที` },
-            { icon: "plate", label: "ได้", value: `${data.servings} ที่` },
-          ] as const
-        ).map((item) => (
-          <div
-            key={item.label}
-            className="rounded-control bg-surface-sunken px-4 py-3 text-center"
-          >
-            <p className="flex items-center justify-center gap-1 text-xs text-fg-muted">
-              <Icon name={`ui/${item.icon}`} className="size-3.5" />
-              {item.label}
-            </p>
-            <p className="font-display font-medium text-fg">{item.value}</p>
-          </div>
-        ))}
-      </div>
+      {/* No four-across stat band here: prep/bake/total/yield are four
+          short numbers that were stretched across the full page width,
+          and the sticky bar repeated two of them. They now live once, in
+          the workspace's left column beside the scaler that changes
+          them. */}
 
       {data.description ? (
         <p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-fg-muted">
@@ -499,21 +541,23 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
       <Workspace
         data={data}
         substitutions={substitutions.data?.results ?? []}
+        focusRequest={focusRequest}
       />
 
-      {/* ---------- Community ---------- */}
-      <Card className="mt-10" id="reviews">
+      {/* ---------- Reviews ----------
+          What people said comes first; the form is a button until it is
+          wanted. A large empty compose box above one small real review
+          weights the section towards writing over reading. */}
+      <Card className="mt-10 scroll-mt-32" id="reviews">
         <CardHeader
-          title={`รีวิวจากคนที่ทำแล้ว${rating.data?.count ? ` (${rating.data.count})` : ""}`}
+          title="รีวิวจากคนที่ทำแล้ว"
+          actions={
+            rating.data ? (
+              <Rating average={rating.data.average} count={rating.data.count} />
+            ) : null
+          }
         />
         <CardBody>
-          <ReviewForm
-            slug={slug}
-            onPosted={() => {
-              reviews.refetch();
-              rating.refetch();
-            }}
-          />
           {reviews.loading ? (
             <Skeleton className="h-20 w-full" />
           ) : !reviews.data || reviews.data.results.length === 0 ? (
@@ -545,6 +589,33 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
               ))}
             </ul>
           )}
+
+          {status === "authenticated" ? (
+            writing ? (
+              <ReviewForm
+                slug={slug}
+                onCancel={() => setWriting(false)}
+                onPosted={() => {
+                  setWriting(false);
+                  reviews.refetch();
+                  rating.refetch();
+                }}
+              />
+            ) : (
+              <div className="mt-5 border-t border-edge pt-4">
+                <Button variant="secondary" onClick={() => setWriting(true)}>
+                  <Icon name="ui/edit" tint className="size-4" /> เขียนรีวิว
+                </Button>
+              </div>
+            )
+          ) : status === "anonymous" ? (
+            <p className="mt-5 border-t border-edge pt-4 text-sm text-fg-muted">
+              <Link href="/login" className="underline hover:text-fg">
+                เข้าสู่ระบบ
+              </Link>{" "}
+              เพื่อเขียนรีวิวสูตรนี้
+            </p>
+          ) : null}
         </CardBody>
       </Card>
 
@@ -554,9 +625,15 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
       {/* ---------- Related ---------- */}
       {relatedItems.length > 0 ? (
         <section className="mt-10">
-          <h2 className="font-display mb-4 text-xl font-medium text-fg">
-            ถ้าชอบสูตรนี้ ลองต่อเลย
-          </h2>
+          <div className="mb-4">
+            <h2 className="font-display text-xl font-medium text-fg">
+              ถ้าชอบสูตรนี้ ลองต่อเลย
+            </h2>
+            <p className="text-sm text-fg-muted">{relatedReason}</p>
+          </div>
+          {/* The same card as the list page, at the same size. Stretching
+              one card across the row put its title in the middle of an
+              acre of nothing and its meta a screen away. */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {relatedItems.map((item) => (
               <RecipeCard key={item.slug} recipe={item} />
@@ -667,15 +744,225 @@ function RecipeCommunitySection({ recipe }: { recipe: RecipeDetail }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Ingredients and their substitutes                                   */
+/* ------------------------------------------------------------------ */
+
+const CONFIDENCE_LABELS: Record<string, string> = {
+  high: "มั่นใจสูง",
+  medium: "ปานกลาง",
+  low: "พอแทนได้",
+};
+
+/** Confidence reads as a dot before the name, so it never wraps to its
+    own line when the name is long — the badges used to land in a
+    different place on every row. */
+const CONFIDENCE_DOT: Record<string, string> = {
+  high: "bg-mint-ink",
+  medium: "bg-butter-ink",
+  low: "bg-peach-ink",
+};
+
+/** A ratio the scaler can honour by itself: same amount, other name. */
+const ONE_TO_ONE = /^\s*1\s*:\s*1\s*$/;
+
+/**
+ * The substitution list for one ingredient.
+ *
+ * It sits directly under the ingredient it replaces rather than in a
+ * drawer at the bottom of the card, so choosing one never costs the
+ * reader their place in the list. Everything shown is registry data:
+ * where the ratio is not 1:1 the conversion is quoted verbatim and *no
+ * amount is computed*, because "3/4 ถ้วย ต่อเนย 1 ถ้วย" cannot be turned
+ * into grams without inventing a density.
+ */
+function SubstitutionOptions({
+  options,
+  applied,
+  onApply,
+}: {
+  options: SubstitutionOption[];
+  applied?: SubstitutionOption;
+  onApply: (option: SubstitutionOption) => void;
+}) {
+  return (
+    <ul className="mt-1.5 space-y-2.5 rounded-control bg-surface-sunken/70 p-3">
+      {options.map((option) => {
+        const oneToOne = ONE_TO_ONE.test(option.ratio);
+        const inUse = applied?.name === option.name;
+        return (
+          <li key={option.name} className="space-y-1">
+            <p className="flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className={cn(
+                  "size-2 shrink-0 rounded-full",
+                  CONFIDENCE_DOT[option.confidence] ?? "bg-fg-subtle",
+                )}
+              />
+              <span className="text-sm font-medium text-fg">{option.name}</span>
+              {oneToOne ? (
+                <Badge tone="mint" className="font-mono">
+                  1:1
+                </Badge>
+              ) : null}
+              <span className="ml-auto shrink-0 text-xs text-fg-muted">
+                {CONFIDENCE_LABELS[option.confidence] ?? option.confidence}
+              </span>
+            </p>
+            {oneToOne ? null : (
+              <p className="pl-3.5 text-xs leading-relaxed text-fg-muted">
+                {option.ratio}
+              </p>
+            )}
+            {option.note ? (
+              <p className="pl-3.5 text-xs text-fg-muted">{option.note}</p>
+            ) : null}
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={inUse}
+                onClick={() => onApply(option)}
+              >
+                {inUse ? (
+                  <>
+                    <Icon name="ui/check" tint className="size-3.5" /> ใช้อยู่
+                  </>
+                ) : (
+                  "ใช้แทน"
+                )}
+              </Button>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function IngredientRow({
+  index,
+  ingredient,
+  amount,
+  checked,
+  onToggle,
+  options,
+  swap,
+  open,
+  onOpenChange,
+  onApply,
+  onClear,
+}: {
+  index: number;
+  ingredient: Ingredient;
+  amount: string | null;
+  checked: boolean;
+  onToggle: () => void;
+  options: SubstitutionOption[];
+  swap?: SubstitutionOption;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApply: (option: SubstitutionOption) => void;
+  onClear: () => void;
+}) {
+  const oneToOne = swap ? ONE_TO_ONE.test(swap.ratio) : false;
+  // A 1:1 swap keeps the scaled amount; anything else states the amount
+  // of the *original* ingredient plus the registry's conversion.
+  const showAmountInline = amount !== null && (!swap || oneToOne);
+
+  return (
+    <li>
+      <div className="rounded-control px-2 py-2 transition-colors hover:bg-surface-sunken">
+        <div className="flex items-start gap-3">
+          <input
+            id={`ingredient-${index}`}
+            type="checkbox"
+            checked={checked}
+            onChange={onToggle}
+            className="mt-0.5 size-5 shrink-0 accent-accent"
+          />
+          <div className="min-w-0 flex-1">
+            <label
+              htmlFor={`ingredient-${index}`}
+              className={cn(
+                "block cursor-pointer text-sm text-fg",
+                checked && "line-through opacity-60",
+              )}
+            >
+              {showAmountInline ? (
+                <strong className="font-medium">{amount}</strong>
+              ) : null}{" "}
+              {swap ? swap.name : ingredient.name}
+              {ingredient.is_optional ? (
+                <span className="text-fg-subtle"> · ไม่ใส่ก็ได้</span>
+              ) : null}
+              {ingredient.note ? (
+                <span className="text-fg-subtle"> ({ingredient.note})</span>
+              ) : null}
+            </label>
+
+            {swap ? (
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-berry-ink">
+                <Icon name="ui/swap" tint className="size-3.5" />
+                <span>
+                  ใช้แทน {ingredient.name}
+                  {amount ? ` ${amount}` : ""}
+                  {oneToOne ? "" : ` · ${swap.ratio}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={onClear}
+                  className="underline hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+                >
+                  คืนค่าเดิม
+                </button>
+              </p>
+            ) : null}
+
+            {options.length > 0 ? (
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => onOpenChange(!open)}
+                className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+              >
+                <Icon name="ui/swap" tint className="size-3.5" />
+                {swap ? "เปลี่ยนของทดแทน" : "ของทดแทน"} ({options.length})
+                <Icon
+                  name="ui/chevron-down"
+                  tint
+                  className={cn("size-3.5 transition-transform", open && "rotate-180")}
+                />
+              </button>
+            ) : null}
+
+            {open ? (
+              <SubstitutionOptions
+                options={options}
+                applied={swap}
+                onApply={onApply}
+              />
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Workspace                                                           */
 /* ------------------------------------------------------------------ */
 
 function Workspace({
   data,
   substitutions,
+  focusRequest,
 }: {
   data: RecipeDetail;
   substitutions: IngredientSubstitution[];
+  /** Increments when the hero asks for focus mode. */
+  focusRequest: number;
 }) {
   const { toast } = useToast();
   const [session, setSession] = useState<BakeSession>(() =>
@@ -684,7 +971,10 @@ function Workspace({
   const [timers, setTimers] = useState<BakeTimer[]>([]);
   const [focusOpen, setFocusOpen] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
-  const [subsOpen, setSubsOpen] = useState(false);
+  /** Which ingredient's substitution list is open — one at a time. */
+  const [openSubs, setOpenSubs] = useState<number | null>(null);
+  /** Live feedback for the notes box: idle → saving → saved → idle. */
+  const [noteState, setNoteState] = useState<"idle" | "saving" | "saved">("idle");
 
   // Persist the baking session per recipe, in this browser.
   useEffect(() => {
@@ -694,6 +984,24 @@ function Workspace({
       // Storage full/blocked  the session simply won't survive reload.
     }
   }, [data.slug, session]);
+
+  // Notes are written to storage by the effect above on every keystroke,
+  // which is invisible. Say so: a note the baker cannot tell was kept is
+  // a note they will retype somewhere safer.
+  const noteTouched = useRef(false);
+  useEffect(() => {
+    if (!noteTouched.current) {
+      noteTouched.current = true;
+      return;
+    }
+    setNoteState("saving");
+    const settle = setTimeout(() => setNoteState("saved"), 400);
+    const fade = setTimeout(() => setNoteState("idle"), 3000);
+    return () => {
+      clearTimeout(settle);
+      clearTimeout(fade);
+    };
+  }, [session.notes]);
 
   // One shared ticker drives every running timer; a timer that reaches
   // zero stops itself (the updater stays pure).
@@ -718,7 +1026,7 @@ function Workspace({
     for (const timer of timers) {
       if (timer.remaining === 0 && !announcedRef.current.has(timer.id)) {
         announcedRef.current.add(timer.id);
-        toast(`⏰ ${timer.label} ครบเวลาแล้ว!`, "success");
+        toast(`${timer.label} ครบเวลาแล้ว!`, "success");
       }
     }
   }, [timers, toast]);
@@ -741,10 +1049,36 @@ function Workspace({
     groups.get(key)!.push({ ingredient, index });
   });
 
-  const usableSubs = substitutions.filter((entry) => entry.substitutions.length);
+  // Substitution candidates keyed by the ingredient name the API echoed
+  // back (it builds its entries from this recipe's own lines, so the
+  // names match exactly; the fold is belt and braces).
+  const subsByIngredient = new Map<string, SubstitutionOption[]>();
+  for (const entry of substitutions) {
+    if (entry.substitutions.length) {
+      subsByIngredient.set(entry.ingredient.trim().toLowerCase(), [
+        ...entry.substitutions,
+      ]);
+    }
+  }
+  const optionsFor = (name: string) =>
+    subsByIngredient.get(name.trim().toLowerCase()) ?? [];
+  const swappableCount = data.ingredients.filter(
+    (ingredient) => optionsFor(ingredient.name).length > 0,
+  ).length;
 
   function update(partial: Partial<BakeSession>) {
     setSession((current) => ({ ...current, ...partial }));
+  }
+
+  function applySwap(index: number, option: SubstitutionOption) {
+    update({ swaps: { ...session.swaps, [String(index)]: option } });
+    setOpenSubs(null);
+  }
+
+  function clearSwap(index: number) {
+    const next = { ...session.swaps };
+    delete next[String(index)];
+    update({ swaps: next });
   }
 
   function toggleChecked(index: number) {
@@ -771,7 +1105,7 @@ function Workspace({
         running: true,
       },
     ]);
-    toast(`เริ่มจับเวลา ${minutes} นาที ⏲`, "success");
+    toast(`เริ่มจับเวลา ${minutes} นาที`, "success");
   }
 
   function toggleTimer(id: number) {
@@ -786,57 +1120,45 @@ function Workspace({
     setTimers((current) => current.filter((timer) => timer.id !== id));
   }
 
-  function openFocus() {
-    setFocusIndex(activeStep === -1 ? steps.length - 1 : activeStep);
+  const resumeAtRef = useRef(0);
+  useEffect(() => {
+    resumeAtRef.current = activeStep === -1 ? steps.length - 1 : activeStep;
+  });
+  useEffect(() => {
+    if (focusRequest === 0) return;
+    setFocusIndex(Math.max(0, resumeAtRef.current));
     setFocusOpen(true);
-  }
-
-  const CONFIDENCE_LABELS: Record<string, string> = {
-    high: "มั่นใจสูง",
-    medium: "ปานกลาง",
-    low: "พอแทนได้",
-  };
+  }, [focusRequest]);
 
   return (
     <div id="workspace" className="mt-10 scroll-mt-32">
-      {/* Sticky workspace bar */}
-      <div className="sticky top-16 z-30 -mx-4 border-y border-edge bg-canvas/90 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:px-6">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
-          <nav aria-label="ส่วนของสูตร" className="flex gap-1">
-            {[
-              ["#overview", "ภาพรวม"],
-              ["#ingredients", "ส่วนผสม"],
-              ["#steps", "วิธีทำ"],
-              ["#reviews", "รีวิว"],
-            ].map(([href, label]) => (
-              <a
-                key={href}
-                href={href}
-                className="rounded-full px-3 py-1 text-fg-muted hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-          <span className="ml-auto flex items-center gap-3 text-xs text-fg-muted">
-            <span className="flex items-center gap-1"><Icon name="ui/clock" className="size-4" /> {data.total_minutes} นาที</span>
-            <span className="flex items-center gap-1"><Icon name="ui/plate" className="size-4" /> {session.servings} ที่</span>
-            <span aria-live="polite">
-              ✓ {doneCount}/{steps.length} ขั้น
-            </span>
-          </span>
-          <Button size="sm" onClick={openFocus}>
-            <Icon name="ui/chef-hat" className="size-4" /> โหมดทำขนม
-          </Button>
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.6fr]">
-        {/* ---------- Ingredients panel ---------- */}
-        <div className="space-y-4 self-start lg:sticky lg:top-36" id="ingredients">
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
+        {/* ---------- Ingredients panel ----------
+            The column flows at its natural height: a capped, scrollable
+            column meant two scrollbars fighting each other and cut off
+            the top of whatever card the box happened to start on. The
+            ingredient card alone is sticky (below), which is the part
+            you actually need in view while reading the method. */}
+        {/* Not `self-start`: the column has to stretch to the row so the
+            sticky card below has somewhere to travel. */}
+        <div id="ingredients" className="space-y-4 scroll-mt-32">
           <Card>
-            <CardHeader title="ปรับสูตร" />
+            <CardHeader title="เวลาและการปรับสูตร" />
             <CardBody className="space-y-4">
+              <dl className="grid gap-1 border-b border-edge pb-3 text-sm">
+                {(
+                  [
+                    { icon: "timer", label: "เตรียม", value: `${data.prep_minutes} นาที` },
+                    { icon: "fire", label: "อบ/ทำ", value: `${data.cook_minutes} นาที` },
+                  ] as const
+                ).map((item) => (
+                  <div key={item.label} className="flex items-center gap-1.5">
+                    <Icon name={`ui/${item.icon}`} tint className="size-4 text-fg-subtle" />
+                    <dt className="text-fg-muted">{item.label}</dt>
+                    <dd className="ml-auto font-medium text-fg">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
               <div>
                 <p className="mb-1.5 text-sm text-fg-muted">จำนวนที่จะทำ</p>
                 <div className="flex items-center gap-3">
@@ -910,7 +1232,7 @@ function Workspace({
             </CardBody>
           </Card>
 
-          <Card>
+          <Card className="lg:sticky lg:top-32">
             <CardHeader
               title="ส่วนผสม"
               actions={
@@ -920,112 +1242,50 @@ function Workspace({
               }
             />
             <CardBody className="space-y-4">
-              {[...groups.entries()].map(([groupName, items]) => (
-                <div key={groupName || "หลัก"}>
+              {swappableCount > 0 ? (
+                <p className="flex items-center gap-1.5 text-xs text-fg-muted">
+                  <Icon name="ui/swap" tint className="size-3.5 text-accent" />
+                  ขาดวัตถุดิบ? แตะ &ldquo;ของทดแทน&rdquo; ใต้รายการนั้นได้เลย
+                  ({swappableCount} รายการมีตัวเลือก)
+                </p>
+              ) : null}
+
+              {[...groups.entries()].map(([groupName, items], groupIndex) => (
+                <div
+                  key={groupName || "หลัก"}
+                  className={cn(
+                    groupIndex > 0 && "border-t border-edge pt-4",
+                  )}
+                >
                   {groupName ? (
                     <p className="font-display mb-1.5 text-sm font-medium text-berry-ink">
                       {groupName}
                     </p>
                   ) : null}
                   <ul className="space-y-0.5">
-                    {items.map(({ ingredient, index }) => {
-                      const amount = scaledQuantity(
-                        ingredient,
-                        factor,
-                        session.unitSystem,
-                      );
-                      const isChecked = checked.has(index);
-                      return (
-                        <li key={index}>
-                          <label
-                            className={cn(
-                              "flex cursor-pointer items-start gap-3 rounded-control px-2 py-2 transition-colors hover:bg-surface-sunken",
-                              isChecked && "opacity-60",
-                            )}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleChecked(index)}
-                              className="mt-0.5 size-5 shrink-0 accent-accent"
-                            />
-                            <span
-                              className={cn(
-                                "text-sm text-fg",
-                                isChecked && "line-through",
-                              )}
-                            >
-                              {amount ? (
-                                <strong className="font-medium">{amount}</strong>
-                              ) : null}{" "}
-                              {ingredient.name}
-                              {ingredient.is_optional ? (
-                                <span className="text-fg-subtle"> · ไม่ใส่ก็ได้</span>
-                              ) : null}
-                              {ingredient.note ? (
-                                <span className="text-fg-subtle">
-                                  {" "}
-                                  ({ingredient.note})
-                                </span>
-                              ) : null}
-                            </span>
-                          </label>
-                        </li>
-                      );
-                    })}
+                    {items.map(({ ingredient, index }) => (
+                      <IngredientRow
+                        key={index}
+                        index={index}
+                        ingredient={ingredient}
+                        amount={scaledQuantity(
+                          ingredient,
+                          factor,
+                          session.unitSystem,
+                        )}
+                        checked={checked.has(index)}
+                        onToggle={() => toggleChecked(index)}
+                        options={optionsFor(ingredient.name)}
+                        swap={session.swaps?.[String(index)]}
+                        open={openSubs === index}
+                        onOpenChange={(open) => setOpenSubs(open ? index : null)}
+                        onApply={(option) => applySwap(index, option)}
+                        onClear={() => clearSwap(index)}
+                      />
+                    ))}
                   </ul>
                 </div>
               ))}
-
-              {usableSubs.length > 0 ? (
-                <div className="border-t border-edge pt-3">
-                  <button
-                    type="button"
-                    aria-expanded={subsOpen}
-                    onClick={() => setSubsOpen((value) => !value)}
-                    className="flex w-full items-center justify-between rounded-control px-2 py-1.5 text-sm font-medium text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
-                  >
-                    <Icon name="ui/salt" className="size-4" /> ไม่มีวัตถุดิบครบ? ดูของทดแทน
-                    <span aria-hidden>{subsOpen ? "▲" : "▼"}</span>
-                  </button>
-                  {subsOpen ? (
-                    <ul className="mt-2 space-y-3 px-2">
-                      {usableSubs.map((entry) => (
-                        <li key={entry.normalized} className="text-sm">
-                          <p className="font-medium text-fg">{entry.ingredient}</p>
-                          <ul className="mt-1 space-y-1">
-                            {entry.substitutions.map((option) => (
-                              <li key={option.name} className="flex flex-wrap items-baseline gap-x-2 text-fg-muted">
-                                <span>
-                                  → {option.name}{" "}
-                                  <span className="text-fg-subtle">({option.ratio})</span>
-                                </span>
-                                <Badge
-                                  tone={
-                                    option.confidence === "high"
-                                      ? "mint"
-                                      : option.confidence === "medium"
-                                        ? "butter"
-                                        : "peach"
-                                  }
-                                >
-                                  {CONFIDENCE_LABELS[option.confidence] ??
-                                    option.confidence}
-                                </Badge>
-                                {option.note ? (
-                                  <span className="w-full text-xs text-fg-subtle">
-                                    {option.note}
-                                  </span>
-                                ) : null}
-                              </li>
-                            ))}
-                          </ul>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              ) : null}
             </CardBody>
           </Card>
         </div>
@@ -1033,53 +1293,77 @@ function Workspace({
         {/* ---------- Steps panel ---------- */}
         <div className="space-y-6" id="steps">
           <Card>
-            <CardHeader
-              title="วิธีทำ"
-              actions={
-                <span className="text-sm text-fg-muted">
+            <CardHeader title="วิธีทำ" />
+            <CardBody>
+              {/* One progress readout, not three: the bar and its own
+                  caption. */}
+              <p className="mb-1.5 flex items-center justify-between text-sm text-fg-muted">
+                <span>ความคืบหน้า</span>
+                <span aria-live="polite">
                   ทำแล้ว {doneCount} จาก {steps.length} ขั้น
                 </span>
-              }
-            />
-            <CardBody>
+              </p>
               <ProgressBar
                 percent={stepPercent}
-                label="ความคืบหน้าการทำ"
+                label={`ทำแล้ว ${doneCount} จาก ${steps.length} ขั้น`}
                 className="mb-5"
               />
+              <p className="mb-3 text-xs text-fg-subtle">
+                แตะที่การ์ดขั้นตอนเพื่อทำเครื่องหมายว่าทำเสร็จแล้ว
+              </p>
               <ol className="space-y-4">
                 {steps.map((step, index) => {
                   const minutes = stepMinutes(step);
                   const isDone = done.has(index);
                   const isActive = index === activeStep;
                   return (
+                    // The whole card is the target. A per-step checkbox
+                    // with its own "ทำเสร็จแล้ว" label added a control
+                    // row to every step for one bit of state; the number
+                    // badge already had a place to show it.
                     <li
                       key={index}
+                      onClick={(event) => {
+                        // Anything genuinely clickable inside acts for
+                        // itself (the timer, the number badge).
+                        if ((event.target as HTMLElement).closest("button,a")) {
+                          return;
+                        }
+                        toggleDone(index);
+                      }}
                       className={cn(
-                        "rounded-surface border p-4 transition-colors",
+                        "cursor-pointer rounded-surface border px-3 py-2.5 transition-colors",
                         isActive
-                          ? "border-lavender-ink/30 bg-lavender-soft/40"
-                          : "border-edge",
+                          ? "border-berry-ink/25 bg-berry-soft/50"
+                          : "border-edge hover:bg-surface-sunken/60",
                         isDone && "opacity-60",
                       )}
                     >
                       <div className="flex gap-4">
-                        <span
-                          aria-hidden
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isDone}
+                          aria-label={`ขั้นที่ ${index + 1} ทำเสร็จแล้ว`}
+                          onClick={() => toggleDone(index)}
                           className={cn(
-                            "font-display flex size-13 shrink-0 items-center justify-center rounded-full text-sm font-medium",
+                            "font-display flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
                             isDone
                               ? "bg-mint-soft text-mint-ink"
                               : isActive
-                                ? "bg-lavender-ink text-fg-inverted"
-                                : "bg-peach-soft text-peach-ink",
+                                ? "bg-berry-ink text-fg-inverted"
+                                : "bg-surface-sunken text-fg-muted",
                           )}
                         >
-                          {isDone ? "✓" : index + 1}
-                        </span>
-                        <div className="min-w-0 flex-1 space-y-2.5">
+                          {isDone ? (
+                            <Icon name="ui/check" tint className="size-5" />
+                          ) : (
+                            index + 1
+                          )}
+                        </button>
+                        <div className="min-w-0 flex-1 space-y-2">
                           {isActive ? (
-                            <p className="text-xs font-medium text-lavender-ink">
+                            <p className="text-xs font-medium text-berry-ink">
                               ขั้นตอนปัจจุบัน
                             </p>
                           ) : null}
@@ -1102,28 +1386,18 @@ function Workspace({
                               />
                             </div>
                           ) : null}
-                          <div className="flex flex-wrap items-center gap-2">
-                            {minutes ? (
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() =>
-                                  startTimer(`ขั้นที่ ${index + 1}`, minutes)
-                                }
-                              >
-                                ⏲ จับเวลา {minutes} นาที
-                              </Button>
-                            ) : null}
-                            <label className="flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-sm text-fg-muted hover:bg-surface-sunken">
-                              <input
-                                type="checkbox"
-                                checked={isDone}
-                                onChange={() => toggleDone(index)}
-                                className="size-5 accent-accent"
-                              />
-                              ทำเสร็จแล้ว
-                            </label>
-                          </div>
+                          {minutes ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() =>
+                                startTimer(`ขั้นที่ ${index + 1}`, minutes)
+                              }
+                            >
+                              <Icon name="ui/timer" tint className="size-4" />
+                              จับเวลา {minutes} นาที
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     </li>
@@ -1132,7 +1406,7 @@ function Workspace({
               </ol>
               {activeStep === -1 && steps.length > 0 ? (
                 <p className="mt-5 rounded-control bg-mint-soft px-4 py-3 text-center text-sm font-medium text-mint-ink">
-                  <Icon name="ui/party" className="size-4 shrink-0" /> ทำครบทุกขั้นแล้ว อย่าลืมมารีวิวเล่าผลงานนะ
+                  <Icon name="ui/party" tint className="size-4 shrink-0" /> ทำครบทุกขั้นแล้ว อย่าลืมมารีวิวเล่าผลงานนะ
                 </p>
               ) : null}
             </CardBody>
@@ -1140,7 +1414,24 @@ function Workspace({
 
           {/* Personal notes */}
           <Card>
-            <CardHeader title="โน้ตส่วนตัว" />
+            <CardHeader
+              title="โน้ตส่วนตัว"
+              actions={
+                <span
+                  aria-live="polite"
+                  className="flex items-center gap-1 text-xs"
+                >
+                  {noteState === "saved" ? (
+                    <span className="flex items-center gap-1 text-success">
+                      <Icon name="ui/check" tint className="size-3.5" />
+                      บันทึกแล้ว
+                    </span>
+                  ) : noteState === "saving" ? (
+                    <span className="text-fg-subtle">กำลังบันทึก…</span>
+                  ) : null}
+                </span>
+              }
+            />
             <CardBody>
               <Textarea
                 value={session.notes}
@@ -1186,7 +1477,7 @@ function Workspace({
         >
           <div className="flex items-center justify-between border-b border-edge px-4 py-3 sm:px-6">
             <p className="font-display font-medium text-fg">
-              <Icon name="ui/chef-hat" className="size-4" /> ขั้นที่ {focusIndex + 1} จาก {steps.length}
+              <Icon name="ui/chef-hat" tint className="size-4" /> ขั้นที่ {focusIndex + 1} จาก {steps.length}
             </p>
             <button
               type="button"
@@ -1194,7 +1485,7 @@ function Workspace({
               aria-label="ปิดโหมดทำขนม"
               className="flex size-11 items-center justify-center rounded-full hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
             >
-              <Icon name="ui/close" className="size-4" />
+              <Icon name="ui/close" tint className="size-4" />
             </button>
           </div>
           <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-6 overflow-y-auto px-6 py-8">
@@ -1226,7 +1517,8 @@ function Workspace({
                   )
                 }
               >
-                ⏲ จับเวลา {stepMinutes(steps[focusIndex])} นาที
+                <Icon name="ui/timer" tint className="size-5" />
+                จับเวลา {stepMinutes(steps[focusIndex])} นาที
               </Button>
             ) : null}
           </div>

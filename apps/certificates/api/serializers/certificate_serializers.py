@@ -1,7 +1,7 @@
 """Serializers for certificate and achievement payloads.
 
-All read-only field maps  issuance takes no body, and nothing here is
-ever written through a serializer.
+Read-only field maps, plus the one write shape: the name a first
+certificate must be printed with.
 """
 
 from __future__ import annotations
@@ -10,6 +10,27 @@ from rest_framework import serializers
 
 from apps.certificates.constants import CertificateStatus
 from apps.certificates.models import Certificate
+from apps.common.api.serializers import StrictSerializer
+from apps.users.constants import NAME_PART_MAX_LENGTH
+
+
+class CertificateIssueSerializer(StrictSerializer):
+    """Validates the optional body of an issuance request.
+
+    Both parts are optional because an account that already carries a
+    legal name needs no body at all; the service decides whether what
+    arrived is enough and answers ``legal_name_required`` when it is not.
+    ``last_name`` may be blank  a mononym is a real kind of name  but
+    the two cannot both be empty, which is the service's rule since it
+    also holds for what is already stored.
+    """
+
+    first_name = serializers.CharField(
+        max_length=NAME_PART_MAX_LENGTH, required=False, allow_blank=True, default=""
+    )
+    last_name = serializers.CharField(
+        max_length=NAME_PART_MAX_LENGTH, required=False, allow_blank=True, default=""
+    )
 
 
 class CertificateSerializer(serializers.Serializer):

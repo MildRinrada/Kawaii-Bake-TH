@@ -15,6 +15,9 @@ export interface DropdownItem {
   onSelect: () => void;
   /** Draw a dividing rule above this item - starts a new group. */
   separator?: boolean;
+  /** Destructive action: rendered in the danger colour so an
+   *  irreversible item never looks like an ordinary one. */
+  danger?: boolean;
 }
 
 /** Minimal structural menu: outside-click + Escape close, ARIA wiring. */
@@ -79,7 +82,10 @@ export function Dropdown({
                   setOpen(false);
                   item.onSelect();
                 }}
-                className="block w-full px-3 py-2 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
+                className={cn(
+                  "block w-full px-3 py-2 text-left text-sm hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus",
+                  item.danger ? "text-danger" : "text-fg",
+                )}
               >
                 {item.label}
               </button>

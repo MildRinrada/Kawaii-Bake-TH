@@ -11,13 +11,12 @@ from apps.common.api.serializers import (
     StrictSerializer,
 )
 from apps.notifications.constants import (
-    BODY_MAX_LENGTH,
+    CAMPAIGN_BODY_MAX_LENGTH,
+    CAMPAIGN_TITLE_MAX_LENGTH,
     CTA_MAX_LENGTH,
-    ICON_MAX_LENGTH,
-    KIND_MAX_LENGTH,
     LINK_MAX_LENGTH,
     TEMPLATE_NAME_MAX_LENGTH,
-    TITLE_MAX_LENGTH,
+    AnnouncementKind,
     CampaignStatus,
     NotificationEventType,
 )
@@ -58,13 +57,13 @@ class AdminNotificationFilterSerializer(PaginatedFilterSerializer):
 class BroadcastSerializer(StrictSerializer):
     """Payload for a platform announcement."""
 
-    title = serializers.CharField(max_length=TITLE_MAX_LENGTH)
+    title = serializers.CharField(max_length=CAMPAIGN_TITLE_MAX_LENGTH)
     body = serializers.CharField(
-        max_length=BODY_MAX_LENGTH, required=False, allow_blank=True
+        max_length=CAMPAIGN_BODY_MAX_LENGTH, required=False, allow_blank=True
     )
-    link = serializers.CharField(
-        max_length=LINK_MAX_LENGTH, required=False, allow_blank=True
-    )
+    # An announcement with nowhere to go is a notification the reader can
+    # do nothing about, so the destination is not optional.
+    link = serializers.CharField(max_length=LINK_MAX_LENGTH)
 
 
 class BroadcastResultSerializer(serializers.Serializer):
@@ -83,7 +82,6 @@ class CampaignSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(read_only=True)
     kind = serializers.CharField(read_only=True)
-    icon = serializers.CharField(read_only=True)
     title = serializers.CharField(read_only=True)
     body = serializers.CharField(read_only=True)
     cta_text = serializers.CharField(read_only=True)
@@ -96,6 +94,7 @@ class CampaignSerializer(serializers.Serializer):
         read_only=True, allow_null=True
     )
     read_count = serializers.IntegerField(read_only=True, default=0)
+    click_count = serializers.IntegerField(read_only=True, default=0)
     created_by = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
@@ -113,25 +112,22 @@ class CampaignWriteSerializer(StrictSerializer):
     layer does not duplicate that contract.
     """
 
-    kind = serializers.RegexField(
-        r"^[a-z0-9_]+$",
-        max_length=KIND_MAX_LENGTH,
+    # A closed set, not a slug: the kind picks the glyph and colour the
+    # recipient sees, so a value the client cannot draw is not a value.
+    kind = serializers.ChoiceField(
+        choices=AnnouncementKind.choices,
         required=False,
-        allow_blank=True,
+        default=AnnouncementKind.GENERAL,
     )
-    icon = serializers.CharField(
-        max_length=ICON_MAX_LENGTH, required=False, allow_blank=True
-    )
-    title = serializers.CharField(max_length=TITLE_MAX_LENGTH)
+    title = serializers.CharField(max_length=CAMPAIGN_TITLE_MAX_LENGTH)
     body = serializers.CharField(
-        max_length=BODY_MAX_LENGTH, required=False, allow_blank=True
+        max_length=CAMPAIGN_BODY_MAX_LENGTH, required=False, allow_blank=True
     )
     cta_text = serializers.CharField(
         max_length=CTA_MAX_LENGTH, required=False, allow_blank=True
     )
-    link = serializers.CharField(
-        max_length=LINK_MAX_LENGTH, required=False, allow_blank=True
-    )
+    # Required for the same reason as a broadcast's: see above.
+    link = serializers.CharField(max_length=LINK_MAX_LENGTH)
     audience = serializers.JSONField()
     status = serializers.ChoiceField(
         choices=(CampaignStatus.DRAFT, CampaignStatus.SCHEDULED),
@@ -160,6 +156,10 @@ class CampaignAnalyticsSerializer(serializers.Serializer):
     read = serializers.IntegerField(read_only=True)
     unread = serializers.IntegerField(read_only=True)
     read_rate = serializers.FloatField(read_only=True)
+    # Reported by the recipient's browser, so a floor rather than a
+    # measurement - the panel labels it as one.
+    clicked = serializers.IntegerField(read_only=True)
+    click_rate = serializers.FloatField(read_only=True)
     sent_at = serializers.DateTimeField(read_only=True, allow_null=True)
 
 
@@ -181,7 +181,6 @@ class TemplateItemSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(read_only=True)
     kind = serializers.CharField(read_only=True)
-    icon = serializers.CharField(read_only=True)
     title = serializers.CharField(read_only=True)
     body = serializers.CharField(read_only=True)
     cta_text = serializers.CharField(read_only=True)
@@ -194,18 +193,14 @@ class TemplateWriteSerializer(StrictSerializer):
     """Payload for creating or editing a template."""
 
     name = serializers.CharField(max_length=TEMPLATE_NAME_MAX_LENGTH)
-    kind = serializers.RegexField(
-        r"^[a-z0-9_]+$",
-        max_length=KIND_MAX_LENGTH,
+    kind = serializers.ChoiceField(
+        choices=AnnouncementKind.choices,
         required=False,
-        allow_blank=True,
+        default=AnnouncementKind.GENERAL,
     )
-    icon = serializers.CharField(
-        max_length=ICON_MAX_LENGTH, required=False, allow_blank=True
-    )
-    title = serializers.CharField(max_length=TITLE_MAX_LENGTH)
+    title = serializers.CharField(max_length=CAMPAIGN_TITLE_MAX_LENGTH)
     body = serializers.CharField(
-        max_length=BODY_MAX_LENGTH, required=False, allow_blank=True
+        max_length=CAMPAIGN_BODY_MAX_LENGTH, required=False, allow_blank=True
     )
     cta_text = serializers.CharField(
         max_length=CTA_MAX_LENGTH, required=False, allow_blank=True
@@ -225,3 +220,4 @@ class AdminNotificationStatsSerializer(serializers.Serializer):
     sent_today = serializers.IntegerField(read_only=True)
     delivered_total = serializers.IntegerField(read_only=True)
     read_total = serializers.IntegerField(read_only=True)
+    clicked_total = serializers.IntegerField(read_only=True)

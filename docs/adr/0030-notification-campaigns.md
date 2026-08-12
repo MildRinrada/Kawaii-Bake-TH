@@ -1,6 +1,6 @@
 # ADR 0030 — Notification campaigns, templates and audiences
 
-- **Status:** accepted
+- **Status:** accepted (kind/icon amended by [0036](0036-announcement-kinds-and-click-receipts.md))
 - **Date:** 2026-08-11
 - **Phase:** back-office completion, part four
 
@@ -86,5 +86,28 @@ archive semantics; campaigns copy from them, never reference them.
 - The legacy `broadcast/` endpoint remains for compatibility; the hub's
   "ส่งประกาศ" flows through the campaign composer.
 - E2E pins the loop: stats → compose (estimate resolves) → draft → send
-  with confirmed estimate → immutable sent row with analytics →
-  template round trip → the moved log — zero unexpected 4xx.
+  with confirmed estimate → sent row with analytics → template round
+  trip → the moved log — zero unexpected 4xx.
+
+## Amendment — 2026-08-11: sent campaigns are amendable and retractable
+
+Operator decision superseding §"sent is immutable": notifications are
+in-app rows, so un-sending and amending are *real*, and pretending
+otherwise only forced workarounds.
+
+- **Amend** — `PATCH` on a sent campaign accepts content fields only
+  (kind/icon/title/body/CTA/link) and re-renders every delivered
+  snapshot in the same transaction, per recipient, variables included —
+  an inbox always shows the amended text, never a mix. The audience and
+  schedule remain history: touching them is still a 409.
+- **Retract** — `DELETE` on a sent campaign removes its delivered
+  snapshots from every recipient's inbox together with the campaign
+  row, inside one transaction. Scheduled campaigns must still be
+  canceled before deletion. Read receipts of retracted deliveries are
+  gone with them — deletion means deletion.
+- Send-twice remains a 409; duplicating is still how staff re-run one.
+- The composer opens sent campaigns in a content-only mode
+  ("บันทึกและอัปเดตผู้รับ"), and the hub's sent-row menu gains
+  แก้ไขเนื้อหา / ลบและเรียกคืนจากผู้รับ, both confirmed with the real
+  recipient count. E2E now runs the full loop send → amend → retract,
+  leaving recipient inboxes net-zero.

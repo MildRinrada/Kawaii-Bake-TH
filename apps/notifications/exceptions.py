@@ -80,3 +80,16 @@ class UnresolvableVariablesError(DomainError):
     code = "unresolvable_variables"
     status_code = 400
     message = "The content uses variables this audience cannot resolve."
+
+
+class NotificationNotClickableError(DomainError):
+    """Raised when a click is reported for a notification with no link.
+
+    409, not a silent 200: the row has nothing to follow, so the event
+    being reported did not happen. Accepting it would put clicks in the
+    analytics that no recipient could have made.
+    """
+
+    code = "not_clickable"
+    status_code = 409
+    message = "This notification has no link to follow."

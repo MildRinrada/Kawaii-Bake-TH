@@ -34,7 +34,11 @@ export function usePagedList<T>(
   const state = useApiQuery<Paginated<T>>(
     (signal) =>
       api.get<Paginated<T>>(path, {
-        query: { ...query, page, page_size: pageSize },
+        // The caller's query spreads last so a `page_size` it carries
+        // wins over the hook default - that is how a rows-per-page
+        // select works (and, being part of `key`, changing it resets
+        // to page 1 like any other filter).
+        query: { page, page_size: pageSize, ...query },
         signal,
       }),
     [path, key, page, pageSize],
@@ -46,7 +50,7 @@ export function usePagedList<T>(
     count: state.data?.count ?? 0,
     page,
     setPage,
-    pageSize,
+    pageSize: Number(query.page_size ?? pageSize),
   };
 }
 

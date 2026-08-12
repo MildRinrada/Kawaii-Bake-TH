@@ -37,6 +37,7 @@ import {
   Rows,
   SaveIndicator,
 } from "./primitives";
+import { GROUP_LABELS, groupForEventType } from "@/lib/notifications";
 import { useAutoSave } from "./use-auto-save";
 
 /* ------------------------------------------------------------------ */
@@ -98,6 +99,14 @@ const NOTIFICATION_LABELS: Record<string, { label: string; description: string }
   qa_answer_accepted: {
     label: "คำตอบของฉันถูกเลือก",
     description: "เมื่อคำตอบของคุณถูกเลือกเป็นคำตอบที่ดีที่สุด",
+  },
+  gallery_comment: {
+    label: "มีคนคอมเมนต์ผลงานของฉัน",
+    description: "เมื่อมีคนคอมเมนต์โพสต์ที่คุณแชร์ในชุมชน",
+  },
+  announcement: {
+    label: "ประกาศจากทีมงาน",
+    description: "ข่าวสาร สูตรใหม่ และการแจ้งปิดปรับปรุงจาก KawaiiBake",
   },
 };
 
@@ -252,25 +261,43 @@ export function NotificationsPanel({
         </Rows>
       </Group>
 
-      <Group
-        title="การแจ้งเตือนในแอป"
-        description="กระดิ่งแจ้งเตือนด้านบนขวา เลือกได้ว่าจะให้เรื่องไหนเข้ามาบ้าง"
-      >
-        <Rows>
-          {Object.entries(inApp.value).map(([event, enabled]) => {
-            const copy = NOTIFICATION_LABELS[event];
-            return (
-              <Switch
-                key={event}
-                label={copy?.label ?? event}
-                description={copy?.description}
-                checked={enabled}
-                onChange={(next) => inApp.update({ [event]: next })}
-              />
-            );
-          })}
-        </Rows>
-      </Group>
+      {/* Grouped, because "things about me" and "things the team sent
+          everyone" are different decisions. One flat list meant muting
+          marketing cost you the comment on your own post. */}
+      {(["engagement", "achievement", "announcement"] as const).map((group) => {
+        const events = Object.entries(inApp.value).filter(
+          ([event]) => groupForEventType(event) === group,
+        );
+        if (events.length === 0) return null;
+        return (
+          <Group
+            key={group}
+            title={`การแจ้งเตือนในแอป · ${GROUP_LABELS[group]}`}
+            description={
+              group === "announcement"
+                ? "ข่าวสารจากทีมงาน ปิดได้โดยไม่กระทบการแจ้งเตือนที่เกี่ยวกับคุณโดยตรง"
+                : group === "achievement"
+                  ? "เหรียญและใบประกาศที่คุณได้รับ"
+                  : "สิ่งที่คนอื่นทำกับผลงาน คำถาม และคอร์สของคุณ"
+            }
+          >
+            <Rows>
+              {events.map(([event, enabled]) => {
+                const copy = NOTIFICATION_LABELS[event];
+                return (
+                  <Switch
+                    key={event}
+                    label={copy?.label ?? event}
+                    description={copy?.description}
+                    checked={enabled}
+                    onChange={(next) => inApp.update({ [event]: next })}
+                  />
+                );
+              })}
+            </Rows>
+          </Group>
+        );
+      })}
 
       <SaveIndicator
         status={inApp.status === "idle" ? emails.status : inApp.status}

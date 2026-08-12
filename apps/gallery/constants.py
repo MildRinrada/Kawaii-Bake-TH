@@ -19,6 +19,9 @@ class GalleryPostStatus(models.TextChoices):
 
 CAPTION_MAX_LENGTH = 500
 
+# A comment is a reaction, not an essay - the same ceiling reviews use.
+COMMENT_BODY_MAX_LENGTH = 1000
+
 MAX_IMAGES_PER_POST = 10
 GALLERY_IMAGE_UPLOAD_DIR = "gallery"
 GALLERY_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024

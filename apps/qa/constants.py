@@ -26,6 +26,25 @@ class ThreadTargetKind(models.TextChoices):
     COURSE = "course", "Course"
 
 
+class ThreadOrdering(models.TextChoices):
+    """How a board page may be sorted.
+
+    ``LATEST`` is the default and the only one that existed before: it
+    answers "what is new", which on its own buries every unanswered
+    question the moment anyone posts anything. ``ACTIVE`` sorts by the
+    most recent answer, ``POPULAR`` by distinct readers.
+    """
+
+    LATEST = "latest", "Newest question first"
+    ACTIVE = "active", "Most recently answered first"
+    POPULAR = "popular", "Most read first"
+
+
+# A question with no answers after this long is one the board has failed
+# to answer, not one that is merely new  the UI surfaces it for help.
+NEEDS_HELP_AFTER_HOURS = 24
+
+
 # The states staff moderation may set  DELETED is never assignable.
 THREAD_MODERATION_CHOICES = [
     (ThreadStatus.ACTIVE.value, "Active"),

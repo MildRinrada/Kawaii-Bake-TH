@@ -100,6 +100,10 @@ gallery_gallerypost ─N:1─▶ courses_course ┘ outlives the content it name
 
 users_user ─1:N─▶ qa_questionthread     (related_name="question_threads")
 users_user ─1:N─▶ qa_questionanswer     (related_name="question_answers")
+users_user ─1:N─▶ qa_threadview         (related_name="thread_views")
+qa_questionthread ─1:N─▶ qa_threadview  (unique (thread, user); the board's
+                                         reader count aggregates these rows,
+                                         ADR 0033  no counter column)
 qa_questionthread ─N:1─▶ recipes_recipe ┐ nullable, SET_NULL  at most one
 qa_questionthread ─N:1─▶ courses_course ┘ (check constraint)
 qa_questionthread ─1:N─▶ qa_questionanswer      (CASCADE with the thread row;

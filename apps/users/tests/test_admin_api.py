@@ -223,3 +223,61 @@ class AdminUserRosterExtrasTests(TestCase):
         usernames = {row["username"] for row in recent["results"]}
         self.assertNotIn(veteran.username, usernames)
         self.assertIn(self.staff.username, usernames)
+
+
+class AdminUserStatsApiTests(TestCase):
+    """GET /api/v1/admin/users/stats/"""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.staff = create_user(is_staff=True)
+        self.url = reverse("users_admin:stats")
+
+    def test_stats_require_staff(self) -> None:
+        self.assertEqual(
+            self.client.get(self.url).status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+        self.client.force_login(create_user())
+        self.assertEqual(
+            self.client.get(self.url).status_code, status.HTTP_403_FORBIDDEN
+        )
+
+    def test_stats_count_account_states_honestly(self) -> None:
+        create_user(is_email_verified=True)          # active + verified
+        create_user(is_email_verified=False)         # pending
+        create_user(is_active=False)                 # suspended
+        self.client.force_login(self.staff)
+
+        payload = self.client.get(self.url).json()
+
+        self.assertEqual(payload["total"], 4)        # + the staff caller
+        self.assertEqual(payload["active"], 3)
+        self.assertEqual(payload["suspended"], 1)
+        # The staff caller and the explicit-unverified user are pending.
+        self.assertEqual(payload["pending"], 2)
+        self.assertEqual(payload["staff"], 1)
+        self.assertEqual(payload["new_7d"], 4)
+
+
+class AdminRosterActivityTests(TestCase):
+    """The roster's activity annotations are real counts."""
+
+    def test_rows_carry_recipe_course_and_post_counts(self) -> None:
+        from apps.recipes.tests.factories import create_recipe
+
+        staff = create_user(is_staff=True)
+        author = create_user(username="activitybaker")
+        create_recipe(author=author)
+        create_recipe(author=author)
+
+        client = APIClient()
+        client.force_login(staff)
+        rows = client.get(
+            reverse("users_admin:list"), {"search": "activitybaker"}
+        ).json()["results"]
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["recipes_count"], 2)
+        self.assertEqual(rows[0]["courses_count"], 0)
+        self.assertEqual(rows[0]["posts_count"], 0)

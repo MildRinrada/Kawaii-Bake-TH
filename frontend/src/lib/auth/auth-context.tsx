@@ -29,15 +29,15 @@ export type AuthStatus = "loading" | "authenticated" | "anonymous";
 interface AuthContextValue {
   status: AuthStatus;
   user: OwnProfile | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   register: (input: {
     email: string;
     username: string;
-    first_name: string;
-    last_name: string;
     password: string;
     accept_terms: boolean;
   }) => Promise<void>;
+  /** Exchange a Google ID token for a session. */
+  signInWithGoogle: (credential: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -87,8 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string) => {
-      await api.post("/auth/login/", { body: { email, password } });
+    async (email: string, password: string, remember = false) => {
+      // `remember_me` decides session lifetime server-side: 30 days, or
+      // a cookie that dies with the browser.
+      await api.post("/auth/login/", {
+        body: { email, password, remember_me: remember },
+      });
       await refresh();
     },
     [refresh],
@@ -98,8 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (input: {
       email: string;
       username: string;
-      first_name: string;
-      last_name: string;
       password: string;
       accept_terms: boolean;
     }) => {
@@ -115,6 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const signInWithGoogle = useCallback(
+    async (credential: string) => {
+      // Unlike password registration this *does* end in a session: Google
+      // already proved the address, so there is no inbox step to wait for.
+      // One endpoint covers both sign-up and sign-in - the visitor pressed
+      // one button and should not have to know which one they did.
+      await api.post("/auth/google/", { body: { credential } });
+      await refresh();
+    },
+    [refresh],
+  );
+
   const logout = useCallback(async () => {
     await api.post("/auth/logout/");
     setUser(null);
@@ -122,8 +136,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ status, user, login, register, logout, refresh }),
-    [status, user, login, register, logout, refresh],
+    () => ({
+      status,
+      user,
+      login,
+      register,
+      signInWithGoogle,
+      logout,
+      refresh,
+    }),
+    [status, user, login, register, signInWithGoogle, logout, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

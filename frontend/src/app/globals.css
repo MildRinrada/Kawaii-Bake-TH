@@ -54,6 +54,19 @@
   --color-lavender-ink: var(--kb-lavender-ink);
   --color-mint-soft: var(--kb-mint-soft);
   --color-mint-ink: var(--kb-mint-ink);
+
+  /* Rating stars — see tokens.css */
+  --color-star: var(--kb-star);
+  --color-star-deep: var(--kb-star-deep);
+  --color-star-empty: var(--kb-star-empty);
+}
+
+html {
+  /* Reserve the scrollbar's width whether or not the page needs one.
+     Without it, any page that grows past the viewport (or a panel that
+     animates from short to tall) shifts everything left by ~15px as the
+     bar appears - which reads as columns that are not the same width. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -169,9 +182,21 @@ h1, h2, h3, h4 {
   animation: kb-sprinkle 1100ms ease-in forwards;
 }
 
+/* The sign-in / sign-up panel swaps its heading while the card slides;
+   the words fade up so the two movements read as one gesture. */
+@keyframes kb-auth-swap {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.kb-auth-swap {
+  animation: kb-auth-swap 320ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kb-badge-pop,
-  .kb-sprinkle {
+  .kb-sprinkle,
+  .kb-auth-swap {
     animation: none;
   }
   /* Sprinkles carry no meaning; with motion off they are simply absent. */

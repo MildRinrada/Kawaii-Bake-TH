@@ -225,7 +225,8 @@ export function DataTableToolbar({
 
 export interface Column<T> {
   key: string;
-  header: string;
+  /** Usually a label; selection columns put their checkbox here. */
+  header: ReactNode;
   /** Right-aligned numeric columns get tabular figures. */
   numeric?: boolean;
   className?: string;

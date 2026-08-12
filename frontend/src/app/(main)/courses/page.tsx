@@ -29,7 +29,7 @@ import { REASON_LABELS } from "@/lib/recommendations";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge, DifficultyBadge, flavorFor } from "@/components/ui/badge";
+import { Badge, DifficultyBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -47,6 +47,11 @@ import { MediaFrame } from "@/components/content/media-frame";
 import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 12;
+
+/* Fluid card grid (same rule as the home page): rows stay straight with
+   any item count instead of demanding "just enough" content. */
+const FLUID_GRID =
+  "grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))]";
 
 const LEVELS = [
   {
@@ -107,9 +112,11 @@ function FilterChip({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors",
         "focus-visible:outline-2 focus-visible:outline-focus",
+        // Selected = dark ink (see the recipes page): pink stays with
+        // the primary CTAs so "on" and "do it" never look alike.
         active
-          ? "bg-accent font-medium text-fg-inverted shadow-raised"
-          : "bg-surface text-fg-muted shadow-raised hover:text-fg",
+          ? "bg-fg font-medium text-fg-inverted shadow-raised"
+          : "border border-edge bg-surface text-fg-muted hover:border-edge-strong hover:text-fg",
       )}
     >
       {children}
@@ -124,9 +131,17 @@ function FilterChip({
 function CourseLearningCard({
   course,
   progress,
+  reasons,
+  orientation = "vertical",
 }: {
   course: CourseListItem;
   progress?: MyCourseProgress;
+  /** Recommendation reasons - rendered inside the card so recommended
+   *  and catalogue cards keep identical geometry. */
+  reasons?: string[];
+  /** `horizontal` (image left, content right) for a one-card shelf,
+   *  where a lone grid cell would float in 70% empty space. */
+  orientation?: "vertical" | "horizontal";
 }) {
   const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [lessons, setLessons] = useState<LessonSyllabusItem[] | null>(null);
@@ -151,35 +166,41 @@ function CourseLearningCard({
       ? "เรียนต่อ"
       : "เริ่มเรียนเลย";
 
+  const horizontal = orientation === "horizontal";
   return (
-    <Card className="flex h-full flex-col overflow-hidden transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-overlay">
+    <Card
+      className={cn(
+        "flex h-full flex-col overflow-hidden transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-overlay",
+        horizontal && "md:flex-row",
+      )}
+    >
       <Link
         href={`/courses/${course.slug}`}
-        className="relative block aspect-video w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-focus"
+        className={cn(
+          "relative block aspect-video w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-focus",
+          horizontal && "md:w-2/5 md:self-stretch",
+        )}
       >
-        <MediaFrame src={course.thumbnail_url} seed={course.slug} />
+        <div className={cn("size-full", horizontal && "md:absolute md:inset-0")}>
+          <MediaFrame src={course.thumbnail_url} seed={course.slug} />
+        </div>
         {course.is_completed ? (
           <span className="absolute right-3 top-3 rounded-full bg-success px-3 py-1 text-xs font-medium text-fg-inverted shadow-raised">
             <Icon name="ui/check" className="size-3.5" /> เรียนจบแล้ว
           </span>
         ) : null}
       </Link>
-      <div className="flex flex-1 flex-col gap-2.5 p-4">
+      <div
+        className={cn(
+          "flex flex-1 flex-col gap-2.5 p-4",
+          horizontal && "md:justify-center",
+        )}
+      >
+        {/* Two badges, one line, every card the same height - the rest
+            of the facts live in the meta line under the title. */}
         <div className="flex flex-wrap items-center gap-1.5">
           <DifficultyBadge level={course.difficulty} />
-          <Badge tone="neutral"><Icon name="ui/book" className="size-3.5" /> {course.lesson_count} บทเรียน</Badge>
-          {course.total_duration_minutes > 0 ? (
-            <Badge tone="neutral">
-              <Icon name="ui/timer" className="size-3.5" />{" "}
-              {formatDuration(course.total_duration_minutes)}
-            </Badge>
-          ) : null}
           <Badge tone="mint">ฟรี</Badge>
-          {course.categories.slice(0, 1).map((category) => (
-            <Badge key={category.slug} tone={flavorFor(category.slug)}>
-              {category.name}
-            </Badge>
-          ))}
         </div>
         <Link
           href={`/courses/${course.slug}`}
@@ -189,7 +210,24 @@ function CourseLearningCard({
             {course.title}
           </h3>
         </Link>
+        <p className="text-xs text-fg-subtle">
+          {course.lesson_count} บทเรียน
+          {course.total_duration_minutes > 0 ? (
+            <> · {formatDuration(course.total_duration_minutes)}</>
+          ) : null}
+          {course.categories[0] ? <> · {course.categories[0].name}</> : null}
+        </p>
         <p className="line-clamp-2 text-sm text-fg-muted">{course.summary}</p>
+        {reasons?.length ? (
+          <p className="flex flex-wrap gap-1.5">
+            {reasons.slice(0, 2).map((reason) => (
+              <Badge key={reason} tone="lavender">
+                <Icon name="ui/sparkle" className="size-3.5" />{" "}
+                {REASON_LABELS[reason] ?? reason}
+              </Badge>
+            ))}
+          </p>
+        ) : null}
         <p className="flex items-center gap-2 text-xs text-fg-subtle">
           <Avatar
             src={course.instructor.avatar_url}
@@ -220,15 +258,18 @@ function CourseLearningCard({
         ) : null}
 
         <div className="mt-auto space-y-2 pt-1">
+          {/* Always filled - the outline variant next to filled cards
+              read as disabled; the completed state already shows on the
+              cover badge. */}
           <Link href={`/courses/${course.slug}`} className="block">
-            <Button
-              size="sm"
-              variant={course.is_completed ? "secondary" : "primary"}
-              className="w-full"
-            >
+            <Button size="sm" className="w-full">
               {cta}
             </Button>
           </Link>
+          {/* The curriculum drawer belongs to the card: a hairline rule
+              out to both edges ties it in instead of leaving it afloat
+              under the button. */}
+          <div className="-mx-4 space-y-2 border-t border-edge px-4 pt-1.5">
           <button
             type="button"
             aria-expanded={curriculumOpen}
@@ -273,6 +314,7 @@ function CourseLearningCard({
               </ol>
             )
           ) : null}
+          </div>
         </div>
       </div>
     </Card>
@@ -307,13 +349,20 @@ function FeaturedCourse({
 
   return (
     <Card className="overflow-hidden md:flex">
+      {/* The cover is a locked 16:9 box at every breakpoint - the same
+          ratio as every other course card (and the home featured card),
+          so a huge upload can never inflate it and all covers line up.
+          The absolute fill keeps it cover-cropped if the text column
+          ever runs taller. */}
       <Link
         href={`/courses/${course.slug}`}
-        className="block aspect-video w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-focus md:aspect-auto md:w-1/2"
+        className="relative block aspect-video w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-focus md:w-1/2 md:self-stretch"
       >
-        <MediaFrame src={course.thumbnail_url} seed={course.slug} />
+        <div className="size-full md:absolute md:inset-0">
+          <MediaFrame src={course.thumbnail_url} seed={course.slug} />
+        </div>
       </Link>
-      <div className="flex flex-col justify-center gap-3 p-6 md:w-1/2 md:p-8">
+      <div className="flex flex-col justify-center gap-1.5 px-6 py-5 md:w-1/2">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge tone="butter"><Icon name="ui/star" className="size-3.5" /> คอร์สแนะนำ</Badge>
           <DifficultyBadge level={course.difficulty} />
@@ -322,7 +371,7 @@ function FeaturedCourse({
         <h2 className="font-display text-xl font-medium text-fg sm:text-2xl">
           {course.title}
         </h2>
-        <p className="line-clamp-3 text-sm text-fg-muted">{course.summary}</p>
+        <p className="line-clamp-2 text-sm text-fg-muted">{course.summary}</p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-fg-muted">
           <span className="flex items-center gap-2">
             <Avatar
@@ -343,9 +392,13 @@ function FeaturedCourse({
           ) : null}
           {previewCount > 0 ? <> · ดูตัวอย่างได้ {previewCount} บท</> : null}
         </p>
-        {lessons.length > 0 ? (
+        {/* Either the syllabus teaser (prospects) or the progress bar
+            (enrolled) - never both, so the text column's height stays
+            inside the cover's locked 16:9 box in both variants. */}
+        {lessons.length > 0 &&
+        !(progress && course.is_enrolled && !course.is_completed) ? (
           <ol className="space-y-1 rounded-control bg-surface-sunken/70 p-3 text-xs">
-            {lessons.slice(0, 3).map((lesson, index) => (
+            {lessons.slice(0, 2).map((lesson, index) => (
               <li key={lesson.id} className="flex items-baseline gap-2 text-fg-muted">
                 <span className="font-medium text-fg-subtle">{index + 1}.</span>
                 <span className="min-w-0 flex-1 truncate text-fg">
@@ -354,9 +407,9 @@ function FeaturedCourse({
                 {lesson.is_preview ? <Icon name="ui/eye" label="ดูตัวอย่างได้" className="size-3.5" /> : null}
               </li>
             ))}
-            {lessons.length > 3 ? (
+            {lessons.length > 2 ? (
               <li className="text-center text-fg-subtle">
-                …และอีก {lessons.length - 3} บทเรียน
+                …และอีก {lessons.length - 2} บทเรียน
               </li>
             ) : null}
           </ol>
@@ -374,7 +427,7 @@ function FeaturedCourse({
           </div>
         ) : null}
         <Link href={`/courses/${course.slug}`} className="mt-1 w-fit">
-          <Button size="lg">{cta}</Button>
+          <Button>{cta}</Button>
         </Link>
       </div>
     </Card>
@@ -401,6 +454,9 @@ function CoursesContent() {
   const selectedCategories = categoryParam ? categoryParam.split(",") : [];
   const selectedDifficulties = difficultyParam ? difficultyParam.split(",") : [];
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Level tiles double as the level filter; activating one scrolls the
+  // results into view so the click visibly does something.
+  const catalogRef = useRef<HTMLHeadingElement>(null);
   const [searchInput, setSearchInput] = useState(search);
   const [seenSearch, setSeenSearch] = useState(search);
   if (seenSearch !== search) {
@@ -556,11 +612,18 @@ function CoursesContent() {
     (instructor ? 1 : 0) +
     (statusFilter ? 1 : 0);
   const filtered = Boolean(search || activeFilterCount);
-  const featured = !filtered && overviewRows.length > 0 ? overviewRows[0] : null;
+  // A featured hero and a recommendation shelf only earn their place
+  // over a catalogue big enough to scroll: below six courses everything
+  // is already on screen, and the sections would just repeat the same
+  // few cards two or three times down one page.
+  const showcase = !filtered && (overview.data?.count ?? 0) >= 6;
+  const featured = showcase && overviewRows.length > 0 ? overviewRows[0] : null;
   const recommendedItems = (recommended.data?.results ?? [])
     .filter((item) => item.course)
     .map((item) => ({ ...item, course: item.course as unknown as CourseListItem }))
     .filter((item) => !item.course.is_enrolled)
+    // The hero already occupies the top of the page - never repeat it.
+    .filter((item) => item.course.slug !== featured?.slug)
     .slice(0, 3);
   const totalPages = catalog.data
     ? Math.max(1, Math.ceil(catalog.data.count / PAGE_SIZE))
@@ -576,22 +639,11 @@ function CoursesContent() {
       ordering: null,
     });
 
+  // ระดับ lives ONLY on the level tiles up top - repeating it here as
+  // chips made the same filter exist twice on one page.
+  const hasExtraFilters = status === "authenticated" || instructors.length > 1;
   const filterControls = (
     <>
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="กรองตามระดับ">
-        <span className="text-xs font-medium text-fg-subtle">ระดับ:</span>
-        {LEVELS.map((level) => (
-          <FilterChip
-            key={level.value}
-            active={selectedDifficulties.includes(level.value)}
-            onClick={() =>
-              toggleInList(selectedDifficulties, level.value, "difficulty")
-            }
-          >
-            <Icon name={`ui/${level.icon}`} className="size-3.5" /> {level.name}
-          </FilterChip>
-        ))}
-      </div>
       {status === "authenticated" ? (
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="กรองตามสถานะการเรียน">
           <span className="text-xs font-medium text-fg-subtle">สถานะ:</span>
@@ -639,39 +691,41 @@ function CoursesContent() {
         description={`เรียนเบเกอรี่เป็นลำดับขั้นจากครูตัวจริง ทั้งหมด ${overview.data?.count ?? "…"} คอร์ส พร้อมแบบทดสอบและใบประกาศนียบัตร`}
       />
 
-      {/* Search  debounced, server-side */}
+      {/* Search: one field, icon inside, already live (debounced) - a
+          separate submit button suggested typing alone does nothing. */}
       <form
         role="search"
-        className="flex max-w-md gap-2"
+        className="relative max-w-md"
         onSubmit={(event) => {
           event.preventDefault();
           setParams({ search: searchInput.trim() || null });
         }}
       >
+        <Icon
+          name="ui/search"
+          className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-fg-subtle"
+        />
         <Input
           type="search"
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           placeholder="ค้นหาคอร์ส เทคนิค หรือคำในบทเรียน…"
           aria-label="ค้นหาคอร์สเรียน"
-          className="rounded-full"
+          className="rounded-full pl-10 pr-10"
         />
-        {search ? (
-          <Button
+        {searchInput ? (
+          <button
             type="button"
-            variant="secondary"
+            aria-label="ล้างคำค้น"
             onClick={() => {
               setSearchInput("");
               setParams({ search: null });
             }}
+            className="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-fg-subtle hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
           >
-            ล้าง
-          </Button>
-        ) : (
-          <Button type="submit" variant="secondary">
-            ค้นหา
-          </Button>
-        )}
+            <Icon name="ui/close" className="size-4" />
+          </button>
+        ) : null}
       </form>
 
       {/* Learning path */}
@@ -680,28 +734,40 @@ function CoursesContent() {
           {LEVELS.map((level) => {
             const active = selectedDifficulties.includes(level.value);
             const count = levelCounts.get(level.value) ?? 0;
+            const empty = count === 0;
             return (
               <button
                 key={level.value}
                 type="button"
                 aria-pressed={active}
-                onClick={() =>
-                  toggleInList(selectedDifficulties, level.value, "difficulty")
-                }
+                // An empty level is a dead end - the tile stays visible
+                // as information but stops pretending to be a filter.
+                disabled={empty}
+                onClick={() => {
+                  toggleInList(selectedDifficulties, level.value, "difficulty");
+                  if (!active) {
+                    catalogRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }
+                }}
                 className={cn(
                   "rounded-surface p-4 text-left shadow-raised transition-[transform,box-shadow] duration-150",
-                  "hover:-translate-y-0.5 hover:shadow-overlay",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
                   level.value === "beginner" && "bg-mint-soft text-mint-ink",
                   level.value === "intermediate" && "bg-butter-soft text-butter-ink",
                   level.value === "advanced" && "bg-peach-soft text-peach-ink",
+                  empty
+                    ? "cursor-not-allowed opacity-45 shadow-none"
+                    : "hover:-translate-y-0.5 hover:shadow-overlay",
                   active && "outline-2 outline-offset-2 outline-focus",
                 )}
               >
                 <p className="font-display font-medium">
                   <Icon name={`ui/${level.icon}`} className="size-3.5" /> {level.name}
                   <span className="ml-2 text-xs font-normal opacity-80">
-                    {count} คอร์ส
+                    {empty ? "เร็ว ๆ นี้" : `${count} คอร์ส`}
                   </span>
                 </p>
                 <p className="mt-1 text-xs opacity-90">{level.detail}</p>
@@ -760,8 +826,9 @@ function CoursesContent() {
         </section>
       ) : null}
 
-      {/* Recommended for your skill */}
-      {!filtered && recommendedItems.length > 0 ? (
+      {/* Recommended for your skill - only over a big catalogue (see
+          `showcase`), never repeating the hero course. */}
+      {showcase && recommendedItems.length > 0 ? (
         <section
           aria-label="คอร์สแนะนำสำหรับคุณ"
           className="mt-10 rounded-surface border border-berry-ink/10 bg-berry-soft/35 p-5 sm:p-6"
@@ -773,32 +840,37 @@ function CoursesContent() {
           <p className="mb-4 text-sm text-fg-muted">
             คัดจากระดับ หมวดที่ชอบ และคอร์สที่คุณเรียน
           </p>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {recommendedItems.map((item, index) => (
-              <div key={index}>
+          {recommendedItems.length === 1 ? (
+            // A lone grid cell floats in empty space - one card lies
+            // down instead (image left, content right).
+            <CourseLearningCard
+              orientation="horizontal"
+              course={recommendedItems[0].course}
+              progress={progressBySlug.get(recommendedItems[0].course.slug)}
+              reasons={recommendedItems[0].reasons}
+            />
+          ) : (
+            <div className={FLUID_GRID}>
+              {recommendedItems.map((item) => (
                 <CourseLearningCard
+                  key={item.course.slug}
                   course={item.course}
                   progress={progressBySlug.get(item.course.slug)}
+                  reasons={item.reasons}
                 />
-                {item.reasons.length ? (
-                  <p className="mt-2 flex flex-wrap gap-1.5">
-                    {item.reasons.slice(0, 2).map((reason) => (
-                      <Badge key={reason} tone="lavender">
-                        <Icon name="ui/sparkle" className="size-3.5" /> {REASON_LABELS[reason] ?? reason}
-                      </Badge>
-                    ))}
-                  </p>
-                ) : null}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       ) : null}
 
       {/* The catalog region starts here - a rule and its own heading keep
           the filters from visually belonging to the recommendation box. */}
       <hr aria-hidden className="mt-10 border-edge" />
-      <h2 className="font-display mt-8 text-xl font-medium text-fg">
+      <h2
+        ref={catalogRef}
+        className="font-display mt-8 scroll-mt-24 text-xl font-medium text-fg"
+      >
         คอร์สทั้งหมด
       </h2>
 
@@ -820,11 +892,11 @@ function CoursesContent() {
                   toggleInList(selectedCategories, category.slug, "category")
                 }
                 className={cn(
-                  "flex shrink-0 snap-start items-center gap-1.5 rounded-full px-4 py-2 text-sm shadow-raised transition-colors",
+                  "flex shrink-0 snap-start items-center gap-1.5 rounded-full px-4 py-2 text-sm transition-colors",
                   "focus-visible:outline-2 focus-visible:outline-focus",
                   active
-                    ? "bg-accent font-medium text-fg-inverted"
-                    : "bg-surface text-fg-muted hover:text-fg",
+                    ? "bg-fg font-medium text-fg-inverted shadow-raised"
+                    : "border border-edge bg-surface text-fg-muted hover:border-edge-strong hover:text-fg",
                 )}
               >
                 <CategoryThumb slug={category.slug} />
@@ -835,18 +907,24 @@ function CoursesContent() {
         </div>
       ) : null}
 
-      {/* Filters: inline (desktop) / bottom sheet (mobile) */}
-      <div className="mt-3 hidden space-y-2.5 lg:block">{filterControls}</div>
-      <div className="mt-3 lg:hidden">
-        <Button
-          variant="secondary"
-          size="sm"
-          aria-expanded={sheetOpen}
-          onClick={() => setSheetOpen(true)}
-        >
-          <Icon name="ui/sliders" className="size-4" /> ตัวกรอง{activeFilterCount ? ` (${activeFilterCount})` : ""}
-        </Button>
-      </div>
+      {/* Filters: inline (desktop) / bottom sheet (mobile). With ระดับ
+          living on the tiles, anonymous visitors of a one-teacher school
+          have no extra facets - so no empty filter UI either. */}
+      {hasExtraFilters ? (
+        <>
+          <div className="mt-3 hidden space-y-2.5 lg:block">{filterControls}</div>
+          <div className="mt-3 lg:hidden">
+            <Button
+              variant="secondary"
+              size="sm"
+              aria-expanded={sheetOpen}
+              onClick={() => setSheetOpen(true)}
+            >
+              <Icon name="ui/sliders" className="size-4" /> ตัวกรอง{activeFilterCount ? ` (${activeFilterCount})` : ""}
+            </Button>
+          </div>
+        </>
+      ) : null}
 
       {/* Active filter summary */}
       {filtered ? (
@@ -897,8 +975,9 @@ function CoursesContent() {
         </div>
       ) : null}
 
-      {/* Results header */}
-      <div className="mb-5 mt-6 flex flex-wrap items-center justify-between gap-3">
+      {/* Results header - count and sort share one quiet bar instead of
+          floating at opposite edges. */}
+      <div className="mb-5 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-control bg-surface-sunken/60 px-4 py-2">
         <p className="text-sm text-fg-muted" aria-live="polite">
           {catalog.loading ? (
             "กำลังค้นหา…"
@@ -934,7 +1013,7 @@ function CoursesContent() {
       </div>
 
       {catalog.loading ? (
-        <div aria-busy="true" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div aria-busy="true" className={FLUID_GRID}>
           {Array.from({ length: 3 }, (_, index) => (
             <Skeleton key={index} className="h-96 w-full rounded-surface" />
           ))}
@@ -976,7 +1055,7 @@ function CoursesContent() {
               <h2 className="font-display mb-4 text-lg font-medium text-fg">
                 คอร์สทั้งหมดที่เปิดสอนตอนนี้
               </h2>
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className={FLUID_GRID}>
                 {overviewRows.slice(0, 3).map((course) => (
                   <CourseLearningCard
                     key={course.slug}
@@ -990,7 +1069,7 @@ function CoursesContent() {
         </div>
       ) : (
         <>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={FLUID_GRID}>
             {rows.map((course) => (
               <CourseLearningCard
                 key={course.slug}

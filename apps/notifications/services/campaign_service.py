@@ -196,7 +196,7 @@ def _get_campaign(campaign_id: int) -> NotificationCampaign:
 _EDITABLE_STATUSES = (CampaignStatus.DRAFT, CampaignStatus.SCHEDULED)
 
 # The writable composer fields, applied verbatim on create/update.
-_CONTENT_FIELDS = ("kind", "icon", "title", "body", "cta_text", "link")
+_CONTENT_FIELDS = ("kind", "title", "body", "cta_text", "link")
 
 
 def _apply_schedule(
@@ -258,7 +258,13 @@ def update_campaign(
     scheduled_at=None,
     **content: str,
 ) -> NotificationCampaign:
-    """Update a draft or scheduled campaign.
+    """Update a campaign.
+
+    Draft and scheduled campaigns accept every field. A **sent** campaign
+    accepts content fields only (an amendment): the change is rendered
+    into every delivered snapshot immediately, so the recipient's inbox
+    always shows the amended text - never a mix. Its audience and
+    schedule are history and cannot change.
 
     Args:
         campaign_id: Primary key of the campaign.
@@ -271,12 +277,18 @@ def update_campaign(
         The updated campaign.
 
     Raises:
-        CampaignStateError: When the campaign is sent or canceled.
+        CampaignStateError: When the campaign is canceled, or a sent
+            campaign's audience/schedule is touched.
     """
     campaign = _get_campaign(campaign_id)
+    if campaign.status == CampaignStatus.SENT:
+        return _amend_sent_campaign(
+            campaign, audience=audience, status=status,
+            scheduled_at=scheduled_at, **content,
+        )
     if campaign.status not in _EDITABLE_STATUSES:
         raise CampaignStateError(
-            "Sent and canceled campaigns cannot be edited - duplicate instead."
+            "Canceled campaigns cannot be edited - duplicate instead."
         )
     for field in _CONTENT_FIELDS:
         if field in content:
@@ -296,21 +308,96 @@ def update_campaign(
     return campaign
 
 
-def delete_campaign(*, campaign_id: int) -> None:
-    """Delete a draft or canceled campaign.
+def _amend_sent_campaign(
+    campaign: NotificationCampaign,
+    *,
+    audience: Any,
+    status: str | None,
+    scheduled_at,
+    **content: str,
+) -> NotificationCampaign:
+    """Apply a content amendment to a sent campaign and its deliveries."""
+    if audience is not None or scheduled_at is not None or (
+        status is not None and status != CampaignStatus.SENT
+    ):
+        raise CampaignStateError(
+            "A sent campaign's audience and schedule cannot change - "
+            "only its content."
+        )
+    with transaction.atomic():
+        for field in _CONTENT_FIELDS:
+            if field in content:
+                setattr(campaign, field, content[field])
+        if not campaign.kind:
+            campaign.kind = "custom"
+        _require_resolvable(campaign)
 
-    Sent campaigns are history and scheduled ones must be canceled
-    first - both are 409s, not silent deletes.
+        shared: dict[str, str] = {}
+        if campaign.audience.get("kind") in COURSE_SCOPED_AUDIENCES:
+            shared[VARIABLE_COURSE_NAME] = _course_ref_for(
+                campaign.audience
+            ).title
+
+        deliveries = list(campaign.deliveries.all())
+        names = user_selector.display_names(
+            user_ids=[row.recipient_id for row in deliveries]
+        )
+        for row in deliveries:
+            values = {
+                **shared,
+                VARIABLE_USER_NAME: names.get(row.recipient_id, ""),
+            }
+            row.title = _render(campaign.title, values)
+            row.body = _render(campaign.body, values)
+            row.kind = campaign.kind
+            row.cta_text = campaign.cta_text
+            row.link = campaign.link
+        Notification.objects.bulk_update(
+            deliveries,
+            ["title", "body", "kind", "cta_text", "link"],
+            batch_size=500,
+        )
+        campaign.save()
+    logger.info(
+        "campaign amended",
+        extra={"campaign_id": campaign.pk, "deliveries": len(deliveries)},
+    )
+    return campaign
+
+
+def delete_campaign(*, campaign_id: int) -> int:
+    """Delete a campaign; deleting a **sent** one retracts it.
+
+    Notifications are in-app rows, so retraction is real: the delivered
+    snapshots are removed from every recipient's inbox along with the
+    campaign. Scheduled campaigns must be canceled first - a pending
+    send should be called off deliberately, not deleted past.
 
     Args:
         campaign_id: Primary key of the campaign.
+
+    Returns:
+        How many delivered snapshots were retracted (0 for drafts).
+
+    Raises:
+        CampaignStateError: When the campaign is still scheduled.
     """
     campaign = _get_campaign(campaign_id)
-    if campaign.status not in (CampaignStatus.DRAFT, CampaignStatus.CANCELED):
+    if campaign.status == CampaignStatus.SCHEDULED:
         raise CampaignStateError(
-            "Only draft and canceled campaigns can be deleted."
+            "Cancel the schedule before deleting this campaign."
         )
-    campaign.delete()
+    with transaction.atomic():
+        retracted, _ = Notification.objects.filter(
+            campaign=campaign
+        ).delete()
+        campaign.delete()
+    if retracted:
+        logger.info(
+            "campaign retracted",
+            extra={"campaign_id": campaign_id, "retracted": retracted},
+        )
+    return retracted
 
 
 def cancel_campaign(*, campaign_id: int) -> NotificationCampaign:
@@ -394,7 +481,7 @@ def send_campaign(*, campaign_id: int, actor_id: int) -> int:
                             VARIABLE_USER_NAME: names.get(user_id, ""),
                         },
                     ),
-                    icon=campaign.icon,
+                    kind=campaign.kind,
                     cta_text=campaign.cta_text,
                     link=campaign.link,
                     campaign=campaign,
@@ -457,7 +544,7 @@ def dispatch_due_campaigns() -> int:
 # --------------------------------------------------------------------------
 
 
-_TEMPLATE_FIELDS = ("name", "kind", "icon", "title", "body", "cta_text", "link")
+_TEMPLATE_FIELDS = ("name", "kind", "title", "body", "cta_text", "link")
 
 
 def create_template(*, actor_id: int, **fields: str) -> NotificationTemplate:

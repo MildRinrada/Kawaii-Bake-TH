@@ -11,6 +11,7 @@ from django.urls import path
 
 from apps.notifications.api.views.notification_views import (
     MyNotificationsView,
+    NotificationClickView,
     NotificationPreferencesView,
     NotificationReadAllView,
     NotificationReadView,
@@ -30,5 +31,10 @@ urlpatterns = [
         "<int:notification_id>/read/",
         NotificationReadView.as_view(),
         name="read",
+    ),
+    path(
+        "<int:notification_id>/click/",
+        NotificationClickView.as_view(),
+        name="click",
     ),
 ]

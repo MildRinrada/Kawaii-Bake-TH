@@ -62,3 +62,18 @@ are evidence — one page must not be both.
   uploads would need a media endpoint and are deliberately out of scope.
 - E2E pins the loop: workspace → designer → add element → autosave →
   undo → autosave, plus the moved registry — with zero unexpected 4xx.
+
+## Amendment — 2026-08-11
+
+- **Field override.** A `field` element may carry a non-blank `text` —
+  a staff override ("มอบโดย เชฟมิลด์") that replaces the automatic
+  value on every certificate. Blank keeps the automatic behaviour. The
+  backend validator now length-caps `text` on field elements exactly
+  like free text (closing a previously unvalidated key), and the
+  properties panel labels the element's state honestly (อัตโนมัติ vs
+  กำหนดเอง). This is how a custom presenter/awarder name is set without
+  breaking the closed field-key set.
+- **Fit-zoom stability.** The stage reserves its scrollbar gutter and
+  the fit-scale recomputes only on canvas-size changes with a small
+  dead-band — previously the scrollbar and the scale fed each other and
+  the certificate frame visibly vibrated while resizing the window.

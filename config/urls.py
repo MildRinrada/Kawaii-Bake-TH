@@ -73,6 +73,13 @@ urlpatterns = [
         include("apps.recipe_categories.api.urls.admin"),
     ),
     path(f"{API_V1}admin/users/", include("apps.users.api.urls.admin")),
+    # Account *actions* (create / reset link / verification resend) live
+    # in authentication - they mint credentials and email flows - but
+    # share the roster's prefix; Django falls through include by include.
+    path(
+        f"{API_V1}admin/users/",
+        include("apps.authentication.api.urls.admin_accounts"),
+    ),
     path(
         f"{API_V1}admin/achievements/",
         include("apps.certificates.api.urls.admin"),

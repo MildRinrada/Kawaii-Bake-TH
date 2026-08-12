@@ -8,11 +8,11 @@ from django.db import models
 from apps.notifications.constants import (
     BODY_MAX_LENGTH,
     CTA_MAX_LENGTH,
-    ICON_MAX_LENGTH,
     KIND_MAX_LENGTH,
     LINK_MAX_LENGTH,
     TEMPLATE_NAME_MAX_LENGTH,
     TITLE_MAX_LENGTH,
+    AnnouncementKind,
     CampaignStatus,
 )
 
@@ -37,8 +37,14 @@ class NotificationCampaign(models.Model):
     a sent campaign - duplicating is how staff iterate on one.
     """
 
-    kind = models.CharField(max_length=KIND_MAX_LENGTH, default="custom")
-    icon = models.CharField(max_length=ICON_MAX_LENGTH, blank=True)
+    # The kind is presentation *and* meaning: one glyph and one colour
+    # per value, chosen by the design system rather than typed by the
+    # sender (which is what the retired `icon` emoji field was).
+    kind = models.CharField(
+        max_length=KIND_MAX_LENGTH,
+        choices=AnnouncementKind.choices,
+        default=AnnouncementKind.GENERAL,
+    )
     title = models.CharField(max_length=TITLE_MAX_LENGTH)
     body = models.CharField(max_length=BODY_MAX_LENGTH, blank=True)
     cta_text = models.CharField(max_length=CTA_MAX_LENGTH, blank=True)
@@ -93,8 +99,11 @@ class NotificationTemplate(models.Model):
     """
 
     name = models.CharField(max_length=TEMPLATE_NAME_MAX_LENGTH)
-    kind = models.CharField(max_length=KIND_MAX_LENGTH, default="custom")
-    icon = models.CharField(max_length=ICON_MAX_LENGTH, blank=True)
+    kind = models.CharField(
+        max_length=KIND_MAX_LENGTH,
+        choices=AnnouncementKind.choices,
+        default=AnnouncementKind.GENERAL,
+    )
     title = models.CharField(max_length=TITLE_MAX_LENGTH)
     body = models.CharField(max_length=BODY_MAX_LENGTH, blank=True)
     cta_text = models.CharField(max_length=CTA_MAX_LENGTH, blank=True)

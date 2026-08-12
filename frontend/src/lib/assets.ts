@@ -75,7 +75,7 @@ export const PLACEHOLDER = {
 } as const;
 
 export const BANNER = {
-  home: "/banners/home-hero.svg",
+  home: "/banners/home-hero.png",
 } as const;
 
 export const BRAND_MARK = "/brand/logo-mark.svg";

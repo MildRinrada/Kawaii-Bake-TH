@@ -6,7 +6,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 let passed = 0;
 
@@ -28,8 +28,35 @@ try {
   await page.goto(`${BASE}/recipes`);
   await expect(page, "text=/ทั้งหมด \\d+ สูตร/", "header shows total recipe count");
   await expect(page, 'button:has-text("Cookies")', "quick category row renders");
-  await expect(page, "text=มีวัตถุดิบ:", "pantry filter row renders");
   await expect(page, "text=เรียงตาม", "sort control renders");
+
+  // Time + pantry now live behind a disclosure so the recipes sit
+  // higher on the page; opening it must reveal the same real filters.
+  await expect(page, "text=ตัวกรองเพิ่มเติม", "extra filters are folded away by default");
+  if (await page.locator("text=มีวัตถุดิบ:").first().isVisible()) {
+    throw new Error("pantry row is visible before opening the disclosure");
+  }
+  await page.click("summary:has-text('ตัวกรองเพิ่มเติม')");
+  await expect(page, "text=มีวัตถุดิบ:", "pantry filter row renders once expanded");
+
+  // Empty categories stay visible but stop being controls.
+  const emptyCategories = await page.evaluate(async () => {
+    const rows = await (
+      await fetch("http://localhost:8000/api/v1/recipe-categories/")
+    ).json();
+    return rows.filter((row) => row.recipe_count === 0).map((row) => row.name);
+  });
+  if (emptyCategories.length) {
+    const tile = page.locator(
+      `button:has-text("${emptyCategories[0]}")`,
+    ).first();
+    if (!(await tile.isDisabled())) {
+      throw new Error(`empty category "${emptyCategories[0]}" is still clickable`);
+    }
+    ok(`empty categories (${emptyCategories.join(", ")}) render dimmed and disabled`);
+  } else {
+    ok("every category has recipes, so none needs the disabled treatment");
+  }
 
   // ---------- Grouped search suggestions ----------
   await page.fill('input[aria-label="ค้นหาสูตรขนม"]', "คุกกี้");
@@ -69,6 +96,16 @@ try {
   await page.click("text=ล้างทั้งหมด");
   await page.waitForURL(`${BASE}/recipes`);
   ok("clear-all resets to the full catalog");
+
+  // ---------- Cards line up regardless of missing optional text ----------
+  const cardHeights = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('a[href^="/recipes/"] > div')];
+    return cards.slice(0, 3).map((card) => Math.round(card.getBoundingClientRect().height));
+  });
+  if (new Set(cardHeights).size > 1) {
+    throw new Error(`recipe cards in one row differ in height: ${cardHeights}`);
+  }
+  ok(`cards in a row share one height (${cardHeights[0]}px) even with a blank summary`);
 
   // ---------- Sort ----------
   await page.selectOption("select", "quickest");
@@ -122,7 +159,7 @@ try {
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await mobile.goto(`${BASE}/recipes`);
   await mobile.waitForSelector('h1:has-text("สูตรขนม")');
-  await mobile.click('button:has-text("⚙️ ตัวกรอง")');
+  await mobile.click('button:has-text("ตัวกรอง")');
   await expect(mobile, 'div[role="dialog"][aria-label="ตัวกรองสูตร"]', "mobile bottom-sheet filter opens");
   await mobile.click('div[role="dialog"] button:has-text("ง่าย")');
   await expect(mobile, 'button:has-text("ดูผลลัพธ์")', "sheet shows apply-with-count action");

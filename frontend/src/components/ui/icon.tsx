@@ -89,6 +89,8 @@ export type UiIconName =
   | "sparkle"
   | "sprout"
   | "star"
+  | "star-filled"
+  | "swap"
   | "target"
   | "timer"
   | "trash"
@@ -128,6 +130,8 @@ export type IconName = `ui/${UiIconName}` | `admin/${AdminIconName}`;
  */
 const MASKABLE = new Set<IconName>([
   "ui/star",
+  "ui/star-filled",
+  "ui/swap",
   "ui/sparkle",
   "ui/sliders",
   "ui/target",

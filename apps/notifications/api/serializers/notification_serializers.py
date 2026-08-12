@@ -16,11 +16,15 @@ class NotificationSerializer(serializers.Serializer):
     body = serializers.CharField(read_only=True)
     actor_handle = serializers.CharField(read_only=True)
     link = serializers.CharField(read_only=True)
-    # ADR 0030: campaign sends choose a glyph and CTA label; machine
-    # events leave both blank and the frontend keeps per-event icons.
-    icon = serializers.CharField(read_only=True)
+    # ADR 0030: campaign sends carry the announcement kind and a CTA
+    # label; machine events leave both blank and the frontend draws them
+    # from `event_type`. The kind is what picks the glyph and colour -
+    # the sender chooses a category, the design system chooses the
+    # picture.
+    kind = serializers.CharField(read_only=True)
     cta_text = serializers.CharField(read_only=True)
     read_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    clicked_at = serializers.DateTimeField(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True)
 
 
@@ -51,6 +55,7 @@ class NotificationPreferencesSerializer(StrictSerializer):
     achievement_earned = serializers.BooleanField(required=False)
     qa_answer_received = serializers.BooleanField(required=False)
     qa_answer_accepted = serializers.BooleanField(required=False)
+    gallery_comment = serializers.BooleanField(required=False)
     announcement = serializers.BooleanField(required=False)
 
 

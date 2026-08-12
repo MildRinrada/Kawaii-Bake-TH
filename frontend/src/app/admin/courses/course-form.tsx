@@ -30,6 +30,8 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminPanel } from "@/components/admin/primitives";
 import { describeImageProblem } from "@/lib/community";
+import { ImageCropper } from "@/components/ui/image-cropper";
+import { COVER_ASPECT } from "@/components/content/cover-frame";
 
 const DIFFICULTIES = [
   { value: "beginner", label: "เริ่มต้น" },
@@ -61,6 +63,8 @@ export function CourseForm({ initial }: { initial?: CourseDetail }) {
   );
 
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+  /** The file waiting to be framed. `null` closes the crop dialog. */
+  const [cropping, setCropping] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [thumbnailProblem, setThumbnailProblem] = useState<string | null>(null);
   const [gateError, setGateError] = useState<string | null>(null);
@@ -77,8 +81,21 @@ export function CourseForm({ initial }: { initial?: CourseDetail }) {
     const problem = describeImageProblem(file);
     setThumbnailProblem(problem);
     if (problem) return;
-    setThumbnail(file);
-    setPreview(URL.createObjectURL(file));
+    // Framed before upload, at the same 4:3 the course card draws, so the
+    // author decides what a crop keeps (see `CoverFrame`).
+    setCropping(file);
+  }
+
+  /** Take the framed result as the thumbnail. */
+  function acceptCrop(blob: Blob) {
+    const source = cropping;
+    setCropping(null);
+    if (!source) return;
+    const framed = new File([blob], `${source.name.replace(/\.[^.]+$/, "")}.jpg`, {
+      type: "image/jpeg",
+    });
+    setThumbnail(framed);
+    setPreview(URL.createObjectURL(framed));
     if (fileInput.current) fileInput.current.value = "";
   }
 
@@ -277,7 +294,7 @@ export function CourseForm({ initial }: { initial?: CourseDetail }) {
               <img
                 src={preview ?? initial?.thumbnail_url ?? ""}
                 alt=""
-                className="aspect-video w-full rounded border border-edge object-cover"
+                className="aspect-4/3 w-full rounded border border-edge object-cover"
               />
             ) : null}
             <Button
@@ -296,8 +313,17 @@ export function CourseForm({ initial }: { initial?: CourseDetail }) {
               className="sr-only"
               onChange={(event) => chooseThumbnail(event.target.files?.[0])}
             />
+            {thumbnail ? (
+              <button
+                type="button"
+                onClick={() => setCropping(thumbnail)}
+                className="text-xs text-accent underline focus-visible:outline-2 focus-visible:outline-focus"
+              >
+                ปรับกรอบรูปใหม่
+              </button>
+            ) : null}
             <p className="text-[11px] text-fg-subtle">
-              รองรับ JPG · PNG · WebP - การ์ดคอร์สที่ไม่มีรูปจะดูเหมือนระบบพัง
+              รองรับ JPG · PNG · WebP · ครอบเป็นสัดส่วน 4:3 ก่อนอัปโหลด - การ์ดคอร์สที่ไม่มีรูปจะดูเหมือนระบบพัง
               จึงบังคับให้ใส่ก่อนบันทึก
             </p>
             {thumbnailProblem ? (
@@ -335,6 +361,22 @@ export function CourseForm({ initial }: { initial?: CourseDetail }) {
           {editing ? "บันทึกการแก้ไข" : "สร้างเป็นฉบับร่าง"}
         </Button>
       </div>
+
+      <ImageCropper
+        file={cropping}
+        aspect={COVER_ASPECT}
+        title="ปรับกรอบรูปหน้าปกคอร์ส"
+        confirmLabel="ใช้รูปนี้"
+        helpText="กรอบนี้คือสิ่งที่จะเห็นทั้งในการ์ดและหน้าคอร์ส รูปจะถูกบันทึกเป็น JPG"
+        onCancel={() => setCropping(null)}
+        onConfirm={acceptCrop}
+        onUndecodable={() => {
+          setCropping(null);
+          setThumbnailProblem(
+            "เปิดไฟล์นี้เป็นรูปภาพไม่ได้  อาจเสียหายหรือเป็นไฟล์คนละชนิดกับนามสกุล ลองไฟล์อื่นนะ",
+          );
+        }}
+      />
     </form>
   );
 }

@@ -2,6 +2,29 @@
 
 from __future__ import annotations
 
+from django.db import models
+
+
+class SocialProvider(models.TextChoices):
+    """Identity providers this deployment can sign a visitor in with."""
+
+    GOOGLE = "google", "Google"
+
+
+# --------------------------------------------------------------------------
+# Google sign-in
+# --------------------------------------------------------------------------
+# Google's own verification endpoint. Using it rather than validating the
+# JWT locally is a deliberate trade: one HTTPS round trip per sign-in, and
+# no JWKS cache, no clock-skew handling and no crypto dependency of ours to
+# get wrong. If sign-in volume ever makes the round trip matter, local
+# verification is a swap inside `_fetch_token_info` and nothing else.
+GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+# The `iss` values Google signs with; both spellings are documented.
+GOOGLE_ISSUERS = frozenset({"accounts.google.com", "https://accounts.google.com"})
+# A sign-in must not be able to hang a worker on a slow provider.
+OAUTH_HTTP_TIMEOUT_SECONDS = 5
+
 # --------------------------------------------------------------------------
 # Session lifetime
 # --------------------------------------------------------------------------

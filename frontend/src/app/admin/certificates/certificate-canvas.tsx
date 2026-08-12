@@ -132,10 +132,14 @@ export function ElementContent({
       </div>
     );
   }
-  // field | text — a line (or block) of typography.
+  // field | text — a line (or block) of typography. A field with a
+  // non-blank `text` is a staff override ("มอบโดย เชฟมิลด์"): it wins
+  // over the automatic value on every certificate.
   const value =
     element.kind === "field" && element.field
-      ? sample.values[element.field]
+      ? element.text?.trim()
+        ? element.text
+        : sample.values[element.field]
       : (element.text ?? "");
   return (
     <div

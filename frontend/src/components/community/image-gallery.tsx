@@ -73,8 +73,13 @@ export function CommunityImageGallery({
                   src={image.url}
                   alt={index === 0 ? label : ""}
                   loading="lazy"
+                  // Capped at 30rem: a single 4:3 photo across a wide
+                  // feed column ran taller than the viewport, so one
+                  // post pushed the next entirely off screen.
                   className={`w-full object-cover ${
-                    images.length === 1 ? "aspect-4/3" : "aspect-square"
+                    images.length === 1
+                      ? "aspect-4/3 max-h-120"
+                      : "aspect-square"
                   }`}
                 />
                 {extra > 0 ? (

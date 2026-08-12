@@ -18,6 +18,7 @@ from apps.certificates.exceptions import (
     CertificateEnrollmentRequiredError,
     CertificateNotFoundError,
     CourseNotCompletedError,
+    LegalNameRequiredError,
 )
 from apps.certificates.models import Certificate
 from apps.certificates.repositories import certificate_repository
@@ -26,6 +27,7 @@ from apps.certificates.services import achievement_service
 from apps.courses.selectors import course_selector, enrollment_selector
 from apps.progress.selectors import progress_selector
 from apps.users.selectors import user_selector
+from apps.users.services import user_service
 
 logger = logging.getLogger("kawaiibake.certificates")
 
@@ -33,31 +35,32 @@ logger = logging.getLogger("kawaiibake.certificates")
 def _printable_name(student) -> str:  # noqa: ANN001 - apps.users.models.User
     """The name a certificate should print: the legal name, not the handle.
 
-    Registration collects ``first_name``/``last_name`` precisely for this
-    line. The chain of fallbacks exists only for accounts that predate
-    the requirement: legal name → profile display name → username. This
-    is a one-time snapshot taken at issuance (``Certificate.student_name``
-    never changes afterward, see the model docstring); a learner renaming
-    themselves later does not retitle certificates already printed, the
-    same way a paper certificate would not rewrite itself.
+    Sign-up does not collect this  ``issue_if_completed`` does, once,
+    and stores it on the account (see ``user_service.set_legal_name``),
+    so by the time this runs the name is present. It is a one-time
+    snapshot (``Certificate.student_name`` never changes afterward, see
+    the model docstring); a learner renaming themselves later does not
+    retitle certificates already printed, the same way a paper
+    certificate would not rewrite itself.
 
     Args:
         student: The issuing user, or ``None``.
 
     Returns:
-        The name to print, or ``""`` if there is no student.
+        The legal name, or ``""`` when there is none to print.
     """
     if student is None:
         return ""
-    legal = f"{student.first_name} {student.last_name}".strip()
-    if legal:
-        return legal
-    profile = getattr(student, "profile", None)
-    return (profile.display_name if profile else "") or student.username
+    return f"{student.first_name} {student.last_name}".strip()
 
 
 def issue_if_completed(
-    *, user_id: int, course_slug: str, viewer_is_staff: bool = False
+    *,
+    user_id: int,
+    course_slug: str,
+    viewer_is_staff: bool = False,
+    first_name: str = "",
+    last_name: str = "",
 ) -> tuple[Certificate, bool]:
     """Issue the caller's certificate for a completed course, idempotently.
 
@@ -66,10 +69,20 @@ def issue_if_completed(
     progress  ``CourseProgress.completed_at``, stamped once by
     ``recalculate_course_progress``  never recomputed here.
 
+    The printed name is the last gate. An account that has never asked
+    for a certificate has no legal name (sign-up does not ask), so the
+    caller may supply one here; it is written to the account first, which
+    is what keeps this a once-per-learner question rather than a
+    once-per-certificate one. A submitted name never overwrites a stored
+    one: the stored name is what earlier certificates already carry, and
+    silently diverging the two would print two different people.
+
     Args:
         user_id: Primary key of the caller.
         course_slug: Slug of the course.
         viewer_is_staff: Whether the caller is a staff member.
+        first_name: Legal first name to record, when the account has none.
+        last_name: Legal last name to record, when the account has none.
 
     Returns:
         The certificate and whether this call created it (existing → False).
@@ -78,6 +91,7 @@ def issue_if_completed(
         CertificateCourseNotFoundError: If the course is absent or hidden.
         CertificateEnrollmentRequiredError: If the caller is not a student.
         CourseNotCompletedError: If progress has not recorded completion.
+        LegalNameRequiredError: If no name is stored and none was supplied.
     """
     course = course_selector.get_course_ref(
         slug=course_slug, viewer_id=user_id, viewer_is_staff=viewer_is_staff
@@ -104,11 +118,20 @@ def issue_if_completed(
         return existing, False
 
     student = user_selector.get_by_id(user_id=user_id)
+    printable = _printable_name(student)
+    if not printable:
+        printable = f"{first_name.strip()} {last_name.strip()}".strip()
+        if not printable or student is None:
+            raise LegalNameRequiredError
+        user_service.set_legal_name(
+            user=student, first_name=first_name, last_name=last_name
+        )
+
     try:
         certificate = certificate_repository.issue_certificate(
             user_id=user_id,
             course_id=course.id,
-            student_name=_printable_name(student),
+            student_name=printable,
             course_title=course.title,
             completed_at=completed_at,
         )

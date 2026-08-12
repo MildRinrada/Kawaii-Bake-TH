@@ -27,6 +27,22 @@ Never delete an ADR  supersede it with a new one.
 | [0018](0018-recommendation-and-substitution.md) | Recommendation & ingredient substitution (pure consumer, deterministic, no tables) | Accepted |
 | [0019](0019-rewards-economy.md) | Rewards economy (identified-fact pull, immutable ledger, DB-level idempotency) | Accepted |
 | [0020](0020-profile-personalization.md) | Profile & personalization (taxonomy M2M backfill, Thai-first language, derived completion, settings composition) | Accepted |
+| [0021](0021-course-list-search-and-stored-aggregates.md) | Course list search and stored aggregates (duration, rating) | Accepted |
+| [0022](0022-admin-surface-identity-flag.md) | The admin surface reads one flag; authorization stays server-side | Accepted |
+| [0023](0023-recipe-id-in-read-payloads.md) | Recipe read payloads carry the primary key | Accepted |
+| [0024](0024-badge-catalogue-and-level-span.md) | The badge catalogue is readable; the level curve is stated | Accepted |
+| [0025](0025-threat-watch-and-client-guard.md) | Threat watching, and the honest limits of a client-side guard | Accepted |
+| [0026](0026-legal-names-consent-and-documents.md) | Legal names, PDPA consent, and editable legal documents | Accepted (amended by 0035) |
+| [0027](0027-back-office-admin-api.md) | The back-office admin API | Accepted |
+| [0028](0028-cross-user-learning-and-staff-instrumentation.md) | Cross-user learning views and staff instrumentation | Accepted |
+| [0029](0029-certificate-template-designer.md) | The certificate template designer | Accepted |
+| [0030](0030-notification-campaigns.md) | Notification campaigns, templates and audiences | Accepted (amended by 0036) |
+| [0031](0031-staff-account-actions.md) | The user-management workspace and staff account actions | Accepted |
+| [0032](0032-gallery-interactions.md) | Community interactions: likes and comments | Accepted |
+| [0033](0033-qa-board-signals.md) | What a question board has to tell you before you click | Accepted |
+| [0034](0034-google-sign-in.md) | Google sign-in, and the first table authentication owns | Accepted |
+| [0035](0035-legal-name-at-issuance.md) | The legal name is asked for where it is used | Accepted |
+| [0036](0036-announcement-kinds-and-click-receipts.md) | Announcement kinds are a closed set, and clicks are a floor | Accepted |
 
 ADR 0005 changes the delivery model assumed by 0001–0004: the layering in 0002
 and the boundaries in 0003–0004 still hold, but templates and static files are

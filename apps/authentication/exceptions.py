@@ -63,3 +63,55 @@ class CredentialRefreshNotSupportedError(DomainError):
     code = "refresh_not_supported"
     status_code = 501
     message = "Credential refresh is not supported by the active auth method."
+
+
+class AccountActionNotApplicableError(DomainError):
+    """Raised when a staff account action does not fit the account's
+    state - a reset link for a deactivated or password-less account, a
+    verification email for an already-verified one."""
+
+    code = "not_applicable"
+    status_code = 409
+    message = "This action is not applicable to the account's current state."
+
+
+class SocialAuthUnavailableError(DomainError):
+    """Raised when provider sign-in is requested but not configured.
+
+    503, not 404: the endpoint exists and the deployment simply has no
+    client id for the provider yet. The frontend hides the button when it
+    has no client id either, so reaching this means a mismatch between the
+    two halves of the configuration - which is worth an explicit answer
+    rather than a silent 404.
+    """
+
+    code = "oauth_unavailable"
+    status_code = 503
+    message = "Google sign-in is not configured on this deployment."
+
+
+class SocialAuthFailedError(DomainError):
+    """Raised when the provider's credential does not check out.
+
+    One code for every reason (expired, wrong audience, forged, wrong
+    issuer): the caller can do exactly one thing about all of them, and
+    detail here would only help someone probing what we accept.
+    """
+
+    code = "social_auth_failed"
+    status_code = 401
+    message = "Google sign-in could not be verified. Please try again."
+
+
+class SocialEmailUnverifiedError(DomainError):
+    """Raised when the provider itself has not verified the address.
+
+    Separate from the failure above because it is actionable, and because
+    accepting it would be the actual security hole: an unverified provider
+    address could be someone else's, and email is what links a provider
+    identity to an existing local account.
+    """
+
+    code = "social_email_unverified"
+    status_code = 400
+    message = "This Google account has no confirmed email address."

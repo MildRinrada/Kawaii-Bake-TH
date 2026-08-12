@@ -12,7 +12,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const API = "http://localhost:8000/api/v1";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 const LEARNER = { email: "p16-learner@example.com", password: "Rhubarb!Tart2024" };
@@ -45,16 +45,17 @@ try {
   await guest.goto(BASE);
   await expect(guest, 'header a[href="/community"]', "Community appears in the main navigation");
   await expect(guest, "text=จากครัวของชุมชน", "home has a community section");
-  await expect(guest, "text=เข้าสู่ระบบเพื่อโพสต์", "anonymous home shows a sign-in CTA, not a composer");
+  // The home page no longer hosts a composer for anyone: posting lives
+  // on /community, and the section here links to it.
   const guestHome = await guest.textContent("body");
-  if (guestHome.includes("เขียนโพสต์…")) {
-    throw new Error("the authenticated composer rendered for an anonymous visitor");
+  if (guestHome.includes("เขียนโพสต์…") || guestHome.includes("เข้าสู่ระบบเพื่อโพสต์")) {
+    throw new Error("a post composer is back on the home page");
   }
-  ok("no authenticated composer leaks to an anonymous visitor");
+  ok("the home page hosts no composer, for any visitor");
   await expect(guest, 'a[href="/recipes/create"]', "home recipe section has its own + เพิ่มสูตรอาหาร CTA");
 
   await guest.goto(`${BASE}/community`);
-  await expect(guest, "text=ชุมชนคนรักการอบขนม", "anonymous can open the community feed");
+  await expect(guest, "text=เข้าสู่ระบบเพื่อโพสต์ผลงาน", "anonymous can open the community feed");
   await expect(guest, "text=เข้าสู่ระบบเพื่อสร้างโพสต์", "feed offers sign-in instead of composing");
   await expect(guest, 'button[aria-pressed="false"]', "category filter chips render");
   if (await guest.locator("text=มีอะไรอยากแบ่งปันเกี่ยวกับการทำขนม?").count()) {
@@ -95,7 +96,12 @@ try {
   await page.waitForURL((url) => !url.pathname.startsWith("/login"));
 
   await page.goto(BASE);
-  await expect(page, "text=เขียนโพสต์…", "home shows the composer for a signed-in user");
+  // Signed in or not, the home page shows work and links to /community;
+  // the composer itself lives there.
+  await expect(page, "text=จากครัวของชุมชน", "home shows the community section for a member");
+  if ((await page.textContent("body")).includes("เขียนโพสต์…")) {
+    throw new Error("a post composer is back on the home page");
+  }
 
   /* ---- The inline composer publishes without leaving the feed ---- */
   await page.goto(`${BASE}/community`);
@@ -191,7 +197,9 @@ try {
   await expect(page, `text=${CAPTION}`, "post detail shows the caption");
   await expect(page, 'img[src*="localhost:8000"]', "the uploaded image is served from the API origin");
   await expect(page, "text=โพสต์นี้แนบสูตร", "detail shows the attached recipe reference");
-  await expect(page, "text=ระบบคอมเมนต์และบันทึกโพสต์ยังไม่เปิดใช้งาน", "missing interactions are stated, not faked");
+  await expect(page, 'button[aria-label="ถูกใจโพสต์นี้"]', "the post detail offers a real like control");
+  await expect(page, 'textarea[aria-label="คอมเมนต์ของคุณ"]', "the comment box is open on the post page");
+  await expect(page, "text=การบันทึกโพสต์ยังไม่เปิดใช้งาน", "the one still-missing interaction is stated, not faked");
   await page.screenshot({ path: `${SHOT_DIR}/64-community-post.png`, fullPage: true });
 
   /* ---- It appears in the feed ---- */
@@ -201,7 +209,25 @@ try {
   // The rich attachment card needs fields the feed payload lacks; the page
   // enriches them from the public recipe list in one read.
   await expect(page, 'a[aria-label^="ดูสูตร"]', "attachment renders as a rich recipe card in the feed");
-  await expect(page, "text=นักอบขนมในฟีดนี้", "desktop sidebar lists real bakers from the feed");
+  // The bakers card only earns its place with three or more people in
+  // view - below that it is "you, alone". Assert whichever state the
+  // real feed produces.
+  const bakerHandles = await page.evaluate(async () => {
+    const data = await (
+      await fetch("http://localhost:8000/api/v1/gallery/?page_size=10", {
+        credentials: "include",
+      })
+    ).json();
+    return new Set(data.results.map((post) => post.author_handle)).size;
+  });
+  const bakersCard = await page.locator("text=นักอบขนมในฟีดนี้").count();
+  if (bakerHandles >= 3 && !bakersCard) {
+    throw new Error(`${bakerHandles} bakers in view but the sidebar card is missing`);
+  }
+  if (bakerHandles < 3 && bakersCard) {
+    throw new Error("the bakers card rendered with fewer than three bakers");
+  }
+  ok(`bakers card matches the feed (${bakerHandles} baker(s) in view)`);
 
   /* ---- And on the attached recipe's page ---- */
   const recipeLink = await page
@@ -258,7 +284,7 @@ try {
   const mobile = await context.newPage();
   await mobile.setViewportSize({ width: 390, height: 844 });
   await mobile.goto(`${BASE}/community`);
-  await mobile.waitForSelector("text=ชุมชนคนรักการอบขนม");
+  await mobile.waitForSelector('div[role="group"][aria-label="กรองโพสต์ตามหมวดของสูตรที่แนบ"]');
   if (await mobile.locator("aside").isVisible().catch(() => false)) {
     throw new Error("the desktop sidebar is visible on mobile");
   }

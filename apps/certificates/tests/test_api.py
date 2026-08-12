@@ -21,7 +21,9 @@ class CertificateApiTests(TestCase):
 
     def setUp(self) -> None:
         self.client = APIClient()
-        self.student = create_user(username="capistudent")
+        self.student = create_user(
+            username="capistudent", first_name="ปาลิตา", last_name="ใจงาม"
+        )
         self.instructor = create_user(username="capiinst")
 
     def test_anonymous_is_denied_on_owner_endpoints(self) -> None:
@@ -76,6 +78,51 @@ class CertificateApiTests(TestCase):
         self.assertEqual(first.json()["status"], "valid")
         self.assertEqual(first.json()["course_title"], course.title)
 
+    def test_a_nameless_account_is_asked_for_one_at_issuance(self) -> None:
+        """Sign-up asks for identity; the credential asks for a name.
+
+        The 409 is the whole contract the sign-up form depends on: it is
+        what lets registration drop two fields without certificates
+        quietly starting to print handles.
+        """
+        nameless = create_user(username="capinameless")
+        course = build_completed_course(
+            student=nameless, instructor=self.instructor
+        )
+        self.client.force_login(nameless)
+
+        refused = self.client.post(f"/api/v1/courses/{course.slug}/certificate/")
+
+        self.assertEqual(refused.status_code, 409)
+        self.assertEqual(refused.json()["error"]["code"], "legal_name_required")
+
+        named = self.client.post(
+            f"/api/v1/courses/{course.slug}/certificate/",
+            {"first_name": "มินตรา", "last_name": "อบอุ่น"},
+            format="json",
+        )
+
+        self.assertEqual(named.status_code, 201)
+        self.assertEqual(named.json()["student_name"], "มินตรา อบอุ่น")
+        nameless.refresh_from_db()
+        self.assertEqual(nameless.first_name, "มินตรา")
+
+    def test_an_over_long_name_is_a_400_not_a_truncated_certificate(self) -> None:
+        nameless = create_user(username="capilongname")
+        course = build_completed_course(
+            student=nameless, instructor=self.instructor
+        )
+        self.client.force_login(nameless)
+
+        response = self.client.post(
+            f"/api/v1/courses/{course.slug}/certificate/",
+            {"first_name": "ก" * 200, "last_name": "ข"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("first_name", response.json()["error"]["details"])
+
     def test_my_certificates_lists_only_mine_with_flat_queries(self) -> None:
         for _ in range(3):
             course = build_completed_course(
@@ -84,7 +131,9 @@ class CertificateApiTests(TestCase):
             certificate_service.issue_if_completed(
                 user_id=self.student.id, course_slug=course.slug
             )
-        other = create_user(username="capiother")
+        other = create_user(
+            username="capiother", first_name="อรุณี", last_name="ทองดี"
+        )
         other_course = build_completed_course(
             student=other, instructor=self.instructor
         )
@@ -112,7 +161,7 @@ class CertificateApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body["status"], "valid")
-        self.assertEqual(body["student_name"], self.student.username)
+        self.assertEqual(body["student_name"], "ปาลิตา ใจงาม")
         self.assertEqual(body["course_title"], course.title)
         # Never the email, never internal ids.
         self.assertNotIn("email", body)
@@ -208,7 +257,7 @@ class BadgeCatalogApiTests(TestCase):
         )
 
     def test_deactivated_badges_are_hidden_without_unearning_anything(self) -> None:
-        student = create_user()
+        student = create_user(first_name="ธนา", last_name="ศรีสุข")
         course = build_completed_course(student=student, instructor=create_user())
         certificate_service.issue_if_completed(
             user_id=student.id, course_slug=course.slug

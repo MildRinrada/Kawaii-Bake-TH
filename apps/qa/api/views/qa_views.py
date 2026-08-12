@@ -17,6 +17,7 @@ from apps.qa.api.serializers import (
     ThreadSerializer,
     ThreadUpdateSerializer,
 )
+from apps.qa.constants import ThreadOrdering
 from apps.qa.selectors import qa_selector
 from apps.qa.services import answer_service, thread_service
 
@@ -26,6 +27,18 @@ def _viewer(request: Request) -> tuple[int | None, bool]:
     if not request.user.is_authenticated:
         return None, False
     return request.user.id, request.user.is_staff
+
+
+def _bool_or_none(raw: str | None) -> bool | None:
+    """Parse an optional tri-state flag; junk means "no opinion"."""
+    if raw is None:
+        return None
+    lowered = raw.strip().lower()
+    if lowered in {"true", "1", "yes"}:
+        return True
+    if lowered in {"false", "0", "no"}:
+        return False
+    return None
 
 
 def _int_or_none(raw: str | None) -> int | None:
@@ -52,9 +65,10 @@ class ThreadListCreateView(PaginatedServiceAPIView):
 
     @extend_schema(responses={200: ThreadSerializer(many=True)}, tags=["qa"])
     def get(self, request: Request) -> Response:
-        """Return a page of visible threads, newest first.
+        """Return a page of visible threads under the requested sort.
 
-        Filters: ``recipe_id``, ``course_id``, ``search``.
+        Filters: ``recipe_id``, ``course_id``, ``search``, ``resolved``,
+        ``target``, ``category``. Sort: ``ordering``.
         """
         viewer_id, viewer_is_staff = _viewer(request)
         params = request.query_params
@@ -64,6 +78,10 @@ class ThreadListCreateView(PaginatedServiceAPIView):
             recipe_id=_int_or_none(params.get("recipe_id")),
             course_id=_int_or_none(params.get("course_id")),
             search=params.get("search"),
+            resolved=_bool_or_none(params.get("resolved")),
+            target=params.get("target"),
+            category=params.get("category"),
+            ordering=params.get("ordering") or ThreadOrdering.LATEST,
         )
         return self.paginated_response(queryset, ThreadSerializer)
 
@@ -101,12 +119,23 @@ class ThreadDetailView(ServiceAPIView):
 
     @extend_schema(responses={200: ThreadSerializer}, tags=["qa"])
     def get(self, request: Request, thread_id: int) -> Response:
-        """Return one thread under the same rule as the list."""
+        """Return one thread under the same rule as the list.
+
+        Opening a thread is what "read" means, so a signed-in reader is
+        recorded here rather than by an extra call the client could
+        forget to make. Recording is idempotent, so the number counts
+        readers, not refreshes; the response still carries the count from
+        *before* this read, which is the honest thing to show the person
+        who just caused it.
+        """
         viewer_id, viewer_is_staff = _viewer(request)
         thread = thread_service.require_visible_thread(
             thread_id=thread_id, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff
         )
-        return Response(ThreadSerializer(thread).data, status=status.HTTP_200_OK)
+        payload = ThreadSerializer(thread).data
+        if viewer_id is not None:
+            thread_service.record_view(thread_id=thread.pk, user_id=viewer_id)
+        return Response(payload, status=status.HTTP_200_OK)
 
     @extend_schema(
         request=ThreadUpdateSerializer,

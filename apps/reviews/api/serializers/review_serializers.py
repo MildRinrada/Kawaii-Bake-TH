@@ -10,6 +10,7 @@ from apps.common.api.serializers import StrictSerializer
 from apps.recipes.api.serializers.recipe_serializers import AuthorRefSerializer
 from apps.reviews.constants import (
     COMMENT_MAX_LENGTH,
+    COMMENT_MIN_LENGTH,
     RATING_MAX,
     RATING_MIN,
     ReviewStatus,
@@ -39,13 +40,36 @@ class ReviewSerializer(serializers.Serializer):
         return obj.course.slug if obj.course_id else None
 
 
+def _validated_comment(value: str) -> str:
+    """Enforce the shared comment rule for both write serializers."""
+    text = value.strip()
+    if text and len(text) < COMMENT_MIN_LENGTH:
+        raise serializers.ValidationError(
+            f"เขียนรีวิวอย่างน้อย {COMMENT_MIN_LENGTH} ตัวอักษร หรือเว้นว่างไว้แล้วให้คะแนนอย่างเดียวก็ได้"
+        )
+    return text
+
+
 class ReviewCreateSerializer(StrictSerializer):
     """Validates a review creation payload."""
 
     rating = serializers.IntegerField(min_value=RATING_MIN, max_value=RATING_MAX)
-    comment = serializers.CharField(
-        max_length=COMMENT_MAX_LENGTH, required=False, allow_blank=True
-    )
+    comment = serializers.CharField(max_length=COMMENT_MAX_LENGTH, required=False, allow_blank=True)
+
+    def validate_comment(self, value: str) -> str:
+        """Blank is fine; a couple of characters is not.
+
+        Args:
+            value: The submitted comment.
+
+        Returns:
+            The stripped comment.
+
+        Raises:
+            serializers.ValidationError: If it is non-blank but shorter
+                than :data:`COMMENT_MIN_LENGTH`.
+        """
+        return _validated_comment(value)
 
 
 class ReviewUpdateSerializer(StrictSerializer):
@@ -56,12 +80,24 @@ class ReviewUpdateSerializer(StrictSerializer):
     its own verb.
     """
 
-    rating = serializers.IntegerField(
-        min_value=RATING_MIN, max_value=RATING_MAX, required=False
-    )
-    comment = serializers.CharField(
-        max_length=COMMENT_MAX_LENGTH, required=False, allow_blank=True
-    )
+    rating = serializers.IntegerField(min_value=RATING_MIN, max_value=RATING_MAX, required=False)
+    comment = serializers.CharField(max_length=COMMENT_MAX_LENGTH, required=False, allow_blank=True)
+
+    def validate_comment(self, value: str) -> str:
+        """Same rule as creation  editing must not smuggle junk in.
+
+        Args:
+            value: The submitted comment.
+
+        Returns:
+            The stripped comment.
+
+        Raises:
+            serializers.ValidationError: If it is non-blank but shorter
+                than :data:`COMMENT_MIN_LENGTH`.
+        """
+        return _validated_comment(value)
+
     status = serializers.ChoiceField(
         choices=[
             (ReviewStatus.ACTIVE, "active"),
@@ -78,6 +114,4 @@ class RatingSummarySerializer(serializers.Serializer):
         max_digits=3, decimal_places=2, read_only=True, allow_null=True
     )
     count = serializers.IntegerField(read_only=True)
-    distribution = serializers.DictField(
-        child=serializers.IntegerField(), read_only=True
-    )
+    distribution = serializers.DictField(child=serializers.IntegerField(), read_only=True)

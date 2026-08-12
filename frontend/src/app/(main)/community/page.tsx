@@ -7,10 +7,11 @@
  * filters are `recipe_id`, `course_id`, `author` and `category` (the
  * *attached recipe's* category). Those are what the chip bar offers.
  *
+ * Likes and comments are real (ADR 0032) and live on each card.
  * Deliberately absent, because the gallery app has no such data:
  * post types beyond "has a recipe attached", free tags, a popularity
- * sort (the feed is newest-first, full stop), likes, comments and
- * bookmarks. Each is reported rather than mocked.
+ * sort (the feed is newest-first, full stop) and bookmarks. Each is
+ * reported rather than mocked.
  *
  * The composer expands in place  writing a post never leaves the feed 
  * and a freshly published post is prepended immediately, so the feed
@@ -38,7 +39,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityPostCard } from "@/components/community/post-card";
 import { PostComposerForm } from "@/components/community/post-composer-form";
 import { Icon } from "@/components/ui/icon";
-import { CategoryTile } from "@/components/content/category-tile";
 import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 10;
@@ -239,26 +239,10 @@ function CommunityFeed() {
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,42rem)_18rem] lg:justify-center lg:gap-8">
       <div className="mx-auto w-full max-w-2xl lg:mx-0">
-        {/* ---- Hero ---------------------------------------------- */}
-        <header className="kb-hero mb-5 rounded-surface px-5 py-6 sm:px-7 sm:py-8">
-          <h1 className="font-display text-2xl font-medium text-fg sm:text-3xl">
-            ชุมชนคนรักการอบขนม
-          </h1>
-          <p className="mt-1.5 max-w-lg text-sm text-fg-muted">
-            มาแบ่งปันผลงาน ถามคำถาม และเรียนรู้เรื่องอบขนมไปด้วยกัน
-          </p>
-          <div className="mt-4">
-            {status === "authenticated" ? (
-              <Link href="/community/create">
-                <Button>+ สร้างโพสต์</Button>
-              </Link>
-            ) : status === "anonymous" ? (
-              <Link href="/login">
-                <Button>เข้าสู่ระบบเพื่อสร้างโพสต์</Button>
-              </Link>
-            ) : null}
-          </div>
-        </header>
+        {/* No hero banner: it repeated the sidebar's "about" card and
+            pushed a second "create post" button within 100px of the
+            composer's own. The feed starts immediately instead. */}
+        <h1 className="sr-only">ชุมชนคนรักการอบขนม</h1>
 
         {/* ---- Composer ------------------------------------------ */}
         <div className="mb-5">
@@ -297,7 +281,7 @@ function CommunityFeed() {
                     "rounded-full px-4 py-1.5 text-sm transition-colors",
                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
                     active
-                      ? "bg-accent font-medium text-fg-inverted"
+                      ? "bg-fg font-medium text-fg-inverted"
                       : "text-fg-muted hover:text-fg",
                   )}
                 >
@@ -309,43 +293,46 @@ function CommunityFeed() {
         ) : null}
 
         {/* ---- Filters ------------------------------------------- */}
-        <div className="mb-4">
-          <div
-            role="group"
-            aria-label="กรองโพสต์ตามหมวดของสูตรที่แนบ"
-            className="-mx-1 flex snap-x items-start gap-2.5 overflow-x-auto px-1 pb-1"
+        {/* Text chips, not photo tiles: 250px of scrolling artwork stood
+            between the reader and the first post, and the same list was
+            duplicated in the sidebar. This is now the only one. */}
+        <div
+          role="group"
+          aria-label="กรองโพสต์ตามหมวดของสูตรที่แนบ"
+          className="mb-4 flex flex-wrap items-center gap-2"
+        >
+          <button
+            type="button"
+            aria-pressed={!category}
+            onClick={() => setFilter({ category: null })}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
+              !category
+                ? "bg-fg font-medium text-fg-inverted shadow-raised"
+                : "border border-edge bg-surface text-fg-muted hover:border-edge-strong hover:text-fg",
+            )}
           >
+            ทั้งหมด
+          </button>
+          {(categories.data ?? []).map((item) => (
             <button
+              key={item.slug}
               type="button"
-              aria-pressed={!category}
-              onClick={() => setFilter({ category: null })}
+              aria-pressed={category === item.slug}
+              title="กรองจากหมวดของสูตรที่โพสต์แนบไว้"
+              onClick={() =>
+                setFilter({ category: category === item.slug ? null : item.slug })
+              }
               className={cn(
-                "flex aspect-square w-20 shrink-0 snap-start items-center justify-center rounded-surface text-sm font-medium shadow-raised transition-colors sm:w-24",
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-                !category
-                  ? "bg-accent text-fg-inverted"
-                  : "bg-surface text-fg-muted hover:text-fg",
+                "rounded-full px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
+                category === item.slug
+                  ? "bg-fg font-medium text-fg-inverted shadow-raised"
+                  : "border border-edge bg-surface text-fg-muted hover:border-edge-strong hover:text-fg",
               )}
             >
-              ทั้งหมด
+              #{item.name}
             </button>
-            {(categories.data ?? []).map((item) => (
-              <CategoryTile
-                key={item.slug}
-                compact
-                slug={item.slug}
-                name={item.name}
-                imageUrl={item.image_url}
-                active={category === item.slug}
-                onClick={() =>
-                  setFilter({ category: category === item.slug ? null : item.slug })
-                }
-              />
-            ))}
-          </div>
-          <p className="mt-1.5 text-xs text-fg-subtle">
-            เรียงจากใหม่ไปเก่า - หมวดกรองจากสูตรที่โพสต์แนบไว้
-          </p>
+          ))}
         </div>
 
         {/* ---- Active filter summary ----------------------------- */}
@@ -362,7 +349,7 @@ function CommunityFeed() {
                 onClick={() =>
                   setFilter({ recipe: null, category: null, author: null })
                 }
-                className="ml-auto text-sm text-accent hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+                className="ml-auto text-sm text-fg-muted underline hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
               >
                 ล้างตัวกรอง
               </button>
@@ -399,9 +386,16 @@ function CommunityFeed() {
                   มาเป็นคนแรกที่แบ่งปันผลงานกันไหม?
                 </p>
                 {status === "authenticated" ? (
-                  <Link href="/community/create">
-                    <Button>+ สร้างโพสต์</Button>
-                  </Link>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Link href="/community/create">
+                      <Button>
+                        <Icon name="ui/plus" className="size-4" /> สร้างโพสต์
+                      </Button>
+                    </Link>
+                    <Link href="/recipes/create">
+                      <Button variant="secondary">แชร์สูตรอาหารแทน</Button>
+                    </Link>
+                  </div>
                 ) : (
                   <Link href="/login">
                     <Button>เข้าสู่ระบบเพื่อสร้างโพสต์</Button>
@@ -461,47 +455,11 @@ function CommunityFeed() {
             </>
           )}
         </div>
-
-        <p className="mt-8 text-center text-sm text-fg-muted">
-          มีสูตรใหม่อยากแบ่งปัน?{" "}
-          <Link href="/recipes/create" className="text-accent hover:underline">
-            สร้างสูตรอาหาร
-          </Link>
-        </p>
       </div>
 
       {/* ---- Sidebar (desktop only) ------------------------------ */}
       <aside className="hidden lg:block">
         <div className="sticky top-20 space-y-4">
-          <Card>
-            <CardBody>
-              <h2 className="font-display text-sm font-medium text-fg">
-                หมวดที่ชุมชนกำลังแชร์
-              </h2>
-              <p className="mt-0.5 text-xs text-fg-subtle">
-                จากหมวดของสูตรที่โพสต์แนบไว้
-              </p>
-              <ul className="mt-3 flex flex-wrap gap-1.5">
-                {(categories.data ?? []).slice(0, 8).map((item) => (
-                  <li key={item.slug}>
-                    <button
-                      type="button"
-                      onClick={() => setFilter({ category: item.slug })}
-                      className={cn(
-                        "rounded-full px-2.5 py-1 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-focus",
-                        category === item.slug
-                          ? "bg-accent-subtle font-medium text-fg"
-                          : "bg-surface-sunken text-fg-muted hover:text-fg",
-                      )}
-                    >
-                      #{item.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
-          </Card>
-
           <RecentBakers
             posts={posts}
             active={author}
@@ -519,7 +477,9 @@ function CommunityFeed() {
                 แชร์ผลงานของคุณ ถามเทคนิค หรือแนบสูตรที่ใช้ก็ได้ ทุกโพสต์จะแสดงเป็นสาธารณะ
               </p>
               <p>
-                ตอนนี้ระบบไลก์ คอมเมนต์ และบันทึกโพสต์ยังไม่เปิดให้ใช้งาน
+                กดถูกใจและคอมเมนต์ได้เมื่อเข้าสู่ระบบ
+                เจ้าของโพสต์จะได้รับการแจ้งเตือน
+                ส่วนการบันทึกโพสต์ยังไม่เปิดให้ใช้งาน
               </p>
             </CardBody>
           </Card>
@@ -555,8 +515,10 @@ function RecentBakers({
       });
     }
   }
+  // Under three bakers the list is either you alone or you and one
+  // other - a section that tells the reader nothing.
   const entries = [...bakers.entries()].slice(0, 6);
-  if (entries.length === 0) return null;
+  if (entries.length < 3) return null;
 
   return (
     <Card>

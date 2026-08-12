@@ -38,6 +38,11 @@ class AdminUserSerializer(serializers.Serializer):
     deactivated_at = serializers.DateTimeField(read_only=True, allow_null=True)
     last_login = serializers.DateTimeField(read_only=True, allow_null=True)
     created_at = serializers.DateTimeField(read_only=True)
+    # Activity annotations (selector `_with_activity`) - real counts, so
+    # the roster can say "เรียน 4 คอร์ส · สูตร 12" without N+1 calls.
+    recipes_count = serializers.IntegerField(read_only=True, default=0)
+    courses_count = serializers.IntegerField(read_only=True, default=0)
+    posts_count = serializers.IntegerField(read_only=True, default=0)
 
     def get_display_name(self, obj: Any) -> str:
         """Return the profile display name, falling back to the handle."""
@@ -71,6 +76,17 @@ class AdminUserUpdateSerializer(StrictSerializer):
     is_active = serializers.BooleanField(required=False)
     is_staff = serializers.BooleanField(required=False)
     is_email_verified = serializers.BooleanField(required=False)
+
+
+class AdminUserStatsSerializer(serializers.Serializer):
+    """Headline account numbers for the roster's summary cards."""
+
+    total = serializers.IntegerField(read_only=True)
+    active = serializers.IntegerField(read_only=True)
+    pending = serializers.IntegerField(read_only=True)
+    suspended = serializers.IntegerField(read_only=True)
+    staff = serializers.IntegerField(read_only=True)
+    new_7d = serializers.IntegerField(read_only=True)
 
 
 class AdminUserFilterSerializer(PaginatedFilterSerializer):

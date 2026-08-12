@@ -17,11 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { DetailPanel } from "@/components/admin/primitives";
 import { describeAdminError } from "@/components/admin/lifecycle";
 
-import { KIND_CATEGORIES, NOTIFICATION_KINDS } from "./kinds";
+import { ANNOUNCEMENT_KIND_OPTIONS, DEFAULT_KIND, isKnownKind } from "./kinds";
 import { NotificationPreviewCard } from "./preview-card";
 
 export function TemplateForm({
@@ -41,8 +40,9 @@ export function TemplateForm({
   const editing = initial !== null;
 
   const [name, setName] = useState(initial?.name ?? "");
-  const [kind, setKind] = useState(initial?.kind ?? "custom");
-  const [icon, setIcon] = useState(initial?.icon ?? "");
+  const [kind, setKind] = useState(
+    initial?.kind && isKnownKind(initial.kind) ? initial.kind : DEFAULT_KIND,
+  );
   const [title, setTitle] = useState(initial?.title ?? "");
   const [body, setBody] = useState(initial?.body ?? "");
   const [ctaText, setCtaText] = useState(initial?.cta_text ?? "");
@@ -61,7 +61,6 @@ export function TemplateForm({
     const payload = {
       name: name.trim(),
       kind,
-      icon,
       title: title.trim(),
       body: body.trim(),
       cta_text: ctaText.trim(),
@@ -119,39 +118,27 @@ export function TemplateForm({
           )}
         </Field>
 
-        <Field label="ประเภทการแจ้งเตือน">
+        <Field
+          label="ประเภทประกาศ"
+          hint="เป็นตัวกำหนดไอคอนและสีที่ผู้รับเห็น"
+        >
           {(control) => (
             <select
               {...control}
               value={kind}
               onChange={(event) => {
                 setKind(event.target.value);
-                const meta = NOTIFICATION_KINDS.find(
-                  (item) => item.key === event.target.value,
-                );
-                if (meta && !icon) setIcon(meta.icon);
               }}
               className="h-10 w-full rounded-md border border-edge bg-surface px-3 text-sm"
             >
-              {KIND_CATEGORIES.map((category) => (
-                <optgroup key={category.key} label={category.label}>
-                  {NOTIFICATION_KINDS.filter(
-                    (item) => item.category === category.key,
-                  ).map((item) => (
-                    <option key={item.key} value={item.key}>
-                      {item.icon} {item.label}
-                    </option>
-                  ))}
-                </optgroup>
+              {ANNOUNCEMENT_KIND_OPTIONS.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
               ))}
             </select>
           )}
         </Field>
-
-        <div className="space-y-1.5">
-          <p className="text-sm font-medium text-fg">ไอคอน</p>
-          <EmojiPicker value={icon} onPick={setIcon} />
-        </div>
 
         <Field label="หัวข้อ" required hint="ใช้ตัวแปรได้ เช่น {{user_name}}">
           {(control) => (
@@ -204,11 +191,11 @@ export function TemplateForm({
         <div className="space-y-1.5">
           <p className="text-sm font-medium text-fg">ตัวอย่าง</p>
           <NotificationPreviewCard
-            icon={icon}
             title={title}
             body={body}
             ctaText={ctaText}
             link={link}
+            kind={kind}
           />
         </div>
       </form>

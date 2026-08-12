@@ -38,6 +38,7 @@ const EVENT_TYPES: { value: string; label: string; tone: Tone }[] = [
   { value: "achievement_earned", label: "ได้รับเหรียญ", tone: "butter" },
   { value: "qa_answer_received", label: "มีคำตอบ", tone: "lavender" },
   { value: "qa_answer_accepted", label: "คำตอบถูกเลือก", tone: "success" },
+  { value: "gallery_comment", label: "คอมเมนต์ผลงาน", tone: "berry" },
 ];
 
 const EVENT_BY_VALUE = new Map(EVENT_TYPES.map((item) => [item.value, item]));

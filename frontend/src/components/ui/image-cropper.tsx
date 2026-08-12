@@ -93,6 +93,7 @@ export function ImageCropper({
   busy = false,
   onCancel,
   onConfirm,
+  onUndecodable,
 }: {
   /** The picked file. `null` closes the dialog. */
   file: File | null;
@@ -105,6 +106,12 @@ export function ImageCropper({
   busy?: boolean;
   onCancel: () => void;
   onConfirm: (blob: Blob) => void;
+  /**
+   * The browser could not decode the file. Nothing can be framed, so the
+   * caller should close the dialog and say why — a disabled confirm
+   * button with no explanation is not an answer.
+   */
+  onUndecodable?: () => void;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -263,6 +270,7 @@ export function ImageCropper({
               setZoom(1);
               setCenter({ x: 0.5, y: 0.5 });
             }}
+            onError={() => onUndecodable?.()}
             className="absolute max-w-none cursor-grab active:cursor-grabbing"
             style={
               natural && rect
@@ -299,10 +307,23 @@ export function ImageCropper({
       </p>
 
       <div className="mt-5 flex justify-end gap-2">
-        <Button variant="secondary" onClick={onCancel} disabled={busy}>
+        {/* Explicitly not submit buttons: the dialog can be opened from
+            inside a form (the recipe editor), and framing a photo must
+            never post it. */}
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={busy}
+        >
           ยกเลิก
         </Button>
-        <Button onClick={confirm} loading={busy} disabled={!natural}>
+        <Button
+          type="button"
+          onClick={confirm}
+          loading={busy}
+          disabled={!natural}
+        >
           {confirmLabel}
         </Button>
       </div>

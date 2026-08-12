@@ -332,7 +332,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Return delivered/read counts and the read rate. */
+        /**
+         * @description Return delivered/read/clicked counts and the two rates.
+         *
+         *     Both rates are over ``delivered``: "of the people who got this,
+         *     how many opened it, and how many followed the link". Rates over
+         *     *recipients* would flatter a send whose rows failed to deliver.
+         */
         get: operations["admin_notifications_campaigns_analytics_retrieve"];
         put?: never;
         post?: never;
@@ -767,6 +773,74 @@ export interface paths {
         patch: operations["admin_users_partial_update"];
         trace?: never;
     };
+    "/api/v1/admin/users/{user_id}/resend-verification/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Dispatch the verification email, or report ineligibility. */
+        post: operations["admin_users_resend_verification_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/send-password-reset/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Dispatch the reset email, or report ineligibility honestly. */
+        post: operations["admin_users_send_password_reset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/create/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Create the account; unverified ones get the verification email. */
+        post: operations["admin_users_create_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/stats/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Return total/active/pending/suspended/staff/new counts. */
+        get: operations["admin_users_stats_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assistant/conversations/": {
         parameters: {
             query?: never;
@@ -829,6 +903,23 @@ export interface paths {
         get: operations["auth_csrf_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/google/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Verify the provider credential, then issue one of our own. */
+        post: operations["auth_google_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1127,7 +1218,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Issue (201) or return the existing certificate (200). */
+        /**
+         * @description Issue (201) or return the existing certificate (200).
+         *
+         *     The body carries the name to print, and only matters the first
+         *     time an account asks: without a stored legal name the service
+         *     answers 409 ``legal_name_required``, which is the client's cue to
+         *     ask the learner and repeat the request.
+         */
         post: operations["courses_certificate_create"];
         delete?: never;
         options?: never;
@@ -1372,6 +1470,30 @@ export interface paths {
         patch: operations["gallery_partial_update"];
         trace?: never;
     };
+    "/api/v1/gallery/{post_id}/comments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Return the post's comments, oldest first.
+         *
+         *     The post's own visibility gates the list: a hidden post 404s
+         *     here rather than returning an empty page, so a stranger cannot
+         *     confirm that a hidden post exists.
+         */
+        get: operations["gallery_comments_list"];
+        put?: never;
+        /** @description Add the caller's comment and notify the post's author. */
+        post: operations["gallery_comments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gallery/{post_id}/images/": {
         parameters: {
             query?: never;
@@ -1401,6 +1523,41 @@ export interface paths {
         post?: never;
         /** @description Remove the image row and its stored file. */
         delete: operations["gallery_images_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gallery/{post_id}/like/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Like the post (idempotent - liking twice stays one like). */
+        post: operations["gallery_like_create"];
+        /** @description Remove the caller's like (idempotent). */
+        delete: operations["gallery_like_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gallery/comments/{comment_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete a comment as its author, the post's owner, or staff. */
+        delete: operations["gallery_comments_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1614,6 +1771,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/notifications/{notification_id}/click/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Stamp ``clicked_at`` (and ``read_at``) once; repeats stay 200.
+         *
+         *     Called by the client as it navigates, so a click that never
+         *     reaches this endpoint is a click the platform simply does not
+         *     know about - see ``record_click``.
+         */
+        post: operations["me_notifications_click_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/notifications/{notification_id}/read/": {
         parameters: {
             query?: never;
@@ -1799,9 +1979,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description Return a page of visible threads, newest first.
+         * @description Return a page of visible threads under the requested sort.
          *
-         *     Filters: ``recipe_id``, ``course_id``, ``search``.
+         *     Filters: ``recipe_id``, ``course_id``, ``search``, ``resolved``,
+         *     ``target``, ``category``. Sort: ``ordering``.
          */
         get: operations["qa_threads_list"];
         put?: never;
@@ -1820,7 +2001,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Return one thread under the same rule as the list. */
+        /**
+         * @description Return one thread under the same rule as the list.
+         *
+         *     Opening a thread is what "read" means, so a signed-in reader is
+         *     recorded here rather than by an extra call the client could
+         *     forget to make. Recording is idempotent, so the number counts
+         *     readers, not refreshes; the response still carries the count from
+         *     *before* this read, which is the honest thing to show the person
+         *     who just caused it.
+         */
         get: operations["qa_threads_retrieve"];
         put?: never;
         post?: never;
@@ -2698,6 +2888,25 @@ export interface components {
             readonly revoked_by: string | null;
             readonly revoked_reason: string;
         };
+        /** @description Payload for creating an account on a member's behalf. */
+        AdminCreateUserRequest: {
+            /** Format: email */
+            email: string;
+            username: string;
+            password: string;
+            first_name?: string;
+            last_name?: string;
+            /** @default false */
+            verified: boolean;
+        };
+        /** @description The created account, roster-shaped identity only. */
+        AdminCreatedUser: {
+            readonly id: number;
+            readonly username: string;
+            /** Format: email */
+            readonly email: string;
+            readonly is_email_verified: boolean;
+        };
         /** @description One favorite row across users - owner and target, no cards. */
         AdminFavorite: {
             readonly id: number;
@@ -2736,6 +2945,7 @@ export interface components {
             readonly sent_today: number;
             readonly delivered_total: number;
             readonly read_total: number;
+            readonly clicked_total: number;
         };
         /**
          * @description A review on the staff surface - adds the target's title.
@@ -2791,6 +3001,21 @@ export interface components {
             readonly last_login: string | null;
             /** Format: date-time */
             readonly created_at: string;
+            /** @default 0 */
+            readonly recipes_count: number;
+            /** @default 0 */
+            readonly courses_count: number;
+            /** @default 0 */
+            readonly posts_count: number;
+        };
+        /** @description Headline account numbers for the roster's summary cards. */
+        AdminUserStats: {
+            readonly total: number;
+            readonly active: number;
+            readonly pending: number;
+            readonly suspended: number;
+            readonly staff: number;
+            readonly new_7d: number;
         };
         /** @description One answer. */
         Answer: {
@@ -2900,7 +3125,7 @@ export interface components {
         BroadcastRequest: {
             title: string;
             body?: string;
-            link?: string;
+            link: string;
         };
         /** @description How far a broadcast reached. */
         BroadcastResult: {
@@ -2910,7 +3135,6 @@ export interface components {
         Campaign: {
             readonly id: number;
             readonly kind: string;
-            readonly icon: string;
             readonly title: string;
             readonly body: string;
             readonly cta_text: string;
@@ -2924,6 +3148,8 @@ export interface components {
             readonly recipients_count: number | null;
             /** @default 0 */
             readonly read_count: number;
+            /** @default 0 */
+            readonly click_count: number;
             /** @description Return the author's handle, blank when the account is gone. */
             readonly created_by: string;
             /** Format: date-time */
@@ -2939,6 +3165,9 @@ export interface components {
             readonly unread: number;
             /** Format: double */
             readonly read_rate: number;
+            readonly clicked: number;
+            /** Format: double */
+            readonly click_rate: number;
             /** Format: date-time */
             readonly sent_at: string | null;
         };
@@ -2950,12 +3179,12 @@ export interface components {
          *     layer does not duplicate that contract.
          */
         CampaignWriteRequest: {
-            kind?: string;
-            icon?: string;
+            /** @default general */
+            kind: components["schemas"]["Kind7f7Enum"];
             title: string;
             body?: string;
             cta_text?: string;
-            link?: string;
+            link: string;
             audience: unknown;
             /** @default draft */
             status: components["schemas"]["CampaignWriteStatusEnum"];
@@ -3018,6 +3247,22 @@ export interface components {
             readonly issued_at: string;
             /** @description Return ``valid`` or ``revoked``. */
             readonly status: string;
+        };
+        /**
+         * @description Validates the optional body of an issuance request.
+         *
+         *     Both parts are optional because an account that already carries a
+         *     legal name needs no body at all; the service decides whether what
+         *     arrived is enough and answers ``legal_name_required`` when it is not.
+         *     ``last_name`` may be blank  a mononym is a real kind of name  but
+         *     the two cannot both be empty, which is the service's rule since it
+         *     also holds for what is already stored.
+         */
+        CertificateIssueRequest: {
+            /** @default  */
+            first_name: string;
+            /** @default  */
+            last_name: string;
         };
         /** @description Payload for a staff revocation - the reason is not optional. */
         CertificateRevokeRequest: {
@@ -3370,6 +3615,22 @@ export interface components {
             readonly title: string;
             readonly count: number;
         };
+        /** @description One comment under a post. */
+        GalleryComment: {
+            readonly id: number;
+            readonly author_handle: string;
+            /** @description Return the author's display name, falling back to the handle. */
+            readonly author_display_name: string;
+            /** @description Return the author's absolute avatar URL, if any. */
+            readonly author_avatar_url: string | null;
+            readonly body: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /** @description Payload for posting a comment. */
+        GalleryCommentCreateRequest: {
+            body: string;
+        };
         /** @description One image of a post. */
         GalleryImage: {
             readonly id: number;
@@ -3381,6 +3642,11 @@ export interface components {
         GalleryImageUploadRequest: {
             /** Format: binary */
             image: string;
+        };
+        /** @description The like state after a like/unlike call. */
+        GalleryLikeResult: {
+            readonly liked: boolean;
+            readonly like_count: number;
         };
         /** @description A gallery post  the one shape for list and detail. */
         GalleryPost: {
@@ -3395,6 +3661,12 @@ export interface components {
             readonly recipe: components["schemas"]["_RecipeRef"] | null;
             readonly course: components["schemas"]["_CourseRef"] | null;
             readonly images: components["schemas"]["GalleryImage"][];
+            /** @default 0 */
+            readonly like_count: number;
+            /** @default 0 */
+            readonly comment_count: number;
+            /** @default false */
+            readonly viewer_has_liked: boolean;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -3419,6 +3691,17 @@ export interface components {
             readonly level: components["schemas"]["_Level"];
             readonly streak: components["schemas"]["Streak"];
             readonly recent_transactions: components["schemas"]["XPTransaction"][];
+        };
+        /**
+         * @description Validates a Google Identity Services callback payload.
+         *
+         *     One field: the ID token the button hands back. Everything about the
+         *     person  address, name, whether the address is confirmed  is inside
+         *     it, signed; accepting any of those as separate fields would be
+         *     accepting them unsigned.
+         */
+        GoogleSignInRequest: {
+            credential: string;
         };
         /**
          * @description * `off` - off
@@ -3449,6 +3732,16 @@ export interface components {
             /** @default false */
             is_optional: boolean;
         };
+        /**
+         * @description * `general` - General announcement
+         *     * `feature` - New feature
+         *     * `event` - Event or campaign
+         *     * `maintenance` - Scheduled maintenance
+         *     * `policy` - Policy or terms change
+         *     * `alert` - Urgent notice
+         * @enum {string}
+         */
+        Kind7f7Enum: "general" | "feature" | "event" | "maintenance" | "policy" | "alert";
         /**
          * @description One public leaderboard row  handle, level, XP. Nothing else.
          *
@@ -3667,10 +3960,12 @@ export interface components {
             readonly body: string;
             readonly actor_handle: string;
             readonly link: string;
-            readonly icon: string;
+            readonly kind: string;
             readonly cta_text: string;
             /** Format: date-time */
             readonly read_at: string | null;
+            /** Format: date-time */
+            readonly clicked_at: string | null;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -3700,6 +3995,7 @@ export interface components {
             achievement_earned?: boolean;
             qa_answer_received?: boolean;
             qa_answer_accepted?: boolean;
+            gallery_comment?: boolean;
             announcement?: boolean;
         };
         /**
@@ -4020,6 +4316,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["FavoriteItem"][];
         };
+        PaginatedGalleryCommentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["GalleryComment"][];
+        };
         PaginatedGalleryPostList: {
             /** @example 123 */
             count: number;
@@ -4261,8 +4572,8 @@ export interface components {
          *     layer does not duplicate that contract.
          */
         PatchedCampaignWriteRequest: {
-            kind?: string;
-            icon?: string;
+            /** @default general */
+            kind: components["schemas"]["Kind7f7Enum"];
             title?: string;
             body?: string;
             cta_text?: string;
@@ -4354,6 +4665,7 @@ export interface components {
             achievement_earned?: boolean;
             qa_answer_received?: boolean;
             qa_answer_accepted?: boolean;
+            gallery_comment?: boolean;
             announcement?: boolean;
         };
         /**
@@ -4445,8 +4757,8 @@ export interface components {
         /** @description Payload for creating or editing a template. */
         PatchedTemplateWriteRequest: {
             name?: string;
-            kind?: string;
-            icon?: string;
+            /** @default general */
+            kind: components["schemas"]["Kind7f7Enum"];
             title?: string;
             body?: string;
             cta_text?: string;
@@ -4807,17 +5119,20 @@ export interface components {
         /**
          * @description Validates a sign-up payload.
          *
-         *     The legal name is mandatory: certificates print it, and a certificate
-         *     naming a handle is not a credential. ``accept_terms`` must be an
-         *     explicit ``true``  PDPA consent is an action the user takes, never a
-         *     default the form ships with.
+         *     Sign-up asks for identity and nothing else. The legal name printed on
+         *     certificates is **not** collected here: most accounts never request a
+         *     certificate, and a field two thirds of readers must fill for a
+         *     document they will never claim is a field that costs sign-ups. It is
+         *     asked for once, at issuance, where it is the subject of the request
+         *     (``POST /courses/{slug}/certificate/``).
+         *
+         *     ``accept_terms`` must be an explicit ``true``  PDPA consent is an
+         *     action the user takes, never a default the form ships with.
          */
         RegistrationRequest: {
             /** Format: email */
             email: string;
             username: string;
-            first_name: string;
-            last_name: string;
             password: string;
             password_confirm: string;
             accept_terms: boolean;
@@ -4941,6 +5256,10 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /** @description Result of a staff-triggered email action. */
+        StaffActionResult: {
+            readonly sent: boolean;
+        };
         /**
          * @description * `acknowledged` - acknowledged
          *     * `ignored` - ignored
@@ -5013,7 +5332,6 @@ export interface components {
             readonly id: number;
             readonly name: string;
             readonly kind: string;
-            readonly icon: string;
             readonly title: string;
             readonly body: string;
             readonly cta_text: string;
@@ -5038,8 +5356,8 @@ export interface components {
         /** @description Payload for creating or editing a template. */
         TemplateWriteRequest: {
             name: string;
-            kind?: string;
-            icon?: string;
+            /** @default general */
+            kind: components["schemas"]["Kind7f7Enum"];
             title: string;
             body?: string;
             cta_text?: string;
@@ -5067,6 +5385,10 @@ export interface components {
             readonly created_at: string;
             /** Format: date-time */
             readonly updated_at: string;
+            readonly answer_count: number;
+            readonly view_count: number;
+            /** Format: date-time */
+            readonly last_answer_at: string | null;
         };
         /** @description Payload for asking a question. */
         ThreadCreateRequest: {
@@ -6492,6 +6814,92 @@ export interface operations {
             };
         };
     };
+    admin_users_resend_verification_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffActionResult"];
+                };
+            };
+        };
+    };
+    admin_users_send_password_reset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffActionResult"];
+                };
+            };
+        };
+    };
+    admin_users_create_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminCreateUserRequest"];
+                "multipart/form-data": components["schemas"]["AdminCreateUserRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AdminCreateUserRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCreatedUser"];
+                };
+            };
+        };
+    };
+    admin_users_stats_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserStats"];
+                };
+            };
+        };
+    };
     assistant_conversations_create: {
         parameters: {
             query?: never;
@@ -6580,6 +6988,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    auth_google_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoogleSignInRequest"];
+                "multipart/form-data": components["schemas"]["GoogleSignInRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GoogleSignInRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthenticatedResponse"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthenticatedResponse"];
+                };
             };
         };
     };
@@ -6994,7 +7435,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CertificateIssueRequest"];
+                "multipart/form-data": components["schemas"]["CertificateIssueRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CertificateIssueRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -7437,6 +7884,59 @@ export interface operations {
             };
         };
     };
+    gallery_comments_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                post_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedGalleryCommentList"];
+                };
+            };
+        };
+    };
+    gallery_comments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GalleryCommentCreateRequest"];
+                "multipart/form-data": components["schemas"]["GalleryCommentCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GalleryCommentCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalleryComment"];
+                };
+            };
+        };
+    };
     gallery_images_create: {
         parameters: {
             query?: never;
@@ -7470,6 +7970,68 @@ export interface operations {
             path: {
                 image_id: number;
                 post_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    gallery_like_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalleryLikeResult"];
+                };
+            };
+        };
+    };
+    gallery_like_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GalleryLikeResult"];
+                };
+            };
+        };
+    };
+    gallery_comments_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: number;
             };
             cookie?: never;
         };
@@ -7809,6 +8371,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NotificationList"];
+                };
+            };
+        };
+    };
+    me_notifications_click_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"];
                 };
             };
         };

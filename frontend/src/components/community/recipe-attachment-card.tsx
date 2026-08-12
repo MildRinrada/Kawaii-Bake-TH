@@ -61,7 +61,7 @@ export function RecipeAttachmentCard({
             <Icon name="ui/paperclip" className="size-4" />
             โพสต์นี้แนบสูตร
           </span>
-          <span className="font-display mt-0.5 block truncate font-medium text-fg group-hover:text-accent-hover">
+          <span className="font-display mt-0.5 block truncate font-medium text-fg group-hover:underline">
             {details.title}
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">

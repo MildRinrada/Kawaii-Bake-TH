@@ -37,6 +37,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityImageGallery } from "@/components/community/image-gallery";
 import { CommunityPostCard } from "@/components/community/post-card";
+import { PostInteractions } from "@/components/community/post-interactions";
 import { RecipeAttachmentCard } from "@/components/community/recipe-attachment-card";
 import { describeAdminError } from "@/components/admin/lifecycle";
 
@@ -271,9 +272,13 @@ export function PostDetailScreen({ id }: { id: string }) {
           ) : null}
         </Card>
 
-        {/* Interactions the backend does not have yet  stated, not faked. */}
+        {/* Likes and comments are real (ADR 0032); the comment thread is
+            open by default here - this page *is* the conversation. */}
+        <Card className="mt-3 overflow-hidden">
+          <PostInteractions post={data} defaultOpen />
+        </Card>
         <p className="mt-3 text-center text-xs text-fg-subtle">
-          ระบบคอมเมนต์และบันทึกโพสต์ยังไม่เปิดใช้งานในเวอร์ชันนี้
+          การบันทึกโพสต์ยังไม่เปิดใช้งานในเวอร์ชันนี้
         </p>
 
         {relatedPosts.length > 0 ? (

@@ -7,19 +7,19 @@
  * both as a clearly-marked reference so a showcase can never be mistaken
  * for a recipe.
  *
- * The action row carries only what the backend can actually do. The
- * gallery app has no likes, comments or bookmarks (its model docstring
- * calls interactions a future phase), so this renders a share/copy-link
- * action  which needs no backend  and nothing that would 404 on click.
+ * The action row carries only what the backend can actually do: likes
+ * and comments are real endpoints now (ADR 0032), share copies a link,
+ * and nothing renders that would 404 on click.
  *
- * The author additionally gets hide/delete right on the card (with the
- * full editor one click away on the post page), so managing your own
- * posts never requires hunting through the feed one detail page at a
- * time. Ownership is decided by comparing handles from `useAuth`  a
+ * Owner actions (edit / hide / delete) live in a `⋯` menu in the card's
+ * corner rather than beside the social actions - "share" and "delete"
+ * are not the same kind of button, and delete is styled as the danger
+ * it is. Ownership is decided by comparing handles from `useAuth`  a
  * cosmetic gate only; the backend re-authorises every mutation.
  */
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { api } from "@/lib/api/client";
@@ -30,7 +30,9 @@ import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
 import { Icon } from "@/components/ui/icon";
 import { Card } from "@/components/ui/card";
+import { Dropdown } from "@/components/ui/dropdown";
 import { CommunityImageGallery } from "@/components/community/image-gallery";
+import { PostInteractions } from "@/components/community/post-interactions";
 import { RecipeAttachmentCard } from "@/components/community/recipe-attachment-card";
 
 /**
@@ -65,15 +67,13 @@ export function CommunityPostCard({
   const Heading = headingLevel;
   const { toast } = useToast();
   const { user } = useAuth();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [armedDelete, setArmedDelete] = useState(false);
   const badge = kindBadge(post);
   const isOwner =
     Boolean(onMutated) && user !== null && user.username === post.author_handle;
 
   async function toggleHidden() {
-    setBusy(true);
     try {
       await api.patch(`/gallery/${post.id}/`, {
         body: {
@@ -89,27 +89,22 @@ export function CommunityPostCard({
       onMutated?.();
     } catch {
       toast("บันทึกไม่สำเร็จ ลองอีกครั้งนะ", "danger");
-    } finally {
-      setBusy(false);
     }
   }
 
   async function removePost() {
-    // Two-step arm-then-confirm on the button itself: a modal would be
-    // heavier than the action deserves inside a feed card.
-    if (!armedDelete) {
-      setArmedDelete(true);
-      setTimeout(() => setArmedDelete(false), 4000);
+    // The menu already hides this behind a deliberate open-and-pick, so
+    // one confirm is the right amount of friction for an irreversible
+    // delete.
+    if (!window.confirm("ลบโพสต์นี้ถาวร? รูปและคอมเมนต์ทั้งหมดจะหายไปด้วย")) {
       return;
     }
-    setBusy(true);
     try {
       await api.delete(`/gallery/${post.id}/`);
       toast("ลบโพสต์แล้ว", "success");
       onMutated?.();
     } catch {
       toast("ลบไม่สำเร็จ ลองอีกครั้งนะ", "danger");
-      setBusy(false);
     }
   }
 
@@ -160,11 +155,54 @@ export function CommunityPostCard({
             {badge.label}
           </span>
         ) : null}
+        {isOwner ? (
+          <Dropdown
+            align="end"
+            trigger={
+              <span
+                aria-label="จัดการโพสต์ของฉัน"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full text-lg leading-none text-fg-muted hover:bg-surface-sunken"
+              >
+                ⋯
+              </span>
+            }
+            items={[
+              {
+                key: "edit",
+                label: "แก้ไขโพสต์",
+                onSelect: () => router.push(`/community/posts/${post.id}`),
+              },
+              {
+                key: "hide",
+                label:
+                  post.status === "unpublished" ? "แสดงโพสต์อีกครั้ง" : "ซ่อนโพสต์",
+                onSelect: () => void toggleHidden(),
+              },
+              {
+                key: "delete",
+                label: "ลบโพสต์",
+                danger: true,
+                separator: true,
+                onSelect: () => void removePost(),
+              },
+            ]}
+          />
+        ) : null}
       </div>
 
-      {post.caption ? (
-        <p className="whitespace-pre-wrap px-4 pt-3 text-sm text-fg">
+      {/* The post's own words are the content, so they outrank the
+          card's metadata; an empty caption falls back to the recipe it
+          was baked from rather than leaving a gap. */}
+      {post.caption?.trim() ? (
+        <p className="whitespace-pre-wrap px-4 pt-3 text-base leading-relaxed text-fg">
           {post.caption}
+        </p>
+      ) : post.recipe || post.course ? (
+        <p className="px-4 pt-3 text-base text-fg-muted">
+          ผลงานจาก{post.recipe ? "สูตร" : "คอร์ส"}{" "}
+          <span className="text-fg">
+            {post.recipe?.title ?? post.course?.title}
+          </span>
         </p>
       ) : null}
 
@@ -184,12 +222,16 @@ export function CommunityPostCard({
         </div>
       ) : null}
 
-      <div className="mt-3 flex items-center gap-1 border-t border-edge px-2 py-1.5">
+      <div className="mt-3">
+        <PostInteractions post={post} />
+      </div>
+
+      <div className="flex items-center gap-1 border-t border-edge px-2 py-1.5">
         <Link
           href={`/community/posts/${post.id}`}
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <Icon name="ui/chat" className="size-4" />
+          <Icon name="ui/eye" className="size-4" />
           เปิดโพสต์
         </Link>
         <button
@@ -204,39 +246,6 @@ export function CommunityPostCard({
         {post.images.length > 1 ? (
           <span className="ml-auto pr-2 text-xs text-fg-subtle">
             {post.images.length} รูป
-          </span>
-        ) : null}
-        {isOwner ? (
-          <span
-            className={`flex items-center gap-1 ${post.images.length > 1 ? "" : "ml-auto"}`}
-          >
-            <Link
-              href={`/community/posts/${post.id}`}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
-            >
-              <Icon name="ui/edit" className="size-4" tint />
-              แก้ไข
-            </Link>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={toggleHidden}
-              className="rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus disabled:opacity-50"
-            >
-              {post.status === "unpublished" ? "แสดงโพสต์" : "ซ่อน"}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={removePost}
-              className={`rounded-full px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus disabled:opacity-50 ${
-                armedDelete
-                  ? "bg-danger/10 font-medium text-danger"
-                  : "text-fg-muted hover:bg-surface-sunken hover:text-danger"
-              }`}
-            >
-              {armedDelete ? "ยืนยันลบ?" : "ลบ"}
-            </button>
           </span>
         ) : null}
       </div>

@@ -10,6 +10,13 @@ export interface FieldProps {
   errors?: string[];
   hint?: string;
   required?: boolean;
+  /**
+   * Rendered at the far end of the label row - for the one link that
+   * belongs to a single field ("ลืมรหัสผ่าน?" beside รหัสผ่าน). Below
+   * the input it would compete with the error text; above it, it reads
+   * as part of the label it belongs to.
+   */
+  action?: ReactNode;
   className?: string;
   /** Render prop receives the wiring for the control. */
   children: (control: {
@@ -28,6 +35,7 @@ export function Field({
   errors,
   hint,
   required,
+  action,
   className,
   children,
 }: FieldProps) {
@@ -36,17 +44,20 @@ export function Field({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={id} className="block text-sm font-medium text-fg">
-        {label}
-        {/* Red is the convention for "required"; aria-hidden because the
-            control itself carries `required`/validation for readers. */}
-        {required ? (
-          <span aria-hidden className="font-semibold text-danger">
-            {" "}
-            *
-          </span>
-        ) : null}
-      </label>
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor={id} className="block text-sm font-medium text-fg">
+          {label}
+          {/* Red is the convention for "required"; aria-hidden because the
+              control itself carries `required`/validation for readers. */}
+          {required ? (
+            <span aria-hidden className="font-semibold text-danger">
+              {" "}
+              *
+            </span>
+          ) : null}
+        </label>
+        {action}
+      </div>
       {children({
         id,
         "aria-invalid": errors?.length ? true : undefined,

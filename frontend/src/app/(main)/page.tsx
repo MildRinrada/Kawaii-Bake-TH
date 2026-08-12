@@ -13,7 +13,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Route } from "next";
 
 import { api, type Paginated } from "@/lib/api/client";
@@ -33,7 +33,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge, DifficultyBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardBody } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,7 @@ function Section({
   description,
   href,
   hrefLabel = "ดูทั้งหมด →",
+  action,
   children,
   className,
 }: {
@@ -63,6 +64,9 @@ function Section({
   description?: string;
   href?: Route;
   hrefLabel?: string;
+  /** A section-owned CTA, on the heading row beside the "see all" link
+      rather than stacked in a band of its own above the grid. */
+  action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -77,23 +81,33 @@ function Section({
             <p className="mt-1 text-sm text-fg-muted">{description}</p>
           ) : null}
         </div>
-        {href ? (
-          <Link
-            href={href}
-            className="rounded-full px-3 py-1 text-sm font-medium text-accent hover:bg-accent-subtle focus-visible:outline-2 focus-visible:outline-focus"
-          >
-            {hrefLabel}
-          </Link>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {action}
+          {href ? (
+            // Quiet by design: pink is reserved for the page's primary
+            // CTAs, so navigation links stay in the neutral ink.
+            <Link
+              href={href}
+              className="rounded-full px-3 py-1 text-sm font-medium text-fg-muted hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              {hrefLabel}
+            </Link>
+          ) : null}
+        </div>
       </div>
       {children}
     </section>
   );
 }
 
+/* Card grids flow with the data instead of demanding an exact count:
+   `auto-fill, minmax(17.5rem, 1fr)` keeps rows straight with 2 items or
+   12, so no section ever needs "just enough" content to look right. */
+const FLUID_GRID = "grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))]";
+
 function CardGridSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div aria-busy="true" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div aria-busy="true" className={FLUID_GRID}>
       {Array.from({ length: count }, (_, index) => (
         <Skeleton key={index} className="h-72 w-full rounded-surface" />
       ))}
@@ -123,9 +137,18 @@ function Hero() {
 
   return (
     <div className="kb-hero relative overflow-hidden border-b border-edge">
+      {/* Oversized past the top/bottom so the float bob never exposes a
+          gap, and left-masked so the photo fades into the hero gradient
+          instead of meeting it at a hard seam. */}
       <ArtIcon
         src={BANNER.home}
-        className="kb-float pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[58%] object-cover object-right lg:block"
+        className="kb-float pointer-events-none absolute -top-4 right-0 hidden h-[calc(100%+2rem)] w-[58%] object-cover object-right lg:block mask-[linear-gradient(to_right,transparent,black_28%)]"
+      />
+      {/* Scrim under the copy: whatever artwork the banner ships, the
+          headline keeps its contrast. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 hidden w-3/5 bg-gradient-to-r from-canvas/90 via-canvas/50 to-transparent lg:block"
       />
       <PageContainer className="relative py-14 sm:py-20">
         <div className="max-w-2xl">
@@ -141,16 +164,19 @@ function Hero() {
             เรียนกับผู้สอนตัวจริง พร้อมสูตรและวิธีทำแบบละเอียด แบบทดสอบ
             ใบประกาศนียบัตร และผู้ช่วย AI ที่ช่วยตอบคำถามเรื่องการอบขนมเป็นภาษาไทย
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
+          {/* One primary CTA; recipe browsing demotes to a quiet link so
+              the two never compete for the same click. */}
+          <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link href="/courses">
               <Button size="lg">
                 เริ่มเรียนเลย
               </Button>
             </Link>
-            <Link href="/recipes">
-              <Button size="lg" variant="secondary">
-                สำรวจสูตรขนม
-              </Button>
+            <Link
+              href="/recipes"
+              className="rounded-full px-3 py-2.5 text-sm font-medium text-fg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              สำรวจสูตรขนม →
             </Link>
           </div>
           <form
@@ -199,7 +225,6 @@ function ContinueLearning() {
     <Section
       title="เรียนต่อจากที่ค้างไว้"
       description="กลับเข้าบทเรียนล่าสุดของคุณได้เลย"
-      className="mt-10"
     >
       <div className="flex snap-x gap-4 overflow-x-auto pb-2">
         {courses.slice(0, 6).map((course) => (
@@ -245,21 +270,21 @@ const SKILL_LEVELS = [
     icon: "sprout" as const,
     name: "เริ่มต้นได้เลย",
     description: "ยังไม่เคยอบก็เริ่มได้  อุปกรณ์ วัตถุดิบ และสูตรแรกที่สำเร็จแน่",
-    className: "bg-mint-soft text-mint-ink",
+    tone: "mint" as const,
   },
   {
     difficulty: "intermediate",
     icon: "croissant" as const,
     name: "ระดับกลาง",
     description: "อบเป็นแล้ว อยากไปต่อ  เทคนิคแป้ง ครีม และการขึ้นรูป",
-    className: "bg-butter-soft text-butter-ink",
+    tone: "butter" as const,
   },
   {
     difficulty: "advanced",
     icon: "chef-hat" as const,
     name: "ขั้นสูง",
     description: "เก็บรายละเอียดระดับร้าน  งานตกแต่งและสูตรที่ท้าทาย",
-    className: "bg-peach-soft text-peach-ink",
+    tone: "peach" as const,
   },
 ] as const;
 
@@ -275,18 +300,23 @@ function SkillLevels() {
             key={level.difficulty}
             href={`/courses?difficulty=${level.difficulty}` as Route}
             className={cn(
-              "group rounded-surface p-6 shadow-raised transition-[transform,box-shadow] duration-150",
+              "group rounded-surface border border-edge bg-surface p-6 shadow-raised transition-[transform,box-shadow] duration-150",
               "hover:-translate-y-0.5 hover:shadow-overlay",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-              level.className,
             )}
           >
-            <Icon name={`ui/${level.icon}`} className="size-8" />
-            <h3 className="font-display mt-3 text-lg font-medium">
+            {/* One surface for all three. Green/amber/red panels read as
+                success/warning/error, which is a different meaning
+                entirely; the level is what the icon and badge say. */}
+            <div className="flex items-center gap-3">
+              <Icon name={`ui/${level.icon}`} className="size-8" />
+              <DifficultyBadge level={level.difficulty} />
+            </div>
+            <h3 className="font-display mt-3 text-lg font-medium text-fg">
               {level.name}
             </h3>
-            <p className="mt-1 text-sm opacity-90">{level.description}</p>
-            <p className="mt-4 text-sm font-medium">
+            <p className="mt-1 text-sm text-fg-muted">{level.description}</p>
+            <p className="mt-4 text-sm font-medium text-fg-muted">
               ดูคอร์สระดับนี้{" "}
               <span
                 aria-hidden
@@ -328,18 +358,24 @@ function FeaturedCourses() {
         <ErrorState error={courses.error} onRetry={courses.refetch} />
       ) : !courses.data || courses.data.results.length === 0 ? (
         <EmptyState icon={<Icon name="ui/graduation" className="size-8 text-fg-subtle" />} title="ยังไม่มีคอร์สเรียน" description="คอร์สแรกกำลังจะเปิดเร็ว ๆ นี้" />
+      ) : courses.data.results.length < 4 ? (
+        // Too few courses to earn a hero slot - a plain fluid grid
+        // never leaves a lonely featured card over an empty row.
+        <div className={FLUID_GRID}>
+          {courses.data.results.map((course) => (
+            <CourseCard key={course.slug} course={course} />
+          ))}
+        </div>
       ) : (
         <div className="space-y-5">
           <FeaturedCourseCard course={courses.data.results[0]} />
-          {courses.data.results.length > 1 ? (
-            <div className="flex snap-x gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
-              {courses.data.results.slice(1).map((course) => (
-                <div key={course.slug} className="w-70 shrink-0 snap-start sm:w-auto">
-                  <CourseCard course={course} />
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <div className="flex snap-x gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))] sm:overflow-visible sm:pb-0">
+            {courses.data.results.slice(1).map((course) => (
+              <div key={course.slug} className="w-70 shrink-0 snap-start sm:w-auto">
+                <CourseCard course={course} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </Section>
@@ -353,8 +389,15 @@ function FeaturedCourseCard({ course }: { course: CourseListItem }) {
       className="group block rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <Card className="overflow-hidden transition-[transform,box-shadow] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-overlay md:flex">
-        <div className="aspect-video w-full overflow-hidden md:aspect-auto md:w-1/2">
-          <MediaFrame src={course.thumbnail_url} seed={course.slug} />
+        {/* The cover is a locked 16:9 box at every breakpoint - the same
+            ratio as every other course card (and the /courses featured
+            card), so a huge upload can never inflate it and all covers
+            line up. The absolute fill keeps it cover-cropped if the text
+            column ever runs taller. */}
+        <div className="relative aspect-video w-full overflow-hidden md:w-1/2 md:self-stretch">
+          <div className="size-full md:absolute md:inset-0">
+            <MediaFrame src={course.thumbnail_url} seed={course.slug} />
+          </div>
         </div>
         <div className="flex flex-col justify-center gap-3 p-6 md:w-1/2 md:p-8">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -383,7 +426,12 @@ function FeaturedCourseCard({ course }: { course: CourseListItem }) {
 /* Recommendation feed (trending for anonymous, personal for members) */
 /* ------------------------------------------------------------------ */
 
-function RecommendationFeed() {
+function RecommendationFeed({
+  onShown,
+}: {
+  /** The slugs this section rendered, so later sections can skip them. */
+  onShown: (slugs: string[]) => void;
+}) {
   const { status } = useAuth();
   const feed = useApiQuery(
     (signal) =>
@@ -395,6 +443,13 @@ function RecommendationFeed() {
   );
 
   const items = (feed.data?.results ?? []).filter((item) => item.recipe);
+  // A string, not the array: the effect should fire on content, not on
+  // every new array identity.
+  const shown = items.map((item) => item.recipe!.slug).join(",");
+  useEffect(() => {
+    onShown(shown ? shown.split(",") : []);
+  }, [shown, onShown]);
+
   if (feed.error || (!feed.loading && items.length === 0)) return null;
 
   const authenticated = status === "authenticated";
@@ -411,7 +466,7 @@ function RecommendationFeed() {
       {feed.loading ? (
         <CardGridSkeleton />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={FLUID_GRID}>
           {items.map((item, index) => (
             <div key={index}>
               <RecipeCard recipe={item.recipe as unknown as RecipeListItem} />
@@ -436,40 +491,43 @@ function RecommendationFeed() {
 /* Recipe discovery                                                   */
 /* ------------------------------------------------------------------ */
 
-function RecipeDiscovery() {
+function RecipeDiscovery({ exclude }: { exclude: string[] }) {
   const recipes = useApiQuery(
     (signal) =>
       api.get<Paginated<RecipeListItem>>("/recipes/", {
-        query: { page_size: 6 },
+        // Over-fetch, so dropping what another section already showed
+        // still leaves a full row.
+        query: { page_size: 9 },
         signal,
       }),
     [],
   );
+  const items = (recipes.data?.results ?? [])
+    .filter((recipe) => !exclude.includes(recipe.slug))
+    .slice(0, 6);
 
   return (
     <Section
       title="สูตรขนมล่าสุด"
       description="ทำตามได้เลย พร้อมส่วนผสมและวิธีทำครบทุกขั้นตอน"
       href="/recipes"
-    >
-      {/* The recipe section owns recipe authoring; the community section
-          below owns post creation. The two CTAs never share a section. */}
-      <div className="mb-4 flex justify-end">
+      action={
         <Link href="/recipes/create">
           <Button variant="secondary" size="sm">
-            + เพิ่มสูตรอาหาร
+            <Icon name="ui/plus" tint className="size-4" /> เพิ่มสูตร
           </Button>
         </Link>
-      </div>
+      }
+    >
       {recipes.loading ? (
         <CardGridSkeleton count={6} />
       ) : recipes.error ? (
         <ErrorState error={recipes.error} onRetry={recipes.refetch} />
-      ) : !recipes.data || recipes.data.results.length === 0 ? (
+      ) : items.length === 0 ? (
         <EmptyState title="ยังไม่มีสูตรขนม" description="สูตรแรกกำลังจะมาเร็ว ๆ นี้" />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {recipes.data.results.map((recipe) => (
+        <div className={FLUID_GRID}>
+          {items.map((recipe) => (
             <RecipeCard key={recipe.slug} recipe={recipe} />
           ))}
         </div>
@@ -488,7 +546,11 @@ function CategoryExplorer() {
     [],
   );
 
-  const items = categories.data ?? [];
+  // A tile with "0 สูตร" is a dead end, not an invitation - only
+  // categories that actually lead somewhere get shown.
+  const items = (categories.data ?? []).filter(
+    (category) => category.recipe_count > 0,
+  );
   if (categories.error || (!categories.loading && items.length === 0)) {
     return null;
   }
@@ -530,65 +592,12 @@ function CategoryExplorer() {
 /* ------------------------------------------------------------------ */
 
 /**
- * The homepage's community entry point.
+ * The homepage community section.
  *
- * A composer-shaped invitation, not a working editor: tapping it opens
- * `/community/create`, where the real post is written. Anonymous
- * visitors get a sign-in call instead  the backend refuses anonymous
- * writes anyway, so showing a composer that cannot submit would be a
- * lie.
+ * Read-only on purpose: it shows what people made and asked, and sends
+ * them to /community to take part. The compose box that used to sit
+ * here was a second entry point to the same editor.
  */
-function CommunityComposerCard() {
-  const { status, user } = useAuth();
-
-  if (status === "anonymous") {
-    return (
-      <Card className="kb-hero border-none">
-        <CardBody className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="font-display font-medium text-fg">
-              อยากแบ่งปันขนมของคุณกับชุมชน?
-            </p>
-            <p className="text-sm text-fg-muted">
-              เข้าสู่ระบบเพื่อโพสต์ผลงาน รูปถ่าย และเทคนิคของคุณ
-            </p>
-          </div>
-          <Link href="/login">
-            <Button>เข้าสู่ระบบเพื่อโพสต์</Button>
-          </Link>
-        </CardBody>
-      </Card>
-    );
-  }
-
-  if (status !== "authenticated") return null;
-
-  return (
-    <Card>
-      <CardBody className="space-y-3">
-        <p className="text-sm text-fg-muted">
-          มีอะไรอยากแบ่งปันเกี่ยวกับการทำขนม?
-        </p>
-        <div className="flex items-center gap-3">
-          <Avatar
-            src={user?.avatar_url}
-            name={user?.display_name || user?.username || "คุณ"}
-          />
-          <Link
-            href="/community/create"
-            className="flex-1 rounded-full bg-surface-sunken px-4 py-2.5 text-sm text-fg-subtle transition-colors hover:bg-accent-subtle hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            เขียนโพสต์…
-          </Link>
-          <Link href="/community/create" className="shrink-0">
-            <Button size="sm">+ สร้างโพสต์</Button>
-          </Link>
-        </div>
-      </CardBody>
-    </Card>
-  );
-}
-
 function CommunityPreview() {
   const gallery = useApiQuery(
     (signal) =>
@@ -622,30 +631,55 @@ function CommunityPreview() {
       href="/community"
       hrefLabel="ไปที่ชุมชน →"
     >
-      <CommunityComposerCard />
-
-      <div className="mt-5 grid gap-6 lg:grid-cols-[3fr_2fr]">
+      {/* No composer here: posting belongs to /community, and a compose
+          box on the home page duplicated the one that lives there. */}
+      {/* Stacked, not two columns: squeezing the work into a third of
+          the row made cards a third the size of every other card on the
+          page. Same grid as the recipes above. */}
+      <div className="space-y-8">
         {posts.length > 0 ? (
           <div>
             <h3 className="mb-3 text-sm font-medium text-fg-muted">
               ผลงานล่าสุด
             </h3>
-            <div className="grid grid-cols-3 gap-3">
-              {posts.slice(0, 6).map((post) => (
-                <figure key={post.id} className="group relative overflow-hidden rounded-control">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={post.images[0].url}
-                    alt={post.caption || `ผลงานของ ${post.author_display_name}`}
-                    loading="lazy"
-                    className="aspect-square w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                  />
-                  <figcaption className="absolute inset-x-0 bottom-0 truncate bg-fg/55 px-2 py-1 text-xs text-fg-inverted">
-                    {post.author_display_name}
-                  </figcaption>
-                </figure>
+            <ul className={FLUID_GRID}>
+              {posts.slice(0, 3).map((post) => (
+                <li key={post.id}>
+                  <Link
+                    href={`/community/posts/${post.id}` as Route}
+                    className="group block h-full rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  >
+                    <Card className="flex h-full flex-col overflow-hidden transition-[transform,box-shadow] duration-150 group-hover:-translate-y-0.5 group-hover:shadow-overlay">
+                      <div className="aspect-4/3 w-full overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.images[0].url}
+                          alt={post.caption || `ผลงานของ ${post.author_display_name}`}
+                          loading="lazy"
+                          className="size-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-2 p-4">
+                        <p className="line-clamp-2 min-h-10 text-sm text-fg">
+                          {post.caption ||
+                            (post.recipe ? `ทำจากสูตร ${post.recipe.title}` : "")}
+                        </p>
+                        <p className="mt-auto flex items-center gap-2 pt-1 text-xs text-fg-subtle">
+                          <Avatar
+                            src={post.author_avatar_url}
+                            name={post.author_display_name}
+                            size="sm"
+                          />
+                          <span className="truncate">
+                            {post.author_display_name}
+                          </span>
+                        </p>
+                      </div>
+                    </Card>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         ) : null}
         {questions.length > 0 ? (
@@ -653,41 +687,27 @@ function CommunityPreview() {
             <h3 className="mb-3 text-sm font-medium text-fg-muted">
               ถาม-ตอบล่าสุด
             </h3>
-            <ul className="space-y-3">
-              {questions.map((thread) => {
-                const target = thread.recipe
-                  ? (`/recipes/${thread.recipe.slug}` as Route)
-                  : thread.course
-                    ? (`/courses/${thread.course.slug}` as Route)
-                    : null;
-                const body = (
-                  <Card className="p-4 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-overlay">
-                    <p className="font-display line-clamp-1 font-medium text-fg">
-                      <Icon name="ui/chat" className="size-3.5" /> {thread.title}
-                    </p>
-                    <p className="mt-1 flex items-center justify-between text-xs text-fg-subtle">
-                      <span>ถามโดย @{thread.author_handle}</span>
-                      {thread.accepted_answer ? (
-                        <Badge tone="mint"><Icon name="ui/check" className="size-3.5" /> มีคำตอบแล้ว</Badge>
-                      ) : null}
-                    </p>
-                  </Card>
-                );
-                return (
-                  <li key={thread.id}>
-                    {target ? (
-                      <Link
-                        href={target}
-                        className="block rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                      >
-                        {body}
-                      </Link>
-                    ) : (
-                      body
-                    )}
-                  </li>
-                );
-              })}
+            <ul className="grid gap-3 sm:grid-cols-3">
+              {questions.map((thread) => (
+                <li key={thread.id}>
+                  <Link
+                    href={`/threads/${thread.id}` as Route}
+                    className="block rounded-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  >
+                    <Card className="p-4 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-overlay">
+                      <p className="font-display line-clamp-1 font-medium text-fg">
+                        <Icon name="ui/chat" className="size-3.5" /> {thread.title}
+                      </p>
+                      <p className="mt-1 flex items-center justify-between text-xs text-fg-subtle">
+                        <span>ถามโดย @{thread.author_handle}</span>
+                        {thread.accepted_answer ? (
+                          <Badge tone="mint"><Icon name="ui/check" className="size-3.5" /> มีคำตอบแล้ว</Badge>
+                        ) : null}
+                      </p>
+                    </Card>
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         ) : null}
@@ -701,6 +721,11 @@ function CommunityPreview() {
 /* ------------------------------------------------------------------ */
 
 export default function HomePage() {
+  // What the recommendation feed showed, so the discovery grid below can
+  // skip it: the same recipe in two sections of one page makes the
+  // catalogue look smaller than it is.
+  const [recommended, setRecommended] = useState<string[]>([]);
+
   return (
     <>
       <Hero />
@@ -708,8 +733,8 @@ export default function HomePage() {
         <ContinueLearning />
         <SkillLevels />
         <FeaturedCourses />
-        <RecommendationFeed />
-        <RecipeDiscovery />
+        <RecommendationFeed onShown={setRecommended} />
+        <RecipeDiscovery exclude={recommended} />
         {/* Community sits after recipes and before categories: enough to
             say "you can post here", never enough to take over the page. */}
         <CommunityPreview />

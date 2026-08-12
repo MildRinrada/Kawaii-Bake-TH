@@ -11,6 +11,7 @@ from apps.authentication.api.views.password_views import (
 )
 from apps.authentication.api.views.session_views import (
     CsrfView,
+    GoogleSignInView,
     LoginView,
     LogoutView,
     MeView,
@@ -33,6 +34,7 @@ urlpatterns = [
         name="username_available",
     ),
     path("login/", LoginView.as_view(), name="login"),
+    path("google/", GoogleSignInView.as_view(), name="google"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("me/", MeView.as_view(), name="me"),
     path(

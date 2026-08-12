@@ -53,7 +53,7 @@ class ReviewApiTests(TestCase):
         self.client.force_login(self.reviewer)
         created = self.client.post(
             f"/api/v1/courses/{self.course.slug}/reviews/",
-            {"rating": 4, "comment": "สอนดีมาก"},
+            {"rating": 4, "comment": "สอนดีมาก อธิบายละเอียดเข้าใจง่าย"},
             format="json",
         )
         self.assertEqual(created.status_code, 201)
@@ -142,3 +142,43 @@ class ReviewApiTests(TestCase):
                 f"/api/v1/recipes/{self.recipe.slug}/reviews/"
             )
         self.assertEqual(response.json()["count"], 4)
+
+
+class ReviewCommentRuleTests(TestCase):
+    """A comment is optional, but a non-blank one has to say something."""
+
+    def setUp(self) -> None:
+        """One reviewer and one recipe to review."""
+        self.client = APIClient()
+        self.author = create_user(username="rulechef")
+        self.reviewer = create_user(username="rulefan")
+        self.recipe = create_published_recipe(author=self.author, slug="rule-cake")
+        self.client.force_login(self.reviewer)
+
+    def _post(self, comment: str) -> int:
+        """POST a 5-star review with this comment; return the status."""
+        return self.client.post(
+            f"/api/v1/recipes/{self.recipe.slug}/reviews/",
+            {"rating": 5, "comment": comment},
+            format="json",
+        ).status_code
+
+    def test_a_stray_keystroke_is_refused(self) -> None:
+        """"tedst" must not become permanent content on a recipe page."""
+        self.assertEqual(self._post("tedst"), 400)
+        self.assertEqual(self._post("   ab   "), 400)
+
+    def test_rating_only_review_is_still_allowed(self) -> None:
+        """Blank is a complete review: the rating is the opinion."""
+        self.assertEqual(self._post(""), 201)
+
+    def test_a_real_comment_passes(self) -> None:
+        """The bar is low - one honest sentence clears it."""
+        self.assertEqual(
+            self.client.post(
+                f"/api/v1/recipes/{self.recipe.slug}/reviews/",
+                {"rating": 5, "comment": "อร่อยมาก ทำตามแล้วขึ้นฟูสวยเลย"},
+                format="json",
+            ).status_code,
+            201,
+        )

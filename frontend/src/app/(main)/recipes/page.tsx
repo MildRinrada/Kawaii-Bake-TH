@@ -45,6 +45,11 @@ const FAVORITE_TOAST = "favorite";
 
 const PAGE_SIZE = 12;
 
+/* Fluid card grid (shared rule with /courses and the home page):
+   rows stay straight at any item count. */
+const FLUID_GRID =
+  "grid gap-5 sm:grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))]";
+
 const DIFFICULTIES = [
   { value: "easy", label: "ง่าย" },
   { value: "medium", label: "ปานกลาง" },
@@ -92,9 +97,12 @@ function FilterChip({
       className={cn(
         "rounded-full px-3.5 py-1.5 text-sm transition-colors",
         "focus-visible:outline-2 focus-visible:outline-focus",
+        // Selected = dark ink, not pink: the accent belongs to the
+        // page's primary actions, and a solid dark pill is the loudest
+        // "this one is on" a chip row can say.
         active
-          ? "bg-accent font-medium text-fg-inverted shadow-raised"
-          : "bg-surface text-fg-muted shadow-raised hover:text-fg",
+          ? "bg-fg font-medium text-fg-inverted shadow-raised"
+          : "border border-edge bg-surface text-fg-muted hover:border-edge-strong hover:text-fg",
       )}
     >
       {children}
@@ -147,6 +155,19 @@ function SearchBox({
     return () => clearTimeout(handle);
   }, [term]);
 
+  // Live filtering: typing narrows the grid on its own, so the field
+  // needs no submit button. The callback goes through a ref because the
+  // page passes a fresh arrow every render.
+  const searchRef = useRef(onSearch);
+  useEffect(() => {
+    searchRef.current = onSearch;
+  });
+  useEffect(() => {
+    if (term === initial) return;
+    const handle = setTimeout(() => searchRef.current(term), 400);
+    return () => clearTimeout(handle);
+  }, [term, initial]);
+
   const categoryHits =
     term.length >= 1
       ? categories
@@ -166,14 +187,22 @@ function SearchBox({
 
   return (
     <div className="relative max-w-xl">
+      {/* One field, magnifier inside, live (debounced) results - the
+          same search shape every list page uses. The panel below adds
+          what typing alone cannot do: jump to a recipe, a category, or
+          switch to an ingredient search. */}
       <form
         role="search"
-        className="flex gap-2"
+        className="relative"
         onSubmit={(event) => {
           event.preventDefault();
           choose(() => onSearch(term));
         }}
       >
+        <Icon
+          name="ui/search"
+          className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-fg-subtle"
+        />
         <Input
           type="search"
           value={value}
@@ -188,11 +217,22 @@ function SearchBox({
           placeholder="ค้นหาสูตร หรือวัตถุดิบ เช่น ครัวซองต์, ช็อกโกแลต…"
           aria-label="ค้นหาสูตรขนม"
           aria-expanded={showPanel}
-          className="rounded-full"
+          className="rounded-full pl-10 pr-10"
         />
-        <Button type="submit" variant="secondary">
-          ค้นหา
-        </Button>
+        {value ? (
+          <button
+            type="button"
+            aria-label="ล้างคำค้น"
+            onClick={() => {
+              setValue("");
+              setOpen(false);
+              onSearch("");
+            }}
+            className="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-fg-subtle hover:bg-surface-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
+          >
+            <Icon name="ui/close" className="size-4" />
+          </button>
+        ) : null}
       </form>
 
       {showPanel ? (
@@ -238,14 +278,6 @@ function SearchBox({
             </div>
           ) : null}
           <div className="p-2">
-            <button
-              type="button"
-              onClick={() => choose(() => onSearch(term))}
-              className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left text-sm text-fg hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
-            >
-              <Icon name="ui/search" className="size-4 shrink-0" />
-              ค้นหา “{term}” ในชื่อสูตร
-            </button>
             <button
               type="button"
               onClick={() => choose(() => onIngredient(term))}
@@ -312,15 +344,22 @@ function SaveableRecipeCard({
               : `บันทึก ${recipe.title} เข้ารายการโปรด`
           }
           className={cn(
-            "absolute right-3 top-3 flex size-11 items-center justify-center rounded-full text-lg shadow-raised backdrop-blur transition-transform",
+            // Always the same opaque white disc - it must stay legible
+            // over a bright photo. Only the heart itself changes: solid
+            // pink when saved, outline when not.
+            "absolute right-3 top-3 flex size-11 items-center justify-center rounded-full bg-surface/95 shadow-raised ring-1 ring-edge backdrop-blur transition-transform",
             "focus-visible:outline-2 focus-visible:outline-focus",
-            saved
-              ? "bg-accent text-fg-inverted"
-              : "bg-surface/90 text-accent hover:scale-110",
+            saved ? "text-accent" : "text-fg-muted hover:scale-110 hover:text-accent",
             busy && "opacity-60",
           )}
         >
-          <Icon name={saved ? "ui/heart-filled-2" : "ui/heart"} className="size-5" />
+          {/* Tinted: the heart must take the button's colour so the two
+              states differ by colour, not by the disc behind them. */}
+          <Icon
+            tint
+            name={saved ? "ui/heart-filled-2" : "ui/heart"}
+            className="size-5"
+          />
         </button>
       ) : null}
     </div>
@@ -485,36 +524,52 @@ function RecipesContent() {
           </FilterChip>
         ))}
       </div>
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="กรองตามเวลา">
-        <span className="text-xs font-medium text-fg-subtle">เวลา:</span>
-        {TIME_CAPS.map((item) => (
-          <FilterChip
-            key={item.value}
-            active={maxMinutes === item.value}
-            onClick={() =>
-              setParams({
-                max_total_minutes: maxMinutes === item.value ? null : item.value,
-              })
-            }
-          >
-            {item.label}
-          </FilterChip>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="กรองตามวัตถุดิบ">
-        <span className="text-xs font-medium text-fg-subtle">มีวัตถุดิบ:</span>
-        {PANTRY_CHIPS.map((term) => (
-          <FilterChip
-            key={term}
-            active={ingredient === term}
-            onClick={() =>
-              setParams({ ingredient: ingredient === term ? null : term })
-            }
-          >
-            {term}
-          </FilterChip>
-        ))}
-      </div>
+      {/* Time and pantry are the rarely-used two-thirds of the filter
+          block; folded away they stop pushing the recipes below the
+          fold. Open by default whenever one of them is in use, so a
+          collapsed panel never hides an active filter. */}
+      <details open={Boolean(maxMinutes || ingredient)} className="group">
+        <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-full px-1 py-1 text-xs font-medium text-fg-muted hover:text-fg [&::-webkit-details-marker]:hidden">
+          ตัวกรองเพิ่มเติม (เวลา · วัตถุดิบ)
+          <Icon
+            name="ui/chevron-down"
+            className="size-3.5 transition-transform group-open:rotate-180"
+          />
+        </summary>
+        <div className="mt-2 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="กรองตามเวลา">
+            <span className="text-xs font-medium text-fg-subtle">เวลา:</span>
+            {TIME_CAPS.map((item) => (
+              <FilterChip
+                key={item.value}
+                active={maxMinutes === item.value}
+                onClick={() =>
+                  setParams({
+                    max_total_minutes:
+                      maxMinutes === item.value ? null : item.value,
+                  })
+                }
+              >
+                {item.label}
+              </FilterChip>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="กรองตามวัตถุดิบ">
+            <span className="text-xs font-medium text-fg-subtle">มีวัตถุดิบ:</span>
+            {PANTRY_CHIPS.map((term) => (
+              <FilterChip
+                key={term}
+                active={ingredient === term}
+                onClick={() =>
+                  setParams({ ingredient: ingredient === term ? null : term })
+                }
+              >
+                {term}
+              </FilterChip>
+            ))}
+          </div>
+        </div>
+      </details>
     </>
   );
 
@@ -531,7 +586,9 @@ function RecipesContent() {
           // The primary recipe-authoring entry point. Community posting
           // deliberately has no CTA on this page.
           <Link href="/recipes/create">
-            <Button>+ เพิ่มสูตรอาหาร</Button>
+            <Button>
+              <Icon name="ui/plus" className="size-4" /> เพิ่มสูตรอาหาร
+            </Button>
           </Link>
         }
       />
@@ -551,20 +608,25 @@ function RecipesContent() {
           role="group"
           aria-label="หมวดขนม"
         >
-          {categories.data.map((category) => (
-            <CategoryTile
-              key={category.slug}
-              compact
-              slug={category.slug}
-              name={category.name}
-              count={category.recipe_count}
-              imageUrl={category.image_url}
-              active={selectedCategories.includes(category.slug)}
-              onClick={() =>
-                toggleInList(selectedCategories, category.slug, "category")
-              }
-            />
-          ))}
+          {/* Categories with recipes first; empty ones keep their place
+              at the end of the row, dimmed and unclickable. */}
+          {[...categories.data]
+            .sort((a, b) => Number(b.recipe_count > 0) - Number(a.recipe_count > 0))
+            .map((category) => (
+              <CategoryTile
+                key={category.slug}
+                compact
+                slug={category.slug}
+                name={category.name}
+                count={category.recipe_count}
+                imageUrl={category.image_url}
+                disabled={category.recipe_count === 0}
+                active={selectedCategories.includes(category.slug)}
+                onClick={() =>
+                  toggleInList(selectedCategories, category.slug, "category")
+                }
+              />
+            ))}
         </div>
       ) : null}
 
@@ -577,7 +639,7 @@ function RecipesContent() {
           aria-expanded={sheetOpen}
           onClick={() => setSheetOpen(true)}
         >
-          ⚙️ ตัวกรอง{activeFilterCount ? ` (${activeFilterCount})` : ""}
+          <Icon name="ui/sliders" className="size-4" /> ตัวกรอง{activeFilterCount ? ` (${activeFilterCount})` : ""}
         </Button>
       </div>
 
@@ -660,7 +722,7 @@ function RecipesContent() {
       </div>
 
       {loading ? (
-        <div aria-busy="true" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div aria-busy="true" className={FLUID_GRID}>
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-72 w-full rounded-surface" />
           ))}
@@ -705,7 +767,7 @@ function RecipesContent() {
               <h2 className="font-display mb-4 text-lg font-medium text-fg">
                 หรือลองสูตรเหล่านี้ดูก่อน
               </h2>
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className={FLUID_GRID}>
                 {fallback.data.results.map((recipe) => (
                   <RecipeCard key={recipe.slug} recipe={recipe} />
                 ))}
@@ -715,7 +777,7 @@ function RecipesContent() {
         </div>
       ) : (
         <>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={FLUID_GRID}>
             {data.results.map((recipe) => (
               <SaveableRecipeCard
                 key={recipe.slug}

@@ -39,12 +39,16 @@ export function MediaFrame({
   seed,
   kind = "recipe",
   className,
+  onNaturalSize,
 }: {
   src?: string | null;
   alt?: string;
   seed: string;
   kind?: keyof typeof ART;
   className?: string;
+  /** The photo's own pixel size, once decoded — for frames that choose
+      their aspect from the picture (see `CoverFrame`). */
+  onNaturalSize?: (width: number, height: number) => void;
 }) {
   if (src) {
     return (
@@ -52,6 +56,15 @@ export function MediaFrame({
         src={src}
         alt={alt}
         loading="lazy"
+        onLoad={
+          onNaturalSize
+            ? (event) =>
+                onNaturalSize(
+                  event.currentTarget.naturalWidth,
+                  event.currentTarget.naturalHeight,
+                )
+            : undefined
+        }
         className={cn("size-full object-cover", className)}
       />
     );

@@ -18,7 +18,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.notifications.constants import NotificationEventType
-from apps.notifications.exceptions import NotificationNotFoundError
+from apps.notifications.exceptions import (
+    NotificationNotClickableError,
+    NotificationNotFoundError,
+)
 from apps.notifications.models import Notification, NotificationPreference
 from apps.notifications.selectors import notification_selector
 from apps.users.selectors import user_selector
@@ -170,7 +173,7 @@ def notify_qa_answer_received(
         title="มีคนตอบคำถามของคุณ",
         body=f'{answerer_handle} ตอบคำถาม "{thread_title}"',
         actor_handle=answerer_handle,
-        link=f"/qa/threads/{thread_id}/",
+        link=f"/threads/{thread_id}/",
     )
 
 
@@ -192,10 +195,35 @@ def notify_qa_answer_accepted(
     notify(
         user_id=answer_author_id,
         event_type=NotificationEventType.QA_ANSWER_ACCEPTED,
-        title="คำตอบของคุณถูกเลือกเป็นคำตอบที่ดีที่สุด ⭐",
+        title="คำตอบของคุณถูกเลือกเป็นคำตอบที่ดีที่สุด",
         body=f'{asker_handle} เลือกคำตอบของคุณใน "{thread_title}"',
         actor_handle=asker_handle,
-        link=f"/qa/threads/{thread_id}/",
+        link=f"/threads/{thread_id}/",
+    )
+
+
+def notify_gallery_comment(
+    *,
+    post_author_id: int,
+    commenter_handle: str,
+    post_id: int,
+    excerpt: str,
+) -> None:
+    """Tell a baker someone commented on their community post.
+
+    Args:
+        post_author_id: The post author's primary key.
+        commenter_handle: The commenter's public handle.
+        post_id: For the frontend link.
+        excerpt: A short snapshot of the comment text.
+    """
+    notify(
+        user_id=post_author_id,
+        event_type=NotificationEventType.GALLERY_COMMENT,
+        title="มีคนคอมเมนต์ผลงานของคุณ",
+        body=f"{commenter_handle}: {excerpt}",
+        actor_handle=commenter_handle,
+        link=f"/community/posts/{post_id}/",
     )
 
 
@@ -209,7 +237,7 @@ def notify_achievement_earned(*, user_id: int, badge_title: str) -> None:
     notify(
         user_id=user_id,
         event_type=NotificationEventType.ACHIEVEMENT_EARNED,
-        title="คุณได้รับความสำเร็จใหม่ 🎉",
+        title="คุณได้รับความสำเร็จใหม่",
         body=f'ปลดล็อก "{badge_title}" แล้ว',
         link="/me/achievements/",
     )
@@ -237,6 +265,49 @@ def mark_read(*, notification_id: int, user_id: int) -> Notification:
         read_at=timezone.now()
     )
     notification.refresh_from_db(fields=["read_at"])
+    return notification
+
+
+def record_click(*, notification_id: int, user_id: int) -> Notification:
+    """Record that the recipient followed this notification's link.
+
+    Stamp-once like ``read_at``, and reading is implied: you cannot open
+    what a notification points at without having read it, so one call
+    settles both and the client needs one round trip.
+
+    This is the **only** click signal the platform has, and it comes from
+    the recipient's browser: a blocked script, a middle-click into a new
+    tab or a copied link all mean a real click that never arrives. The
+    number is therefore a floor, and the analytics panel says so rather
+    than presenting it as a measurement.
+
+    Args:
+        notification_id: Primary key of the notification.
+        user_id: Primary key of the caller.
+
+    Returns:
+        The (now clicked, now read) notification.
+
+    Raises:
+        NotificationNotFoundError: If absent or not the caller's.
+        NotificationNotClickableError: If the row carries no link.
+    """
+    notification = notification_selector.get_owned(
+        notification_id=notification_id, user_id=user_id
+    )
+    if notification is None:
+        raise NotificationNotFoundError
+    if not notification.link:
+        raise NotificationNotClickableError
+
+    now = timezone.now()
+    Notification.objects.filter(
+        pk=notification.pk, clicked_at__isnull=True
+    ).update(clicked_at=now)
+    Notification.objects.filter(pk=notification.pk, read_at__isnull=True).update(
+        read_at=now
+    )
+    notification.refresh_from_db(fields=["read_at", "clicked_at"])
     return notification
 
 

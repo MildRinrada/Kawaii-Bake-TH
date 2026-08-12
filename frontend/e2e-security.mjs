@@ -26,7 +26,7 @@ import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const API = "http://localhost:8000/api/v1";
 const ORIGIN = "http://localhost:8000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";

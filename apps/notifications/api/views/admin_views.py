@@ -243,7 +243,12 @@ class AdminCampaignAnalyticsView(ServiceAPIView):
         tags=["notifications-admin"],
     )
     def get(self, request: Request, campaign_id: int) -> Response:
-        """Return delivered/read counts and the read rate."""
+        """Return delivered/read/clicked counts and the two rates.
+
+        Both rates are over ``delivered``: "of the people who got this,
+        how many opened it, and how many followed the link". Rates over
+        *recipients* would flatter a send whose rows failed to deliver.
+        """
         campaign = notification_selector.get_campaign(campaign_id=campaign_id)
         if campaign is None:
             raise CampaignNotFoundError
@@ -252,6 +257,7 @@ class AdminCampaignAnalyticsView(ServiceAPIView):
         )
         delivered = stats["delivered"]
         read = stats["read"]
+        clicked = stats["clicked"]
         return Response(
             {
                 "recipients": campaign.recipients_count or 0,
@@ -259,6 +265,8 @@ class AdminCampaignAnalyticsView(ServiceAPIView):
                 "read": read,
                 "unread": delivered - read,
                 "read_rate": (read / delivered) if delivered else 0.0,
+                "clicked": clicked,
+                "click_rate": (clicked / delivered) if delivered else 0.0,
                 "sent_at": campaign.sent_at,
             }
         )

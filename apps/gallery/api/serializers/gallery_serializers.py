@@ -17,6 +17,7 @@ from rest_framework import serializers
 from apps.common.api.serializers import StrictSerializer
 from apps.gallery.constants import (
     CAPTION_MAX_LENGTH,
+    COMMENT_BODY_MAX_LENGTH,
     MAX_IMAGES_PER_POST,
     GalleryPostStatus,
 )
@@ -65,6 +66,12 @@ class GalleryPostSerializer(serializers.Serializer):
     recipe = _RecipeRefSerializer(read_only=True, allow_null=True)
     course = _CourseRefSerializer(read_only=True, allow_null=True)
     images = GalleryImageSerializer(many=True, read_only=True)
+    # Interaction counts are annotated by the selector, never stored
+    # (ADR 0032) - `default=0` keeps the shape valid for a post fetched
+    # outside the annotated queryset.
+    like_count = serializers.IntegerField(read_only=True, default=0)
+    comment_count = serializers.IntegerField(read_only=True, default=0)
+    viewer_has_liked = serializers.BooleanField(read_only=True, default=False)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
 
@@ -127,3 +134,41 @@ class GalleryImageUploadSerializer(StrictSerializer):
     """Multipart payload for one image upload."""
 
     image = serializers.ImageField()
+
+
+class GalleryCommentSerializer(serializers.Serializer):
+    """One comment under a post."""
+
+    id = serializers.IntegerField(read_only=True)
+    author_handle = serializers.CharField(read_only=True, source="author.username")
+    author_display_name = serializers.SerializerMethodField()
+    author_avatar_url = serializers.SerializerMethodField()
+    body = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+
+    def get_author_display_name(self, obj: Any) -> str:
+        """Return the author's display name, falling back to the handle."""
+        profile = getattr(obj.author, "profile", None)
+        return (profile.display_name if profile else "") or obj.author.username
+
+    def get_author_avatar_url(self, obj: Any) -> str | None:
+        """Return the author's absolute avatar URL, if any."""
+        profile = getattr(obj.author, "profile", None)
+        avatar = getattr(profile, "avatar", None) if profile else None
+        if not avatar:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(avatar.url) if request else avatar.url
+
+
+class GalleryCommentCreateSerializer(StrictSerializer):
+    """Payload for posting a comment."""
+
+    body = serializers.CharField(max_length=COMMENT_BODY_MAX_LENGTH)
+
+
+class GalleryLikeResultSerializer(serializers.Serializer):
+    """The like state after a like/unlike call."""
+
+    liked = serializers.BooleanField(read_only=True)
+    like_count = serializers.IntegerField(read_only=True)

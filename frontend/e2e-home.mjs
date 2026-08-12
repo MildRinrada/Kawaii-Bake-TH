@@ -6,7 +6,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 let passed = 0;
 
@@ -32,8 +32,10 @@ try {
   await expect(page, "text=กำลังเป็นที่นิยม", "anonymous recommendation feed renders");
   await expect(page, "text=สำรวจตามหมวดขนม", "category explorer renders");
   await expect(page, "text=จากครัวของชุมชน", "community preview renders");
-  await expect(page, "text=ทำไมคุกกี้ของฉันแข็งเกินไป?", "community shows a real question");
-  await expect(page, "text=มีคำตอบแล้ว", "accepted-answer badge shows");
+  // Behaviour, not seed order: the newest-3 window shifts whenever
+  // anyone posts a thread, so assert the cards link to the board
+  // instead of pinning a specific seed title.
+  await expect(page, 'a[href^="/threads/"]', "community shows real questions linking to the board");
   await expect(page, 'nav[aria-label="เมนูเรียนรู้"]', "structured footer renders");
   await page.screenshot({ path: `${SHOT_DIR}/12-home-anon-desktop.png`, fullPage: true });
 
@@ -90,9 +92,13 @@ try {
     ok("engine returned nothing, so the recommendation section is correctly absent");
   }
 
-  // The community section must invite posting even when the feed is empty.
+  // The community section shows work and sends people to /community; it
+  // is deliberately not a second place to post.
   await expect(page, "text=จากครัวของชุมชน", "home has a community section");
-  await expect(page, "text=เขียนโพสต์…", "signed-in home shows the community composer");
+  if (await page.locator("text=เขียนโพสต์…").count()) {
+    throw new Error("the home page is hosting a post composer again");
+  }
+  await expect(page, 'a[href="/community"]', "community section links to the community");
   await expect(page, 'a[href="/recipes/create"]', "recipe section keeps its own creation CTA");
   await page.screenshot({ path: `${SHOT_DIR}/14-home-authed-desktop.png`, fullPage: true });
 

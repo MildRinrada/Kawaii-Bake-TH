@@ -6,6 +6,8 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
+from django.db import IntegrityError, transaction
+
 from apps.courses.selectors import course_selector
 from apps.notifications.services import notification_service
 from apps.qa.constants import ThreadStatus, ThreadTargetKind
@@ -16,7 +18,7 @@ from apps.qa.exceptions import (
     ThreadNotFoundError,
     ThreadTargetNotFoundError,
 )
-from apps.qa.models import QuestionThread
+from apps.qa.models import QuestionThread, ThreadView
 from apps.qa.selectors import qa_selector
 from apps.recipes.selectors import recipe_selector
 
@@ -103,14 +105,10 @@ def update_thread(
             updates.append(field)
     if updates:
         thread.save(update_fields=[*updates, "updated_at"])
-    return _reload(
-        thread_id=thread.pk, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff
-    )
+    return _reload(thread_id=thread.pk, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff)
 
 
-def delete_thread(
-    *, thread_id: int, viewer_id: int, viewer_is_staff: bool = False
-) -> None:
+def delete_thread(*, thread_id: int, viewer_id: int, viewer_is_staff: bool = False) -> None:
     """Soft-delete a thread  it vanishes from every API surface.
 
     The row and its answers survive as history (other users' words are
@@ -185,9 +183,7 @@ def accept_answer(
             thread_title=thread.title,
             thread_id=thread.pk,
         )
-    return _reload(
-        thread_id=thread.pk, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff
-    )
+    return _reload(thread_id=thread.pk, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff)
 
 
 def require_visible_thread(
@@ -214,6 +210,27 @@ def require_visible_thread(
     return thread
 
 
+def record_view(*, thread_id: int, user_id: int) -> None:
+    """Remember that this reader has opened this thread.
+
+    Idempotent by constraint rather than by a read-then-write check (the
+    enrollment/like precedent): two tabs opening the same thread at once
+    end as one row. Anonymous readers are not recorded at all  see
+    :class:`~apps.qa.models.view.ThreadView`.
+
+    Args:
+        thread_id: Primary key of a thread the caller has already been
+            shown; visibility is the caller's business, not this one's.
+        user_id: Primary key of the signed-in reader.
+    """
+    try:
+        with transaction.atomic():
+            ThreadView.objects.create(thread_id=thread_id, user_id=user_id)
+    except IntegrityError:
+        # Already read. Nothing to update: the first read is the fact.
+        pass
+
+
 def _resolve_target(*, kind: str, slug: str, viewer_id: int) -> int:
     """Resolve the asked-about content through its public ref selector."""
     if kind == ThreadTargetKind.RECIPE:
@@ -227,9 +244,7 @@ def _resolve_target(*, kind: str, slug: str, viewer_id: int) -> int:
     return course.id
 
 
-def _require_manageable(
-    *, thread_id: int, viewer_id: int, viewer_is_staff: bool
-) -> QuestionThread:
+def _require_manageable(*, thread_id: int, viewer_id: int, viewer_is_staff: bool) -> QuestionThread:
     """A visible thread the caller may manage; "not yours" is the same 404."""
     thread = require_visible_thread(
         thread_id=thread_id, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff
@@ -239,9 +254,7 @@ def _require_manageable(
     return thread
 
 
-def _reload(
-    *, thread_id: int, viewer_id: int, viewer_is_staff: bool = False
-) -> QuestionThread:
+def _reload(*, thread_id: int, viewer_id: int, viewer_is_staff: bool = False) -> QuestionThread:
     """Re-read with relations for serialization."""
     thread = qa_selector.get_thread(
         thread_id=thread_id, viewer_id=viewer_id, viewer_is_staff=viewer_is_staff

@@ -79,7 +79,9 @@ class RecalculateTests(TestCase):
     """Reconciliation against real domain facts, idempotently."""
 
     def setUp(self) -> None:
-        self.student = create_user(username="recalcuser")
+        self.student = create_user(
+            username="recalcuser", first_name="กมล", last_name="แสงทอง"
+        )
         self.instructor = create_user(username="recalcinst")
 
     def test_rebuild_from_real_facts(self) -> None:

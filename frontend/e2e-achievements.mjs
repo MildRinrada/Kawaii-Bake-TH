@@ -9,7 +9,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const API = "http://localhost:8000/api/v1";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 const LEARNER = { email: "p16-learner@example.com", password: "Rhubarb!Tart2024" };

@@ -1,35 +1,57 @@
 "use client";
 
-/** Notification center: unread emphasis, read stamps, read-all. */
+/** Notification centre: unread marks, day grouping, and type tabs. */
 
-import Link from "next/link";
+import { useState } from "react";
 
 import { api } from "@/lib/api/client";
-import type { NotificationList } from "@/lib/api/models";
+import type { NotificationItem, NotificationList } from "@/lib/api/models";
 import { useApiQuery } from "@/lib/hooks/use-api-query";
 import { RequireAuth } from "@/lib/auth/require-auth";
+import { dayBucket, notificationGroup } from "@/lib/notifications";
 import { useToast } from "@/components/ui/toast";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { Icon, type UiIconName } from "@/components/ui/icon";
+import { Icon } from "@/components/ui/icon";
+import { NotificationRow } from "@/components/notifications/notification-item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
 
-/** One glyph per wired event type; unknown types fall back to the bell. */
-const EVENT_ICONS: Record<string, UiIconName> = {
-  review_received: "star",
-  course_enrollment: "graduation",
-  achievement_earned: "medal",
-  qa_answer_received: "chat",
-  qa_answer_accepted: "check-circle",
-};
+/** The tabs. `unread` filters on state; the rest filter on kind. */
+const TABS = [
+  { key: "all", label: "ทั้งหมด" },
+  { key: "unread", label: "ยังไม่อ่าน" },
+  { key: "engagement", label: "การมีส่วนร่วม" },
+  { key: "achievement", label: "ความสำเร็จ" },
+  { key: "announcement", label: "ประกาศ" },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
+function matches(item: NotificationItem, tab: TabKey): boolean {
+  if (tab === "all") return true;
+  if (tab === "unread") return item.read_at === null;
+  return notificationGroup(item) === tab;
+}
+
+/** Consecutive items under "วันนี้" / "เมื่อวาน" / … in arrival order. */
+function groupByDay(items: NotificationItem[]) {
+  const groups: Array<{ label: string; items: NotificationItem[] }> = [];
+  for (const item of items) {
+    const label = dayBucket(item.created_at);
+    const last = groups.at(-1);
+    if (last && last.label === label) last.items.push(item);
+    else groups.push({ label, items: [item] });
+  }
+  return groups;
+}
 
 function NotificationsContent() {
   const { toast } = useToast();
+  const [tab, setTab] = useState<TabKey>("all");
   const { data, loading, error, refetch } = useApiQuery(
     (signal) => api.get<NotificationList>("/me/notifications/", { signal }),
     [],
@@ -54,6 +76,10 @@ function NotificationsContent() {
     }
   }
 
+  const all = data?.results ?? [];
+  const shown = all.filter((item) => matches(item, tab));
+  const groups = groupByDay(shown);
+
   return (
     <>
       <PageHeader
@@ -71,82 +97,74 @@ function NotificationsContent() {
           ) : undefined
         }
       />
+
+      {all.length > 0 ? (
+        <div
+          role="group"
+          aria-label="กรองการแจ้งเตือน"
+          className="mb-4 flex flex-wrap gap-2"
+        >
+          {TABS.map((item) => {
+            const count = all.filter((row) => matches(row, item.key)).length;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                aria-pressed={tab === item.key}
+                onClick={() => setTab(item.key)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
+                  tab === item.key
+                    ? "bg-fg font-medium text-fg-inverted shadow-raised"
+                    : "border border-edge bg-surface text-fg-muted hover:border-edge-strong hover:text-fg",
+                )}
+              >
+                {item.label}
+                <span className="ml-1.5 text-xs opacity-70">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       {loading ? (
         <div className="space-y-3" aria-busy="true">
-          <Skeleton className="h-20 w-full rounded-surface" />
-          <Skeleton className="h-20 w-full rounded-surface" />
+          <Skeleton className="h-16 w-full rounded-surface" />
+          <Skeleton className="h-16 w-full rounded-surface" />
         </div>
       ) : error ? (
         <ErrorState error={error} onRetry={refetch} />
-      ) : !data || data.results.length === 0 ? (
+      ) : all.length === 0 ? (
         <EmptyState
           icon={<Icon name="ui/bell" className="size-8 text-fg-subtle" />}
           title="ยังไม่มีการแจ้งเตือน"
           description="เมื่อมีคนรีวิวผลงานหรือมีความเคลื่อนไหว จะแจ้งไว้ที่นี่"
         />
+      ) : shown.length === 0 ? (
+        <EmptyState
+          icon={<Icon name="ui/bell" className="size-8 text-fg-subtle" />}
+          title="ไม่มีรายการในหมวดนี้"
+          description="ลองดูหมวดอื่น หรือกลับไปที่ทั้งหมด"
+        />
       ) : (
-        <ul className="space-y-2.5">
-          {data.results.map((item) => {
-            const unread = item.read_at === null;
-            return (
-              <li
-                key={item.id}
-                className={cn(
-                  "flex items-start gap-3.5 rounded-surface border px-4 py-3.5",
-                  unread
-                    ? "border-accent/30 bg-berry-soft/40"
-                    : "border-edge bg-surface",
-                )}
-              >
-                <span
-                  aria-hidden
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-fg-muted"
-                >
-                  {/* Campaign sends carry their own glyph (ADR 0030);
-                      machine events keep the per-event icon. */}
-                  {item.icon ? (
-                    <span className="text-xl leading-none">{item.icon}</span>
-                  ) : (
-                    <Icon
-                      name={`ui/${EVENT_ICONS[item.event_type] ?? "bell"}`}
-                      className="size-5"
-                    />
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className={cn("text-sm text-fg", unread && "font-medium")}>
-                    {item.title}
-                  </p>
-                  {item.body ? (
-                    <p className="mt-0.5 text-sm text-fg-muted">{item.body}</p>
-                  ) : null}
-                  {item.link ? (
-                    <Link
-                      href={item.link}
-                      className="mt-1.5 inline-block text-sm font-medium text-accent hover:underline"
-                    >
-                      {item.cta_text || "ดูรายละเอียด"} →
-                    </Link>
-                  ) : null}
-                  <p className="mt-1 text-xs text-fg-subtle">
-                    {new Date(item.created_at).toLocaleString("th-TH")}
-                  </p>
-                </div>
-                {unread ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void markRead(item.id)}
-                  >
-                    อ่านแล้ว
-                  </Button>
-                ) : (
-                  <Badge tone="neutral">อ่านแล้ว</Badge>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <section key={`${group.label}-${group.items[0].id}`}>
+              <h2 className="mb-2 text-sm font-medium text-fg-muted">
+                {group.label}
+              </h2>
+              <ul className="space-y-2.5">
+                {group.items.map((item) => (
+                  <NotificationRow
+                    key={item.id}
+                    item={item}
+                    onMarkRead={(id) => void markRead(id)}
+                  />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
     </>
   );

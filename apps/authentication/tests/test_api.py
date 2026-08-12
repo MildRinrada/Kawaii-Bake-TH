@@ -29,8 +29,6 @@ class RegistrationApiTests(TestCase):
         payload: dict[str, object] = {
             "email": "new@example.com",
             "username": "newbaker",
-            "first_name": "มินตรา",
-            "last_name": "อบอุ่น",
             "password": VALID_PASSWORD,
             "password_confirm": VALID_PASSWORD,
             "accept_terms": True,
@@ -46,26 +44,42 @@ class RegistrationApiTests(TestCase):
         self.assertFalse(response.json()["is_email_verified"])
         self.assertTrue(User.objects.filter(email="new@example.com").exists())
 
-    def test_registration_stores_the_legal_name_and_consent(self) -> None:
+    def test_registration_records_consent(self) -> None:
         response = self.client.post(self.url, self._payload(), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(email="new@example.com")
-        self.assertEqual(user.first_name, "มินตรา")
-        self.assertEqual(user.last_name, "อบอุ่น")
         # PDPA evidence: consenting is what registration *is* now.
         self.assertIsNotNone(user.terms_accepted_at)
 
-    def test_registration_without_a_legal_name_is_rejected(self) -> None:
-        for missing in ("first_name", "last_name"):
-            payload = self._payload()
-            del payload[missing]
+    def test_registration_does_not_ask_for_a_legal_name(self) -> None:
+        """The certificate name is collected at issuance, not at sign-up.
 
-            response = self.client.post(self.url, payload, format="json")
+        Asserted from both sides: an account is created without one, and
+        a payload that carries one is refused rather than quietly
+        accepted  a field the form no longer shows must not remain a
+        way to write to the user row.
+        """
+        response = self.client.post(self.url, self._payload(), format="json")
 
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertIn(missing, response.json()["error"]["details"])
-        self.assertFalse(User.objects.filter(email="new@example.com").exists())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(email="new@example.com")
+        self.assertEqual(user.first_name, "")
+        self.assertEqual(user.last_name, "")
+
+        smuggled = self.client.post(
+            self.url,
+            self._payload(
+                email="other@example.com",
+                username="otherbaker",
+                first_name="มินตรา",
+                last_name="อบอุ่น",
+            ),
+            format="json",
+        )
+
+        self.assertEqual(smuggled.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(email="other@example.com").exists())
 
     def test_registration_without_consent_is_rejected(self) -> None:
         for consent in (False, None):

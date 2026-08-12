@@ -7,7 +7,7 @@
  */
 import { chromium } from "playwright";
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const SHOT_DIR = process.env.SHOT_DIR ?? "e2e-shots";
 const STAFF = { email: "admin@kawaiibake.local", password: "Kawaii!Chef2026" };
 const TITLE = `สูตรทดสอบผู้ดูแล ${Date.now() % 100000}`;
@@ -20,6 +20,18 @@ function ok(label) {
 async function expect(page, selector, label, timeout = 15_000) {
   await page.waitForSelector(selector, { timeout });
   ok(label);
+}
+
+
+/**
+ * Choose a cover and frame it. Covers are cropped to the card's 4:3 in
+ * the browser now, so every pick goes through the crop dialog.
+ */
+async function pickCover(page, file) {
+  await page.setInputFiles('input[aria-label="เลือกรูปหน้าปก"]', file);
+  await page.waitForSelector('button:has-text("ใช้รูปนี้")');
+  await page.click('button:has-text("ใช้รูปนี้")');
+  await page.waitForSelector('button:has-text("ใช้รูปนี้")', { state: "hidden" });
 }
 
 const browser = await chromium.launch();
@@ -78,7 +90,7 @@ try {
   await expect(page, "text=อีกนิดเดียว! ยังขาด รูปหน้าปก", "missing cover blocks with a friendly Thai error");
 
   // A real 1x1 PNG so the upload path runs end-to-end at create time.
-  await page.setInputFiles('input[aria-label="เลือกรูปหน้าปก"]', {
+  await pickCover(page, {
     name: "cover.png",
     mimeType: "image/png",
     buffer: Buffer.from(
@@ -160,7 +172,7 @@ try {
   /* ---------- Cover image: the separate multipart PATCH ---------- */
   const PNG_1X1 =
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
-  await page.setInputFiles('input[aria-label="เลือกรูปหน้าปก"]', {
+  await pickCover(page, {
     name: "cover.png",
     mimeType: "image/png",
     buffer: Buffer.from(PNG_1X1, "base64"),

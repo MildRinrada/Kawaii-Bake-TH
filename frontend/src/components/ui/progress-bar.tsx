@@ -18,7 +18,10 @@ export function ProgressBar({
       aria-valuemax={100}
       aria-label={label}
       className={cn(
-        "h-3 w-full overflow-hidden ",
+        // The track must be visible on its own: at 0% the fill has no
+        // width, and a bar you cannot see reads as a broken component
+        // rather than as "not started yet".
+        "h-3 w-full overflow-hidden rounded-full bg-surface-sunken",
         className,
       )}
     >

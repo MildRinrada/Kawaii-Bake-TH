@@ -81,7 +81,9 @@ class EnrollmentWiringTests(TestCase):
 
     def setUp(self) -> None:
         self.instructor = create_user(username="wireinst")
-        self.student = create_user(username="wirestudent")
+        self.student = create_user(
+            username="wirestudent", first_name="ณิชา", last_name="บุญมี"
+        )
         self.course = create_published_course(
             instructor=self.instructor, slug="wire-course"
         )
@@ -122,7 +124,9 @@ class AchievementWiringTests(TestCase):
     """First award notifies; idempotent repeats do not."""
 
     def setUp(self) -> None:
-        self.student = create_user(username="wireach")
+        self.student = create_user(
+            username="wireach", first_name="ภูริ", last_name="วงศ์ดี"
+        )
         self.instructor = create_user(username="wireachinst")
 
     def test_first_award_notifies_with_thai_badge_title(self) -> None:

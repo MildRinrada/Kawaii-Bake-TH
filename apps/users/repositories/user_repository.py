@@ -22,14 +22,15 @@ def ensure_related_records(*, user: User) -> None:
 
 
 def create_user(
-    *, email: str, username: str, password: str, **extra_fields: object
+    *, email: str, username: str, password: str | None, **extra_fields: object
 ) -> User:
     """Persist a new user together with its profile and preference rows.
 
     Args:
         email: The account email address.
         username: The public handle.
-        password: The raw password; hashed by the manager.
+        password: The raw password; hashed by the manager. ``None`` for a
+            provider-only account, which gets an unusable password.
         **extra_fields: Additional ``User`` column values (legal name,
             consent timestamp), forwarded to the manager verbatim.
 
