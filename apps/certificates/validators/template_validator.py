@@ -5,7 +5,7 @@ to store arbitrary blobs: bounds keep the scene renderable, the element
 cap keeps payloads sane, and the signature cap is a product rule (three
 signers is the ceiling a certificate can carry with dignity).
 
-Everything here checks *shape*, not taste — numbers are clamped-checked,
+Everything here checks *shape*, not taste - numbers are clamped-checked,
 enums are closed, strings are length-capped. Values are rendered by the
 frontend through typed React styles only, never as markup.
 """
@@ -128,7 +128,7 @@ def validate_design(document: Any) -> None:
         if kind in ("text", "field"):
             # On a field element, a non-blank ``text`` is the staff
             # override ("มอบโดย …") that replaces the automatic value on
-            # every certificate — same length cap as free text.
+            # every certificate - same length cap as free text.
             _require_short_text(
                 element.get("text", ""), key="text", limit=MAX_TEXT_LENGTH
             )

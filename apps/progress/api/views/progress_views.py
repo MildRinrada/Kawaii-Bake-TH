@@ -101,6 +101,10 @@ class MyProgressView(ServiceAPIView):
         """
         reports = progress_service.get_my_progress(user_id=request.user.id)
         return Response(
-            {"courses": MyCourseProgressSerializer(reports, many=True).data},
+            {
+                "courses": MyCourseProgressSerializer(
+                    reports, many=True, context=self.get_serializer_context()
+                ).data
+            },
             status=status.HTTP_200_OK,
         )

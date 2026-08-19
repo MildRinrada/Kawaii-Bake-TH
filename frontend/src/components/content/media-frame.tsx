@@ -46,7 +46,7 @@ export function MediaFrame({
   seed: string;
   kind?: keyof typeof ART;
   className?: string;
-  /** The photo's own pixel size, once decoded — for frames that choose
+  /** The photo's own pixel size, once decoded - for frames that choose
       their aspect from the picture (see `CoverFrame`). */
   onNaturalSize?: (width: number, height: number) => void;
 }) {

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from rest_framework import serializers
+
+from apps.recipes.api.serializers.recipe_serializers import ImageUrlMixin
 
 
 class LessonCompletionSerializer(serializers.Serializer):
@@ -42,7 +46,7 @@ class CourseProgressSerializer(serializers.Serializer):
     lessons = LessonProgressItemSerializer(many=True, read_only=True)
 
 
-class MyCourseProgressSerializer(serializers.Serializer):
+class MyCourseProgressSerializer(ImageUrlMixin):
     """One course in the ``/me/progress/`` overview."""
 
     id = serializers.IntegerField(read_only=True)
@@ -52,3 +56,8 @@ class MyCourseProgressSerializer(serializers.Serializer):
     total_lessons = serializers.IntegerField(read_only=True)
     percentage = serializers.IntegerField(read_only=True)
     completed_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    thumbnail_url = serializers.SerializerMethodField()
+
+    def get_thumbnail_url(self, obj: Any) -> str | None:
+        """Return the absolute thumbnail URL, if any."""
+        return self._absolute(obj.thumbnail)

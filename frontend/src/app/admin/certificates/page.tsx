@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The certificate template workspace — pick a course, open its design.
+ * The certificate template workspace - pick a course, open its design.
  *
  * This page is about **templates**, not issued paper: every course has
  * a certificate design (its own, or the built-in default), and the
@@ -68,7 +68,7 @@ export default function AdminCertificateTemplatesPage() {
     <>
       <AdminPageHeader
         title="ใบประกาศ"
-        description="ออกแบบเทมเพลตใบประกาศของแต่ละคอร์สด้วยเครื่องมือแก้ไขภาพ — ลากวาง ปรับขนาด และเผยแพร่เมื่อพร้อม"
+        description="ออกแบบเทมเพลตใบประกาศของแต่ละคอร์สด้วยเครื่องมือแก้ไขภาพ - ลากวาง ปรับขนาด และเผยแพร่เมื่อพร้อม"
         actions={
           <Link href="/admin/certificates/issued">
             <Button size="sm" variant="secondary">

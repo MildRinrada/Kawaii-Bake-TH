@@ -5,7 +5,7 @@
  * set → the certificate, at any scale. Used by the editor canvas (with
  * an interaction overlay on top) and by the clean preview (alone).
  *
- * Everything is typed style values on React elements — a document has
+ * Everything is typed style values on React elements - a document has
  * no way to produce markup.
  */
 
@@ -132,7 +132,7 @@ export function ElementContent({
       </div>
     );
   }
-  // field | text — a line (or block) of typography. A field with a
+  // field | text - a line (or block) of typography. A field with a
   // non-blank `text` is a staff override ("มอบโดย เชฟมิลด์"): it wins
   // over the automatic value on every certificate.
   const value =

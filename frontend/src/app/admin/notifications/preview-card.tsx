@@ -5,7 +5,7 @@
  *
  * It renders the *actual* component the notification centre and the bell
  * panel use, with sample values filled into `{{variables}}`. A preview
- * that reimplements the card drifts from it within one design change —
+ * that reimplements the card drifts from it within one design change -
  * this one cannot, because there is only one card.
  */
 
@@ -31,7 +31,7 @@ export function NotificationPreviewCard({
   /** Narrow layout, imitating a phone-width notification center. */
   compact?: boolean;
 }) {
-  // A campaign send always lands as an unread `announcement` — the
+  // A campaign send always lands as an unread `announcement` - the
   // preview is that row, not an approximation of it.
   const sample: NotificationItem = {
     id: 0,

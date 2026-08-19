@@ -19,7 +19,7 @@ const PREVIEW_SIZE = 5;
  *
  * A peek, not a second notification centre: the newest few, the unread
  * count, and one link to the real page. The list is fetched when the
- * panel opens rather than on every page load — a badge nobody looked at
+ * panel opens rather than on every page load - a badge nobody looked at
  * is not worth a request per navigation.
  */
 export function NotificationBell() {

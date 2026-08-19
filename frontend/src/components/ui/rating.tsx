@@ -6,7 +6,7 @@ import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/cn";
 
 /**
- * Star ratings — read-only display and the interactive picker.
+ * Star ratings - read-only display and the interactive picker.
  *
  * Two things this component is deliberate about:
  *
@@ -19,7 +19,7 @@ import { cn } from "@/lib/cn";
  * lukewarm verdict from a crowd; with one review there is no crowd, and
  * three filled stars make the recipe look worse than the evidence can
  * support. Under `FEW_REVIEWS` neither the stars nor the average are
- * drawn — the honest reading is "not enough ratings yet, N reviews".
+ * drawn - the honest reading is "not enough ratings yet, N reviews".
  */
 
 const FEW_REVIEWS = 3;
@@ -28,7 +28,7 @@ const SIZES = { sm: "size-3.5", md: "size-4", lg: "size-6" } as const;
 type StarSize = keyof typeof SIZES;
 
 /** The gold gradient the earned part of a rating is painted with.
-    It sits on the masked glyph itself, not a wrapper — the mask is what
+    It sits on the masked glyph itself, not a wrapper - the mask is what
     the paint shows through. */
 const GOLD = "bg-linear-to-b from-star to-star-deep";
 

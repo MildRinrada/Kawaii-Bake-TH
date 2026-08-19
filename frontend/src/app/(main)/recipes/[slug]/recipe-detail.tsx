@@ -346,7 +346,7 @@ function ReviewForm({
       />
       <div className="mt-3 flex items-center gap-2">
         {/* Full-strength primary, and genuinely disabled until a star is
-            picked — the washed-out pink used to *look* disabled while
+            picked - the washed-out pink used to *look* disabled while
             being clickable, which is the worst of both. */}
         <Button type="submit" loading={busy} disabled={stars === 0}>
           ส่งรีวิว
@@ -452,8 +452,8 @@ export function RecipeDetailScreen({ slug }: { slug: string }) {
       {/* ---------- Hero ----------
           Two columns rather than a full-width banner. The cover keeps the
           card's 4:3 (or 3:4 for a phone photo), so the picture the author
-          framed is the picture shown — a 21:9 strip cut a plate of food
-          down to its middle band — and the actions come up beside the
+          framed is the picture shown - a 21:9 strip cut a plate of food
+          down to its middle band - and the actions come up beside the
           title instead of below a 400px image. */}
       <div className="grid gap-6 lg:grid-cols-2 lg:items-center">
         <CoverFrame
@@ -754,7 +754,7 @@ const CONFIDENCE_LABELS: Record<string, string> = {
 };
 
 /** Confidence reads as a dot before the name, so it never wraps to its
-    own line when the name is long — the badges used to land in a
+    own line when the name is long - the badges used to land in a
     different place on every row. */
 const CONFIDENCE_DOT: Record<string, string> = {
   high: "bg-mint-ink",
@@ -971,7 +971,7 @@ function Workspace({
   const [timers, setTimers] = useState<BakeTimer[]>([]);
   const [focusOpen, setFocusOpen] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
-  /** Which ingredient's substitution list is open — one at a time. */
+  /** Which ingredient's substitution list is open - one at a time. */
   const [openSubs, setOpenSubs] = useState<number | null>(null);
   /** Live feedback for the notes box: idle → saving → saved → idle. */
   const [noteState, setNoteState] = useState<"idle" | "saving" | "saved">("idle");

@@ -66,7 +66,7 @@ export function Dropdown({
         <div
           role="menu"
           className={cn(
-            "absolute z-20 mt-1 min-w-40 rounded-surface border border-edge bg-surface-raised py-1 shadow-overlay",
+            "absolute z-20 mt-1 min-w-40 overflow-hidden rounded-surface border border-edge bg-surface-raised py-1 shadow-overlay",
             align === "end" ? "right-0" : "left-0",
           )}
         >

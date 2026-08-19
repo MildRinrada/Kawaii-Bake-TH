@@ -13,7 +13,7 @@ class ThreadView(TimeStampedModel):
 
     A row, not a counter (the gallery-interactions rule, ADR 0032): the
     board's "N คนอ่าน" is ``Count("views")`` over these rows, so it can
-    never drift, and re-opening a thread cannot inflate it — the unique
+    never drift, and re-opening a thread cannot inflate it - the unique
     constraint makes recording a view idempotent.
 
     Only signed-in readers are recorded, and that is what the UI says.

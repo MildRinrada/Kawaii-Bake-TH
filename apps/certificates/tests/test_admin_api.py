@@ -385,7 +385,7 @@ class CertificateTemplateApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_field_custom_override_saves_and_is_length_capped(self) -> None:
-        """A field may carry a staff override text ("มอบโดย …") — stored
+        """A field may carry a staff override text ("มอบโดย …") - stored
         verbatim within the same cap as free text."""
         self.client.force_login(self.staff)
 

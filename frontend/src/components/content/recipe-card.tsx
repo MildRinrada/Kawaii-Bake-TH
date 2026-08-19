@@ -15,7 +15,7 @@ import { Icon } from "@/components/ui/icon";
  * flex column, the summary reserves two lines even when the field is
  * blank, and the author/time meta is pushed to the bottom with
  * `mt-auto`. A recipe missing optional text must never change the card's
- * skeleton — and must never *say* it is missing either: the blank line
+ * skeleton - and must never *say* it is missing either: the blank line
  * holds its space silently, because "ยังไม่มีคำอธิบาย" is a note to the
  * author, not information for the reader.
  */

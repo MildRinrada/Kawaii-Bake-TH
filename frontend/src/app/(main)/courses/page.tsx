@@ -186,7 +186,7 @@ function CourseLearningCard({
         </div>
         {course.is_completed ? (
           <span className="absolute right-3 top-3 rounded-full bg-success px-3 py-1 text-xs font-medium text-fg-inverted shadow-raised">
-            <Icon name="ui/check" className="size-3.5" /> เรียนจบแล้ว
+            <Icon tint name="ui/check" className="size-3.5" /> เรียนจบแล้ว
           </span>
         ) : null}
       </Link>

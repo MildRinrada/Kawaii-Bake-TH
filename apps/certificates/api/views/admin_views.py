@@ -231,7 +231,7 @@ class AdminTemplateDetailView(ServiceAPIView):
         tags=["certificates-admin"],
     )
     def put(self, request: Request, course_slug: str) -> Response:
-        """Replace the draft — the designer's debounced autosave."""
+        """Replace the draft - the designer's debounced autosave."""
         serializer = TemplateDraftSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         template = template_service.save_draft(
@@ -245,7 +245,7 @@ class AdminTemplateDetailView(ServiceAPIView):
 
     @extend_schema(responses={204: None}, tags=["certificates-admin"])
     def delete(self, request: Request, course_slug: str) -> Response:
-        """Drop the row — the course returns to the built-in default."""
+        """Drop the row - the course returns to the built-in default."""
         template_service.remove_template(
             course_slug=course_slug, actor_id=request.user.id
         )

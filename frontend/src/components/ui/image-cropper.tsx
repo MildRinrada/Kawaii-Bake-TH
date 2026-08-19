@@ -108,7 +108,7 @@ export function ImageCropper({
   onConfirm: (blob: Blob) => void;
   /**
    * The browser could not decode the file. Nothing can be framed, so the
-   * caller should close the dialog and say why — a disabled confirm
+   * caller should close the dialog and say why - a disabled confirm
    * button with no explanation is not an answer.
    */
   onUndecodable?: () => void;

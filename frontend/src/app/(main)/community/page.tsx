@@ -389,7 +389,7 @@ function CommunityFeed() {
                   <div className="flex flex-wrap justify-center gap-2">
                     <Link href="/community/create">
                       <Button>
-                        <Icon name="ui/plus" className="size-4" /> สร้างโพสต์
+                        <Icon name="ui/plus" tint className="size-4" /> สร้างโพสต์
                       </Button>
                     </Link>
                     <Link href="/recipes/create">

@@ -19,7 +19,7 @@ import { cn } from "@/lib/cn";
  * render as "white, probably".
  *
  * **The time is a time, not a timestamp.** "47 นาทีที่แล้ว" beside the
- * title, where meta belongs — `11/8/2569 17:24:17` under the CTA told
+ * title, where meta belongs - `11/8/2569 17:24:17` under the CTA told
  * nobody anything and cost a line.
  *
  * **The whole row is the link.** Every card carried an identical "ดู

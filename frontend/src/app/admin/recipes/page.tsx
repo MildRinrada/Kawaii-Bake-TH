@@ -1,22 +1,22 @@
 "use client";
 
 /**
- * Recipe management — the staff workspace over every recipe in the system.
+ * Recipe management - the staff workspace over every recipe in the system.
  *
- * Reads `GET /recipes/?scope=all` — the staff-only slice that includes
+ * Reads `GET /recipes/?scope=all` - the staff-only slice that includes
  * drafts, unlisted and archived rows (a non-staff caller is silently
  * narrowed to the public set by the backend, which is why this page is
  * safe even if the client-side gate is bypassed).
  *
  * Writes are the endpoints that already exist: publish / unpublish /
  * archive and DELETE. Every filter here (`status`, `visibility`,
- * `author`, …) is server-side and narrow-only — the backend intersects
+ * `author`, …) is server-side and narrow-only - the backend intersects
  * them with the visibility rule, so they can never widen what a viewer
  * sees. The summary cards are the same counts (`page_size=1`), never
  * client-side arithmetic over one page.
  *
  * Bulk actions orchestrate the existing per-recipe endpoints in
- * sequence — there is no bulk API, and this page does not pretend
+ * sequence - there is no bulk API, and this page does not pretend
  * otherwise: each selected row gets its own real request and failures
  * are reported per batch.
  */
@@ -416,7 +416,7 @@ export default function AdminRecipesPage() {
     <>
       <AdminPageHeader
         title="สูตรอาหาร"
-        description="จัดการสูตรอาหารทั้งหมดของ KawaiiBake — ทุกสถานะ ทุกผู้เขียน"
+        description="จัดการสูตรอาหารทั้งหมดของ KawaiiBake - ทุกสถานะ ทุกผู้เขียน"
         actions={
           <Link href="/admin/recipes/new">
             <Button size="sm">+ เพิ่มสูตรใหม่</Button>
@@ -424,7 +424,7 @@ export default function AdminRecipesPage() {
         }
       />
 
-      {/* Summary strip — each card is a live count and a one-click filter. */}
+      {/* Summary strip - each card is a live count and a one-click filter. */}
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         <MiniStat
           label="สูตรทั้งหมด"
@@ -557,7 +557,7 @@ export default function AdminRecipesPage() {
           </div>
         </DataTableToolbar>
 
-        {/* Contextual bulk bar — appears only with a selection. */}
+        {/* Contextual bulk bar - appears only with a selection. */}
         {checked.size > 0 ? (
           <div
             role="toolbar"

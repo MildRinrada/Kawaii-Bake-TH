@@ -439,7 +439,7 @@ export default function ThreadsPage() {
     <PageContainer>
       <PageHeader
         title="กระทู้ถาม-ตอบ"
-        description="กระทู้จริงจากเพื่อนนักอบ ถามเกี่ยวกับสูตรและคอร์สบนแพลตฟอร์ม — คำถามการใช้งานทั่วไปดูที่คำถามที่พบบ่อยได้เลย"
+        description="กระทู้จริงจากเพื่อนนักอบ ถามเกี่ยวกับสูตรและคอร์สบนแพลตฟอร์ม - คำถามการใช้งานทั่วไปดูที่คำถามที่พบบ่อยได้เลย"
         actions={
           !asking ? (
             <Button onClick={() => setAsking(true)}>

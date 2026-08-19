@@ -51,7 +51,7 @@
   --kb-mint-soft: #e3f6ec;
   --kb-mint-ink: #2e7d54;
 
-  /* Rating stars. Butter-ink (#96700f) is a text colour — as a filled
+  /* Rating stars. Butter-ink (#96700f) is a text colour - as a filled
      shape it reads olive and lifeless, which is why ratings looked dull
      everywhere. A star is one of the few marks that should be genuinely
      bright, so it gets its own pair: a warm gold gradient for the earned

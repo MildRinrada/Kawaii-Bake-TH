@@ -95,7 +95,7 @@ function FilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "rounded-full px-3.5 py-1.5 text-sm transition-colors",
+        "inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-sm transition-colors",
         "focus-visible:outline-2 focus-visible:outline-focus",
         // Selected = dark ink, not pink: the accent belongs to the
         // page's primary actions, and a solid dark pill is the loudest
@@ -587,7 +587,7 @@ function RecipesContent() {
           // deliberately has no CTA on this page.
           <Link href="/recipes/create">
             <Button>
-              <Icon name="ui/plus" className="size-4" /> เพิ่มสูตรอาหาร
+              <Icon name="ui/plus" tint className="size-4" /> เพิ่มสูตรอาหาร
             </Button>
           </Link>
         }
@@ -604,7 +604,7 @@ function RecipesContent() {
       {/* Quick categories  compact square photo tiles, horizontal scroll */}
       {categories.data && categories.data.length > 0 ? (
         <div
-          className="mt-4 flex snap-x gap-2.5 overflow-x-auto pb-2"
+          className="mt-4 flex snap-x gap-2.5 overflow-x-auto pt-1 pb-2"
           role="group"
           aria-label="หมวดขนม"
         >
@@ -649,12 +649,15 @@ function RecipesContent() {
           <span className="text-xs font-medium text-fg-subtle">กำลังกรอง:</span>
           {search ? (
             <FilterChip active onClick={() => setParams({ search: null, ordering: null })}>
-              <>“{search}” <Icon name="ui/close" className="size-3" /></>
+              “{search}”
+              <Icon tint name="ui/close" className="size-3" />
             </FilterChip>
           ) : null}
           {ingredient ? (
             <FilterChip active onClick={() => setParams({ ingredient: null })}>
-              <><Icon name="ui/salt" className="size-3.5" /> {ingredient} <Icon name="ui/close" className="size-3" /></>
+              <Icon tint name="ui/salt" className="size-3.5" />
+              {ingredient}
+              <Icon tint name="ui/close" className="size-3" />
             </FilterChip>
           ) : null}
           {selectedCategories.map((slug) => (
@@ -663,7 +666,8 @@ function RecipesContent() {
               active
               onClick={() => toggleInList(selectedCategories, slug, "category")}
             >
-              <>{categoryName(slug)} <Icon name="ui/close" className="size-3" /></>
+              {categoryName(slug)}
+              <Icon tint name="ui/close" className="size-3" />
             </FilterChip>
           ))}
           {selectedDifficulties.map((value) => (
@@ -672,12 +676,14 @@ function RecipesContent() {
               active
               onClick={() => toggleInList(selectedDifficulties, value, "difficulty")}
             >
-              <>{DIFFICULTIES.find((item) => item.value === value)?.label} <Icon name="ui/close" className="size-3" /></>
+              {DIFFICULTIES.find((item) => item.value === value)?.label}
+              <Icon tint name="ui/close" className="size-3" />
             </FilterChip>
           ))}
           {maxMinutes ? (
             <FilterChip active onClick={() => setParams({ max_total_minutes: null })}>
-              <>≤ {maxMinutes} นาที <Icon name="ui/close" className="size-3" /></>
+              ≤ {maxMinutes} นาที
+              <Icon tint name="ui/close" className="size-3" />
             </FilterChip>
           ) : null}
           <button

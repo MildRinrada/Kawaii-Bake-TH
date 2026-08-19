@@ -1,23 +1,23 @@
-# ADR 0036 — Announcement kinds are a closed set, and clicks are a floor
+# ADR 0036 - Announcement kinds are a closed set, and clicks are a floor
 
 - **Status:** accepted
 - **Date:** 2026-08-12
 - **Phase:** Notification polish
-- **Amends:** [0030](0030-notification-campaigns.md) — the composer's
+- **Amends:** [0030](0030-notification-campaigns.md) - the composer's
   `icon` field and the free-slug kind catalog
 
 ## Context
 
 ADR 0030 shipped campaigns with two deliberately loose pieces: `kind`
 was "a frontend catalog over a validated backend slug", and each
-campaign carried an `icon` — an emoji the composer asked staff to pick.
+campaign carried an `icon` - an emoji the composer asked staff to pick.
 
 Both turned out wrong in the same way. The design review of the
 notification centre replaced per-campaign emoji with one glyph system,
 so the emoji stopped being rendered at all; and because every
 announcement then drew the same lavender pin, "ระบบจะปิดปรับปรุงคืนนี้"
 and "มีคอร์สใหม่มาแล้ว" were indistinguishable in a list. Meanwhile the
-analytics panel could report only delivered and read, and said so — the
+analytics panel could report only delivered and read, and said so - the
 honest position, but the one question staff actually ask about a link is
 whether anyone followed it.
 
@@ -31,7 +31,7 @@ a 400) and mirrored once in the frontend's `ANNOUNCEMENT_KINDS`, which
 maps each to a glyph and a colour pair.
 
 The sender picks a *category*; the design system picks the picture. That
-is the inversion the emoji field had backwards — and it is why the
+is the inversion the emoji field had backwards - and it is why the
 picker in the composer shows the real glyph and colour rather than a
 label, so nobody has to send one to find out what it looks like.
 
@@ -49,7 +49,7 @@ information; the data migration maps every pre-existing free-form kind
 onto `general` and backfills delivered announcements from their campaign
 so an inbox looks the same after the deploy as before it.
 
-`Notification.kind` is a **copy**, not a join through the campaign FK —
+`Notification.kind` is a **copy**, not a join through the campaign FK -
 the same rule every other field on that row follows (ADR 0016): the row
 is what the recipient was told. Amending a sent campaign still rewrites
 delivered snapshots, because that is an explicit, all-recipients-at-once
@@ -58,7 +58,7 @@ operation with its own endpoint.
 ### 3. A click is what the client reports, and the panel says so
 
 `POST /me/notifications/{id}/click/` stamps `clicked_at` once and
-`read_at` with it — you cannot open what a notification points at without
+`read_at` with it - you cannot open what a notification points at without
 having read it, and folding them saves the client a round trip on the
 one action it takes while navigating away.
 
@@ -71,7 +71,7 @@ records. Both the admin panel and `docs/API.md` state that in words
 rather than presenting the number as a measurement.
 
 A click on a row with no link is a 409 `not_clickable`, not a silent
-200 — accepting it would put clicks in the analytics that no recipient
+200 - accepting it would put clicks in the analytics that no recipient
 could have made.
 
 ### 4. Rates are over delivered, never over recipients
@@ -89,7 +89,7 @@ dropped by an opt-out.
 - The composer's 26-entry catalog with categories collapses to six cards.
   `kinds.ts` keeps the audience and variable catalogs unchanged.
 - Staff can now see, per campaign, how many of the people who *read* an
-  announcement went on to follow it — the "อ่านแต่ไม่กด" figure that
+  announcement went on to follow it - the "อ่านแต่ไม่กด" figure that
   tells you the headline worked and the link did not.
 
 ## Alternatives considered

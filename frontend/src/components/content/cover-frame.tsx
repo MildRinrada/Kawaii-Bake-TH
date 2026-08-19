@@ -11,8 +11,8 @@ import { cn } from "@/lib/cn";
  * One upload serves both the card and this frame, so the frame has to
  * bend rather than the picture: a wide banner (the old 21:9) sliced a
  * 4:3 food photo down to its middle band and threw away the plate. Here
- * the frame takes the card's own 4:3 — the crop the author already
- * approved — and switches to 3:4 when the file is portrait, which is
+ * the frame takes the card's own 4:3 - the crop the author already
+ * approved - and switches to 3:4 when the file is portrait, which is
  * what a phone camera hands you. Either way `object-cover` has almost
  * nothing left to cut.
  *

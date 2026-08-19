@@ -55,7 +55,7 @@ try {
     .locator("[data-canvas]", { hasText: "มอบโดย เชฟมิลด์ รินรดา" })
     .count();
   console.log("override renders on canvas:", shows > 0);
-  await page.waitForSelector("text=กำหนดเอง — ทุกใบจะใช้ข้อความที่กรอกแทนข้อมูลจริง");
+  await page.waitForSelector("text=กำหนดเอง - ทุกใบจะใช้ข้อความที่กรอกแทนข้อมูลจริง");
   console.log("override state labelled honestly: true");
   await page.waitForSelector("text=บันทึกแล้ว", { timeout: 15_000 });
   await page.screenshot({ path: "e2e-shots/62-designer-field-override.png" });

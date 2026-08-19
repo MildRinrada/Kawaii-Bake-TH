@@ -458,7 +458,7 @@ function ProfileContent() {
             {learning.map((course) => (
               <Card key={course.slug} className="flex gap-4 overflow-hidden">
                 <div className={cn("shrink-0", learning.length > 1 ? "w-24" : "w-32 sm:w-44")}>
-                  <MediaFrame src={null} seed={course.slug} />
+                  <MediaFrame src={course.thumbnail_url} seed={course.slug} />
                 </div>
                 <div className="min-w-0 flex-1 py-3 pr-4">
                   <h3 className="font-display truncate font-medium text-fg">
@@ -530,7 +530,7 @@ function ProfileContent() {
               action={
                 <Link href="/community/create">
                   <Button>
-                    <Icon name="ui/plus" className="size-4" /> แชร์ผลงาน
+                    <Icon name="ui/plus" tint className="size-4" /> แชร์ผลงาน
                   </Button>
                 </Link>
               }

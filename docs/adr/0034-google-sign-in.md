@@ -1,4 +1,4 @@
-# ADR 0034 — Google sign-in, and the first table authentication owns
+# ADR 0034 - Google sign-in, and the first table authentication owns
 
 - **Status:** accepted
 - **Date:** 2026-08-12
@@ -7,7 +7,7 @@
 ## Context
 
 Sign-up asked for five fields and offered one way in. Two of those fields
-— ชื่อจริง and นามสกุล — existed to print certificates (they moved to
+- ชื่อจริง and นามสกุล - existed to print certificates (they moved to
 issuance; see `docs/API.md`, `legal_name_required`), and the design
 review that removed them named the missing social button as the single
 biggest remaining drag on conversion. ADR 0007 anticipated this exact
@@ -29,8 +29,8 @@ through that row and reads nothing else.
 Matching on email instead would be a live account-takeover path: mail
 addresses get released and re-issued (corporate domains do this
 routinely), and whoever received the address next would sign in as its
-previous owner. Email is used exactly once — when a Google identity first
-meets an existing local account — and only because Google states it
+previous owner. Email is used exactly once - when a Google identity first
+meets an existing local account - and only because Google states it
 verified the address in the same signed token. `email_verified` false is
 a refusal (`social_email_unverified`), not a warning.
 
@@ -62,8 +62,8 @@ refusals is free reconnaissance for whoever is probing.
 
 `GOOGLE_OAUTH_CLIENT_ID` empty (the default, and the state of this repo
 as shipped) disables the feature: the endpoint answers 503
-`oauth_unavailable`, and the frontend — reading its own
-`NEXT_PUBLIC_GOOGLE_CLIENT_ID` — renders no button, no divider, nothing.
+`oauth_unavailable`, and the frontend - reading its own
+`NEXT_PUBLIC_GOOGLE_CLIENT_ID` - renders no button, no divider, nothing.
 
 A dead button is worse than no button, and a *demo* button that pretends
 to work is worse than both. The two ids must be the same value, which is
@@ -74,7 +74,7 @@ rather than a 404.
 ### 4. Accounts made this way have no password, and do have consent
 
 Provider-created accounts get `set_unusable_password()`, which
-`user_selector.get_for_password_reset` already filters out — so a
+`user_selector.get_for_password_reset` already filters out - so a
 social-only account can never be sent reset mail for a password it does
 not have. The handle is derived from the mail name and made unique
 through the same validator a typed handle passes, so reserved words
@@ -82,7 +82,7 @@ through the same validator a typed handle passes, so reserved words
 
 `terms_accepted_at` is stamped at creation. The button sits under a line
 saying that continuing accepts the terms, and PDPA consent has to be an
-act the person takes — pressing that button, under that line, is the act.
+act the person takes - pressing that button, under that line, is the act.
 Registration by password keeps its explicit checkbox.
 
 ## Consequences
@@ -90,7 +90,7 @@ Registration by password keeps its explicit checkbox.
 - One new table, `auth_social_account`, in the app that had none. The
   model docstring says why it could not be stateless.
 - `POST /auth/google/` returns **201** when it created the account and
-  **200** when it signed one in — one endpoint, because the visitor
+  **200** when it signed one in - one endpoint, because the visitor
   pressed one button and does not know which case they were.
 - Unlike password registration, this path *does* establish a session
   immediately: the provider already proved the address, so there is no

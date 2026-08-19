@@ -3,7 +3,7 @@
 The design document is a JSON scene graph the admin designer edits:
 absolutely-positioned elements (dynamic fields, static text, images,
 signatures, boxes) over a fixed-size canvas. Draft and published live
-side by side on the same row — saving the editor state and changing the
+side by side on the same row - saving the editor state and changing the
 production template are different acts, so an operator can experiment
 freely and publish deliberately.
 

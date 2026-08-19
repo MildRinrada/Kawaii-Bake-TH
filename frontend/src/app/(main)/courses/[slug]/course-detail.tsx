@@ -35,6 +35,7 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const [enrolling, setEnrolling] = useState(false);
+  const [unenrolling, setUnenrolling] = useState(false);
 
   const course = useApiQuery(
     (signal) => api.get<CourseDetail>(`/courses/${slug}/`, { signal }),
@@ -67,6 +68,25 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
       toast("ลงทะเบียนไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
     } finally {
       setEnrolling(false);
+    }
+  }
+
+  async function unenroll() {
+    // Soft on the backend - progress and history survive, and re-enrolling
+    // restores them - but it still drops the learner out of the course
+    // right now, so a stray click deserves a confirmation.
+    if (!window.confirm("เลิกเรียนคอร์สนี้? ประวัติการเรียนจะยังอยู่ ลงทะเบียนใหม่ได้ทุกเมื่อ")) {
+      return;
+    }
+    setUnenrolling(true);
+    try {
+      await api.delete(`/courses/${slug}/unenroll/`);
+      toast("เลิกเรียนคอร์สนี้แล้ว", "neutral");
+      course.refetch();
+    } catch {
+      toast("เลิกเรียนไม่สำเร็จ ลองใหม่อีกครั้ง", "danger");
+    } finally {
+      setUnenrolling(false);
     }
   }
 
@@ -132,15 +152,20 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
         </div>
       </div>
 
+      {/* Kept outside the two-column grid on purpose: a description of
+          varying length must not push "บทเรียนในคอร์ส" (and the sticky
+          "การเรียนของฉัน" card beside it) down by a different amount every
+          time - the two column tops stay level only if nothing but the
+          heading and the card lead their columns. */}
+      {data.description ? (
+        <p className="mt-8 whitespace-pre-wrap text-sm leading-relaxed text-fg">
+          {data.description}
+        </p>
+      ) : null}
+
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.7fr_1fr]">
         <div>
-          {data.description ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg">
-              {data.description}
-            </p>
-          ) : null}
-
-          <h2 className="font-display mb-4 mt-8 text-xl font-medium text-fg first:mt-0">
+          <h2 className="font-display mb-4 text-xl font-medium text-fg">
             บทเรียนในคอร์ส
           </h2>
           {syllabus.loading ? (
@@ -186,6 +211,15 @@ export function CourseDetailScreen({ slug }: { slug: string }) {
                       <Icon name="ui/party" className="size-3.5" /> เรียนจบคอร์สแล้ว
                     </Badge>
                   ) : null}
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    className="w-full"
+                    loading={unenrolling}
+                    onClick={() => void unenroll()}
+                  >
+                    เลิกเรียนคอร์สนี้
+                  </Button>
                 </>
               ) : (
                 <>

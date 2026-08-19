@@ -1,5 +1,5 @@
 /**
- * The certificate design document — the client twin of the backend
+ * The certificate design document - the client twin of the backend
  * validator (`apps/certificates/validators/template_validator.py`).
  *
  * A design is data, never markup: elements carry typed style values the

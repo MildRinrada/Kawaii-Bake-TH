@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from django.db import transaction
 
@@ -75,6 +76,9 @@ class MyCourseProgress:
     total_lessons: int
     percentage: int
     completed_at: datetime | None
+    # The raw `ImageFieldFile`, not a URL - building an absolute URL needs
+    # the request, which belongs to the serializer, not this layer.
+    thumbnail: Any
 
 
 def _require_enrolled_lesson(*, lesson_id: int, user_id: int) -> LessonRef:
@@ -333,6 +337,7 @@ def get_my_progress(*, user_id: int) -> list[MyCourseProgress]:
                 total_lessons=total,
                 percentage=round(done * 100 / total) if total else 0,
                 completed_at=completion.completed_at if completion else None,
+                thumbnail=course.thumbnail if course.thumbnail else None,
             )
         )
     return reports

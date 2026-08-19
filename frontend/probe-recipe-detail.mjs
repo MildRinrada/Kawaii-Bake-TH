@@ -2,7 +2,7 @@
  * Probe: the rebuilt recipe-detail layout.
  *
  * Measures the things the design review was about rather than asserting
- * on copy — is the cover framed instead of sliced, is the left column
+ * on copy - is the cover framed instead of sliced, is the left column
  * actually pinned while the method scrolls, is each fact stated once,
  * are the stars drawn at a real fraction.
  */
@@ -15,7 +15,7 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
 
-  // Pick a recipe with substitutions and, where one exists, a sibling —
+  // Pick a recipe with substitutions and, where one exists, a sibling -
   // the single-card layout only appears when the catalogue provides it.
   // (Navigate first: `fetch` from about:blank has no origin to send.)
   await page.goto(`${BASE}/recipes`);
@@ -38,7 +38,7 @@ try {
       total: list.count,
     };
   });
-  console.log("catalogue:", target.total, "recipes — probing", target.slug);
+  console.log("catalogue:", target.total, "recipes - probing", target.slug);
 
   await page.goto(`${BASE}/recipes/${target.slug}`, { waitUntil: "networkidle" });
   await page.waitForSelector("#ingredients");
@@ -71,7 +71,7 @@ try {
     // photo, for comparison.
     const before = Math.min(hero.sourceRatio, 21 / 9) / Math.max(hero.sourceRatio, 21 / 9);
     console.log(
-      `hero: source ${hero.sourceRatio} in a ${hero.frameRatio} frame — keeps ${Math.round(hero.kept * 100)}% of the photo (21:9 kept ${Math.round(before * 100)}%)`,
+      `hero: source ${hero.sourceRatio} in a ${hero.frameRatio} frame - keeps ${Math.round(hero.kept * 100)}% of the photo (21:9 kept ${Math.round(before * 100)}%)`,
     );
     // The detail frame must be the card's own ratio, so a cover approved
     // once is never re-cropped by a second layout.

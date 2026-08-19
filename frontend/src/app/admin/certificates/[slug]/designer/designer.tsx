@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The certificate template designer — a visual editor over the design
+ * The certificate template designer - a visual editor over the design
  * document `PUT /admin/certificates/templates/{slug}/` stores.
  *
  * Layout: element library + layers on the left, the live canvas in the
@@ -133,7 +133,7 @@ export function CertificateDesigner({ slug }: { slug: string }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Seed editor state when the template arrives (render-time seeding —
+  // Seed editor state when the template arrives (render-time seeding -
   // no setState-in-effect).
   if (template.data && loadedFor !== slug) {
     setLoadedFor(slug);
@@ -152,7 +152,7 @@ export function CertificateDesigner({ slug }: { slug: string }) {
   // ---- fit-to-container zoom --------------------------------------
   // Depends on the canvas *size* only: re-measuring on every document
   // edit re-created the observer mid-drag for no reason. The stage also
-  // reserves its scrollbar gutter (see className) — without that, the
+  // reserves its scrollbar gutter (see className) - without that, the
   // scrollbar appearing shrinks clientWidth, which shrinks the scale,
   // which hides the scrollbar, which grows the scale again: the frame
   // visibly vibrates on resize. The dead-band below absorbs what's left
@@ -522,7 +522,7 @@ export function CertificateDesigner({ slug }: { slug: string }) {
         {},
       );
       setPublishedAt(result.published_at ?? null);
-      toast("เผยแพร่เทมเพลตแล้ว — ใช้กับคอร์สนี้ตั้งแต่ตอนนี้", "success");
+      toast("เผยแพร่เทมเพลตแล้ว - ใช้กับคอร์สนี้ตั้งแต่ตอนนี้", "success");
     } catch (error) {
       toast(describeAdminError(error), "danger");
     }
@@ -597,7 +597,7 @@ export function CertificateDesigner({ slug }: { slug: string }) {
     dirty: "มีการแก้ไขที่ยังไม่บันทึก…",
     saving: "กำลังบันทึก…",
     saved: "บันทึกแล้ว",
-    error: "บันทึกไม่สำเร็จ — จะลองใหม่เมื่อแก้ไขอีกครั้ง",
+    error: "บันทึกไม่สำเร็จ - จะลองใหม่เมื่อแก้ไขอีกครั้ง",
   }[saveState];
 
   return (
@@ -675,7 +675,7 @@ export function CertificateDesigner({ slug }: { slug: string }) {
           <span className="hidden text-xs text-fg-subtle lg:block">
             {publishedAt
               ? `เผยแพร่ล่าสุด ${relativeThai(publishedAt)}`
-              : "ยังไม่เคยเผยแพร่ — คอร์สนี้ยังใช้ดีไซน์มาตรฐาน"}
+              : "ยังไม่เคยเผยแพร่ - คอร์สนี้ยังใช้ดีไซน์มาตรฐาน"}
           </span>
           <Button size="sm" variant="secondary" onClick={() => setPreviewOpen(true)}>
             ดูตัวอย่าง
@@ -967,7 +967,7 @@ export function CertificateDesigner({ slug }: { slug: string }) {
               <p className="font-medium text-fg-muted">ยังไม่ได้เลือกองค์ประกอบ</p>
               <p className="mt-1.5 leading-relaxed">
                 คลิกองค์ประกอบบนใบประกาศเพื่อย้าย ปรับขนาด หมุน
-                และแก้คุณสมบัติแบบละเอียดที่นี่ — ทุกการแก้ไขเห็นผลทันที
+                และแก้คุณสมบัติแบบละเอียดที่นี่ - ทุกการแก้ไขเห็นผลทันที
                 และระบบบันทึกแบบร่างให้อัตโนมัติ
               </p>
             </div>
@@ -1129,9 +1129,9 @@ function PropertiesPanel({
         <p className="mt-1 text-[11px] text-fg-subtle">
           {element.kind === "field"
             ? element.text?.trim()
-              ? "กำหนดเอง — ทุกใบจะใช้ข้อความที่กรอกแทนข้อมูลจริง"
-              : "ข้อมูลอัตโนมัติ — ระบบเติมค่าจริงตอนออกใบประกาศ"
-            : "องค์ประกอบดีไซน์ — ตายตัวบนใบประกาศทุกใบ"}
+              ? "กำหนดเอง - ทุกใบจะใช้ข้อความที่กรอกแทนข้อมูลจริง"
+              : "ข้อมูลอัตโนมัติ - ระบบเติมค่าจริงตอนออกใบประกาศ"
+            : "องค์ประกอบดีไซน์ - ตายตัวบนใบประกาศทุกใบ"}
         </p>
       </div>
 

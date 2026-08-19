@@ -215,7 +215,7 @@ def publish_template(
 
 
 def delete_template(*, template: CertificateTemplate) -> None:
-    """Remove the row entirely — the course falls back to the default.
+    """Remove the row entirely - the course falls back to the default.
 
     Args:
         template: The template to delete.

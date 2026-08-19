@@ -156,7 +156,7 @@ export function PostInteractions({
             <p className="text-sm text-fg-subtle">กำลังโหลดคอมเมนต์…</p>
           ) : (comments.data?.results.length ?? 0) === 0 ? (
             <p className="text-sm text-fg-subtle">
-              ยังไม่มีคอมเมนต์ — เป็นคนแรกที่ชมผลงานนี้ได้เลย
+              ยังไม่มีคอมเมนต์ - เป็นคนแรกที่ชมผลงานนี้ได้เลย
             </p>
           ) : (
             <ul className="space-y-3">

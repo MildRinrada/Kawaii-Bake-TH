@@ -152,13 +152,16 @@ apps/recipes/
 ├── services/   recipe_ · ingredient_ · step_ · publish_ · image_ · nutrition_service.py
 ├── validators/ recipe_ · ingredient_ · step_ · publish_ · image_ · nutrition_validator.py
 ├── permissions/recipe_permissions.py  # pure predicates: edit / delete / change status
+├── seeds/      loader.py + one module per category (20 recipes each), loaded by
+│               `manage.py seed_recipes`  demo content, not a fixture
+├── management/commands/seed_recipes.py
 ├── api/
 │   ├── serializers/  recipe_serializers.py · recipe_write_serializers.py
 │   │                 · filter_serializers.py
 │   ├── views/        recipe_views.py · search_views.py · publish_views.py · image_views.py
 │   └── urls/                          # literals BEFORE <str:slug>
 └── tests/  test_visibility · test_models · test_services · test_api
-         · test_list_search · test_images_nutrition · factories.py
+         · test_list_search · test_images_nutrition · test_seeds · factories.py
 ```
 
 ### Shared

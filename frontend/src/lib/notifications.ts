@@ -1,13 +1,13 @@
 import type { UiIconName } from "@/components/ui/icon";
 
 /**
- * How a notification is presented — shared by the bell panel and the
+ * How a notification is presented - shared by the bell panel and the
  * notification centre so the two can never drift apart.
  */
 
 /** One line glyph per wired event type; unknown types fall back to the
     bell. Staff announcements are drawn as announcements, not as whatever
-    emoji the sender typed — one icon system, not two. */
+    emoji the sender typed - one icon system, not two. */
 const EVENT_ICONS: Record<string, UiIconName> = {
   review_received: "star",
   course_enrollment: "graduation",
@@ -102,7 +102,7 @@ const GROUPS: Record<string, NotificationGroup> = {
 };
 
 /** The bucket one event type belongs to. Anything not about the reader
-    personally is an announcement — the one category someone may want to
+    personally is an announcement - the one category someone may want to
     mute without losing the things that concern them. */
 export function groupForEventType(eventType: string): NotificationGroup {
   return GROUPS[eventType] ?? "announcement";
@@ -122,7 +122,7 @@ export function notificationGroup(item: {
   return groupForEventType(item.event_type);
 }
 
-/** "วันนี้" / "เมื่อวาน" / a date — the heading a run of items sits under. */
+/** "วันนี้" / "เมื่อวาน" / a date - the heading a run of items sits under. */
 export function dayBucket(iso: string): string {
   const date = new Date(iso);
   const today = new Date();

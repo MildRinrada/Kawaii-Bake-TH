@@ -1,4 +1,4 @@
-# ADR 0035 — The legal name is asked for where it is used
+# ADR 0035 - The legal name is asked for where it is used
 
 - **Status:** accepted
 - **Date:** 2026-08-12
@@ -14,7 +14,7 @@ never claim a certificate. Sign-up asked for five fields where three
 identify an account; the design review of the page named those two as
 the first thing to cut.
 
-Nothing about the credential requirement changed — a certificate naming
+Nothing about the credential requirement changed - a certificate naming
 "@mildbakes" is still not a credential. What changed is *when* the
 question is asked.
 
@@ -23,8 +23,8 @@ question is asked.
 ### 1. Registration collects identity only
 
 Email, handle, password, consent. The registration serializer no longer
-declares the name fields at all, so — `StrictSerializer` rejecting
-unknown keys — sending them is a 400 rather than a silent write. New
+declares the name fields at all, so - `StrictSerializer` rejecting
+unknown keys - sending them is a 400 rather than a silent write. New
 accounts start with an empty legal name, which the model already allowed
 (`blank=True`, kept for pre-rule accounts under 0026).
 
@@ -41,7 +41,7 @@ issued carry the stored name in an immutable snapshot, and letting a
 later request diverge from it would produce two credentials naming two
 different people for one learner.
 
-`last_name` may be blank — a mononym is a real kind of name — but the two
+`last_name` may be blank - a mononym is a real kind of name - but the two
 cannot both be empty.
 
 ### 3. The snapshot chain loses its fallbacks
@@ -69,7 +69,7 @@ display name printed as a credential). It is now the legal name or the
 ## Alternatives considered
 
 **Ask at first enrolment.** Closer to the moment a name matters, but
-enrolling is browsing behaviour — it is free, reversible, and most
+enrolling is browsing behaviour - it is free, reversible, and most
 enrolments never finish. It would move the toll rather than remove it.
 
 **Keep the fields, make them optional.** Optional fields on a sign-up

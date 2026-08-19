@@ -1,6 +1,6 @@
 """Staff curation of per-course certificate templates (ADR 0029).
 
-Draft saves are the designer's autosave — cheap, frequent, validated.
+Draft saves are the designer's autosave - cheap, frequent, validated.
 Publishing is the deliberate act that freezes the draft as the course's
 production design. A course with no row (or a deleted row) uses
 ``DEFAULT_DESIGN``, so the platform always has a printable answer.
@@ -253,7 +253,7 @@ def reset_draft(*, course_slug: str, actor_id: int) -> CertificateTemplate:
 
 
 def remove_template(*, course_slug: str, actor_id: int) -> None:
-    """Delete the row — the course goes back to the built-in default.
+    """Delete the row - the course goes back to the built-in default.
 
     Args:
         course_slug: The course slug.

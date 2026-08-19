@@ -159,10 +159,10 @@ export interface paths {
          *     the default design when the course never had one.
          */
         get: operations["admin_certificates_templates_retrieve"];
-        /** @description Replace the draft — the designer's debounced autosave. */
+        /** @description Replace the draft - the designer's debounced autosave. */
         put: operations["admin_certificates_templates_update"];
         post?: never;
-        /** @description Drop the row — the course returns to the built-in default. */
+        /** @description Drop the row - the course returns to the built-in default. */
         delete: operations["admin_certificates_templates_destroy"];
         options?: never;
         head?: never;
@@ -3934,6 +3934,8 @@ export interface components {
             readonly percentage: number;
             /** Format: date-time */
             readonly completed_at: string | null;
+            /** @description Return the absolute thumbnail URL, if any. */
+            readonly thumbnail_url: string | null;
         };
         /**
          * @description Everything the settings screen needs, in one read.

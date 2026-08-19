@@ -13,6 +13,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import type { Route } from "next";
 
 import { api } from "@/lib/api/client";
 import type { Me, NotificationList } from "@/lib/api/models";
@@ -21,6 +22,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArtIcon, Icon, type AdminIconName } from "@/components/ui/icon";
+import { LottieHover } from "@/components/ui/lottie-asset";
 import { BRAND_MARK } from "@/lib/assets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
@@ -87,6 +89,58 @@ export const ADMIN_NAV: NavGroup[] = [
 const LABELS = new Map(
   ADMIN_NAV.flatMap((group) => group.items).map((item) => [item.href, item.label]),
 );
+
+/**
+ * Thai action labels for the routes each section owns beyond its own list
+ * page (new/edit/etc.), keyed by the section's URL segment and then by the
+ * *last* path segment.
+ *
+ * The last segment is what matters, not depth: it is unambiguous whether or
+ * not a dynamic slug sits in between, so `/recipes/new` and
+ * `/recipes/<slug>/edit` both resolve correctly off the same map without the
+ * breadcrumb needing to know that one has a slug and the other doesn't.
+ */
+const ADMIN_SUBROUTE_LABELS: Record<string, Record<string, string>> = {
+  recipes: { new: "เพิ่มสูตร", edit: "แก้ไขสูตร" },
+  courses: { new: "เพิ่มคอร์ส", edit: "แก้ไขคอร์ส" },
+  certificates: { issued: "ใบประกาศที่ออกแล้ว", designer: "ออกแบบใบประกาศ" },
+  notifications: { compose: "แจ้งเตือนใหม่", log: "ประวัติการส่ง" },
+};
+
+interface Crumb {
+  label: string;
+  /** Linked when present; the last crumb never carries one - it's the
+   *  current page. */
+  href?: string;
+}
+
+/**
+ * The breadcrumb trail for the current admin path.
+ *
+ * Nav items cover the exact-match case (every list page) for free. Anything
+ * deeper isn't itself a nav item, so it falls back to the section's own list
+ * page plus a label from `ADMIN_SUBROUTE_LABELS` - never the previous
+ * behaviour of silently mislabelling a nested page "แดชบอร์ด" just because
+ * its exact path had no entry. An unmapped sub-route still degrades
+ * gracefully: it shows only the section, not a wrong page name.
+ */
+function getBreadcrumb(pathname: string): Crumb[] {
+  const exact = LABELS.get(pathname);
+  if (exact) return [{ label: exact }];
+
+  const segments = pathname.split("/").filter(Boolean);
+  const section = segments[1];
+  const sectionHref = `/admin/${section}`;
+  const sectionLabel = section ? LABELS.get(sectionHref) : undefined;
+  if (!sectionLabel) return [{ label: "แดชบอร์ด" }];
+
+  const tail = segments[segments.length - 1];
+  const tailLabel = ADMIN_SUBROUTE_LABELS[section]?.[tail];
+
+  return tailLabel
+    ? [{ label: sectionLabel, href: sectionHref }, { label: tailLabel }]
+    : [{ label: sectionLabel }];
+}
 
 /* ------------------------------------------------------------------ */
 /* Staff gate                                                          */
@@ -189,7 +243,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const crumbLabel = LABELS.get(pathname) ?? "แดชบอร์ด";
+  const crumbs = getBreadcrumb(pathname);
 
   return (
     <div className="flex min-h-dvh bg-canvas">
@@ -228,7 +282,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminHeader
           user={user}
-          crumb={crumbLabel}
+          crumbs={crumbs}
           onOpenNav={() => setNavOpen(true)}
         />
         <main className="min-w-0 flex-1 px-4 py-5 sm:px-6">{children}</main>
@@ -255,9 +309,12 @@ function SidebarContent({
 }) {
   return (
     <>
-      <div
+      <Link
+        href="/"
+        aria-label="กลับไปหน้าแรกของเว็บ"
         className={cn(
-          "flex h-14 items-center gap-2 border-b border-edge",
+          "flex h-14 items-center gap-2 border-b border-edge transition-colors hover:bg-surface-sunken",
+          "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
           collapsed ? "justify-center px-0" : "px-4",
         )}
       >
@@ -268,7 +325,7 @@ function SidebarContent({
             <p className="text-xs leading-tight text-fg-subtle">ผู้ดูแลระบบ</p>
           </div>
         )}
-      </div>
+      </Link>
       <nav aria-label="เมนูผู้ดูแลระบบ" className="flex-1 overflow-y-auto py-3">
         {ADMIN_NAV.map((group) => (
           <div key={group.title} className="mb-3">
@@ -367,11 +424,11 @@ function SidebarContent({
 
 function AdminHeader({
   user,
-  crumb,
+  crumbs,
   onOpenNav,
 }: {
   user: Me;
-  crumb: string;
+  crumbs: Crumb[];
   onOpenNav: () => void;
 }) {
   const { logout } = useAuth();
@@ -408,12 +465,31 @@ function AdminHeader({
               ผู้ดูแลระบบ
             </Link>
           </li>
-          <li aria-hidden className="text-fg-subtle">
-            /
-          </li>
-          <li className="truncate font-medium text-fg" aria-current="page">
-            {crumb}
-          </li>
+          {crumbs.map((item, index) => {
+            const isLast = index === crumbs.length - 1;
+            return (
+              <li key={`${item.label}-${index}`} className="flex items-center gap-1.5">
+                <span aria-hidden className="text-fg-subtle">
+                  /
+                </span>
+                {item.href ? (
+                  <Link
+                    href={item.href as Route}
+                    className="text-fg-muted hover:text-accent-hover"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span
+                    className={cn("truncate", isLast && "font-medium text-fg")}
+                    aria-current={isLast ? "page" : undefined}
+                  >
+                    {item.label}
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ol>
       </nav>
 
@@ -423,7 +499,7 @@ function AdminHeader({
           aria-label={`การแจ้งเตือน${unread > 0 ? ` (ยังไม่อ่าน ${unread})` : ""}`}
           className="relative flex size-13 items-center justify-center rounded-md text-fg-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span aria-hidden>🔔</span>
+          <LottieHover src="/lottie/Notification bell.lottie" className="size-6" />
           {unread > 0 ? (
             <span className="absolute right-1 top-1 flex min-w-4 justify-center rounded-full bg-danger px-1 text-[10px] font-medium text-fg-inverted">
               {unread > 9 ? "9+" : unread}
